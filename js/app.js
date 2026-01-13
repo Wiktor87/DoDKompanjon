@@ -184,7 +184,8 @@ function viewCharacter(id) {
         currentCharacter = char;
         container.innerHTML = renderFullCharacterSheet(char);
     }).catch(function(err) {
-        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
+        console.error('Failed to load character:', err);
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
     });
 }
 
