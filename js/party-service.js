@@ -2,7 +2,7 @@
 var PartyService = {
     generateInviteCode: function() {
         // Excluding confusing chars: I, L, O, 0, 1
-        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        var chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
         var code = '';
         for (var i = 0; i < 6; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));

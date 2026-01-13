@@ -1108,7 +1108,7 @@ function savePartyNotes(partyId) {
         return;
     }
     
-    // Verify ownership before updating
+    // Client-side ownership check for better UX (server-side validation in Firestore rules)
     PartyService.getParty(partyId).then(function(party) {
         if (party.ownerId !== user.uid) {
             showToast('Endast ägaren kan redigera anteckningar', 'error');
