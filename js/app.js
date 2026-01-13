@@ -49,13 +49,10 @@ function showSection(sectionId) {
 
 function goToLanding() {
     console.log('🏠 goToLanding');
-    // Don't logout - just go to home section if logged in
-    if (typeof isUserLoggedIn === 'function' && isUserLoggedIn()) {
-        showSection('home');
-    } else {
-        document.getElementById('app').classList.add('hidden');
-        document.getElementById('landingPage').classList.remove('hidden');
-    }
+    // Always go to landing page regardless of login status
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('landingPage').classList.remove('hidden');
+    document.body.classList.remove('app-active');
     return false;
 }
 
@@ -176,19 +173,25 @@ function renderCharacterCardFull(char) {
 // View Character
 function viewCharacter(id) {
     console.log('👁️ viewCharacter:', id);
-    var modal = document.getElementById('characterSheetModal');
     var container = document.getElementById('characterSheetContainer');
-    if (!modal || !container) return;
+    if (!container) return;
     
-    modal.classList.add('active');
+    // Switch to character sheet section
+    showSection('characterSheet');
     container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
     
     CharacterService.getCharacter(id).then(function(char) {
         currentCharacter = char;
         container.innerHTML = renderFullCharacterSheet(char);
     }).catch(function(err) {
-        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p><button class="btn btn-outline" onclick="closeModal(\'characterSheetModal\')">Stäng</button></div>';
+        console.error('Failed to load character:', err);
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
     });
+}
+
+function closeCharacterSheet() {
+    showSection('characters');
+    currentCharacter = null;
 }
 
 function renderFullCharacterSheet(char) {

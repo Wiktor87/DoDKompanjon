@@ -86,7 +86,7 @@ body.app-active::before {
 .brand-logo { height: 50px; width: auto; }
 .nav-actions { display: flex; gap: 0.75rem; }
 .hero { max-width: 1200px; margin: 0 auto; padding: 4rem 3rem; text-align: center; position: relative; }
-.hero-bg { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-size: cover; background-position: center; opacity: 0.3; mask-image: linear-gradient(to bottom, black 0%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%); }
+.hero-bg { position: absolute; top: 0; left: 0; right: 0; height: 100%; width: 100%; background-size: 100% auto; background-position: center; opacity: 0.3; mask-image: linear-gradient(to bottom, black 0%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%); }
 .hero-content { position: relative; z-index: 1; }
 .hero-title-main { display: block; font-family: var(--font-display); font-size: 4rem; font-weight: 700; color: var(--text-primary); }
 .hero-title-sub { display: block; font-family: var(--font-display); font-size: 3rem; background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -101,6 +101,10 @@ body.app-active::before {
 .feature-card h3 { font-family: var(--font-display); margin-bottom: 0.5rem; }
 .feature-card p { color: var(--text-secondary); }
 .landing-footer { padding: 2rem; text-align: center; color: var(--text-muted); }
+.landing-footer p { margin-bottom: 0.5rem; }
+.footer-disclaimer { font-size: 0.75rem; color: var(--text-muted); max-width: 800px; margin: 0.75rem auto 0; line-height: 1.5; }
+.app-footer { padding: 2rem; text-align: center; color: var(--text-muted); border-top: 1px solid var(--border-default); margin-top: 2rem; }
+.app-footer p { margin-bottom: 0.5rem; }
 
 /* App Header */
 .app-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 1100; }
@@ -124,7 +128,7 @@ body.app-active::before {
 .quick-action-card { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); cursor: pointer; transition: all 0.2s; text-align: left; }
 .quick-action-card:hover { border-color: var(--accent-gold); transform: translateY(-2px); }
 .qa-icon { font-size: 2rem; }
-.qa-content h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+.qa-content h3 { font-size: 1rem; margin-bottom: 0.25rem; color: var(--text-primary); }
 .qa-content p { font-size: 0.813rem; color: var(--text-muted); }
 .home-section { margin-top: 2rem; }
 .home-section h2 { font-size: 1.25rem; margin-bottom: 1rem; }
@@ -222,7 +226,8 @@ body.app-active::before {
 .summary-card p { margin-bottom: 0.5rem; }
 
 /* Character Sheet */
-.character-sheet-full { background: var(--bg-primary); }
+.character-sheet-wrapper { max-width: 1000px; margin: 0 auto; }
+.character-sheet-full { background: var(--bg-primary); border-radius: var(--radius-lg); overflow: hidden; }
 .sheet-header-full { display: flex; gap: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated)); border-bottom: 1px solid var(--border-default); flex-wrap: wrap; }
 .sheet-portrait-large { width: 80px; height: 80px; background: var(--bg-primary); border: 3px dashed var(--accent-gold); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative; cursor: pointer; transition: all 0.2s; }
 .sheet-portrait-large svg { width: 48px; height: 48px; color: var(--accent-gold); }
