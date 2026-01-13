@@ -23,7 +23,9 @@
                 </div>
             </nav>
             <section class="hero">
-                <div class="hero-bg" style="background-image: url('banner_img_02.png');"></div>
+                <video autoplay muted loop playsinline class="bg-video">
+                    <source src="Website_Animation_For_Drakar_och_Demoner.mp4" type="video/mp4">
+                </video>
                 <div class="hero-content">
                     <h1 class="hero-title">
                         <span class="hero-title-main">Ditt Äventyr</span>
@@ -71,7 +73,7 @@
             <div class="header-top">
                 <div class="header-content">
                     <a href="javascript:void(0)" class="header-brand" onclick="goToLanding()">
-                        <img src="DoDC_Logo.png" alt="D&D Kompanjon" class="brand-logo">
+                        <img src="DoDC_Logo_2.png" alt="D&D Kompanjon" class="brand-logo">
                     </a>
                     <div class="user-menu">
                         <span class="user-name" id="userName">Användare</span>
@@ -246,6 +248,18 @@
         <div class="modal-content modal-large">
             <button class="close-modal" onclick="closeModal('partyViewModal')">×</button>
             <div id="partyViewContainer"></div>
+        </div>
+    </div>
+
+    <!-- Add to Group Modal -->
+    <div id="addToGroupModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('addToGroupModal')">×</button>
+            <h2>Lägg till i grupp</h2>
+            <div id="addToGroupContent">
+                <p style="margin-bottom: 1rem; color: var(--text-secondary);">Välj vilken grupp du vill lägga till karaktären i:</p>
+                <div id="groupsList"></div>
+            </div>
         </div>
     </div>
 
