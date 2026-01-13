@@ -3,10 +3,17 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
-var KIN_ICONS = {
-    'Människa': '👤', 'Alv': '🧝', 'Dvärg': '🧔',
-    'Halvling': '🧒', 'Anka': '🦆', 'Vargfolk': '🐺', 'default': '⚔️'
-};
+// Use emoji fallbacks if icons.js not loaded, otherwise will be replaced
+function getKinIcon(kin) {
+    if (typeof getIconSVG !== 'undefined') {
+        return getIconSVG('kin', kin) || getIconSVG('kin', 'default');
+    }
+    var fallback = {
+        'Människa': '👤', 'Alv': '🧝', 'Dvärg': '🧔',
+        'Halvling': '🧒', 'Anka': '🦆', 'Vargfolk': '🐺', 'default': '⚔️'
+    };
+    return fallback[kin] || fallback.default;
+}
 
 var PROFESSION_ICONS = {
     'Bard': '🎵', 'Hantverkare': '🔨', 'Jägare': '🏹', 'Krigare': '⚔️',
@@ -37,8 +44,13 @@ function showSection(sectionId) {
 
 function goToLanding() {
     console.log('🏠 goToLanding');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('landingPage').classList.remove('hidden');
+    // Don't logout - just go to home section if logged in
+    if (typeof isUserLoggedIn === 'function' && isUserLoggedIn()) {
+        showSection('home');
+    } else {
+        document.getElementById('app').classList.add('hidden');
+        document.getElementById('landingPage').classList.remove('hidden');
+    }
     return false;
 }
 
@@ -100,7 +112,7 @@ function loadDashboard() {
 }
 
 function renderCharacterCardCompact(char) {
-    var icon = KIN_ICONS[char.kin] || KIN_ICONS.default;
+    var icon = getKinIcon(char.kin);
     var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
     var kp = char.currentKP || (char.attributes && char.attributes.FYS) || '?';
     var vp = char.currentVP || (char.attributes && char.attributes.PSY) || '?';
@@ -136,7 +148,7 @@ function loadCharactersList() {
 }
 
 function renderCharacterCardFull(char) {
-    var icon = KIN_ICONS[char.kin] || KIN_ICONS.default;
+    var icon = getKinIcon(char.kin);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
     return '<div class="character-card-full" onclick="viewCharacter(\'' + char.id + '\')">' +
@@ -175,13 +187,17 @@ function viewCharacter(id) {
 }
 
 function renderFullCharacterSheet(char) {
-    var icon = KIN_ICONS[char.kin] || KIN_ICONS.default;
+    var icon = getKinIcon(char.kin);
     var attrs = char.attributes || {};
     var skills = char.skills || {};
     var inventory = char.inventory || [];
     var currency = char.currency || { guld: 0, silver: 0, brons: 0 };
     var maxKp = attrs.FYS || 0;
     var maxVp = attrs.PSY || 0;
+    var currentKp = char.currentKP || maxKp;
+    var currentVp = char.currentVP || maxVp;
+    var kpPercent = maxKp > 0 ? (currentKp / maxKp * 100) : 0;
+    var vpPercent = maxVp > 0 ? (currentVp / maxVp * 100) : 0;
     
     return '<div class="character-sheet-full">' +
         '<div class="sheet-header-full">' +
@@ -190,37 +206,75 @@ function renderFullCharacterSheet(char) {
         '<input type="text" class="sheet-name-input" value="' + (char.name || '') + '" data-field="name">' +
         '<div class="sheet-subtitle-row">' + [char.kin, char.profession, char.age].filter(Boolean).join(' • ') + '</div>' +
         '<div class="sheet-hp-vp-bar">' +
-        '<div class="hp-vp-item"><label>KP</label><input type="number" class="stat-input current" value="' + (char.currentKP || maxKp) + '" data-field="currentKP">/' + maxKp + '</div>' +
-        '<div class="hp-vp-item"><label>VP</label><input type="number" class="stat-input current" value="' + (char.currentVP || maxVp) + '" data-field="currentVP">/' + maxVp + '</div>' +
+        '<div class="hp-vp-progress-bar">' +
+        '<div class="progress-label"><span class="progress-label-text">❤️ Kroppspoäng</span>' +
+        '<div class="progress-bar-input-group">' +
+        '<input type="number" class="progress-bar-input" value="' + currentKp + '" data-field="currentKP" onchange="updateProgressBar(this, ' + maxKp + ')"> / ' + maxKp +
+        '</div></div>' +
+        '<div class="progress-bar-track"><div class="progress-bar-fill hp" style="width: ' + kpPercent + '%"></div></div>' +
+        '</div>' +
+        '<div class="hp-vp-progress-bar">' +
+        '<div class="progress-label"><span class="progress-label-text">💜 Viljekraft</span>' +
+        '<div class="progress-bar-input-group">' +
+        '<input type="number" class="progress-bar-input" value="' + currentVp + '" data-field="currentVP" onchange="updateProgressBar(this, ' + maxVp + ')"> / ' + maxVp +
+        '</div></div>' +
+        '<div class="progress-bar-track"><div class="progress-bar-fill vp" style="width: ' + vpPercent + '%"></div></div>' +
+        '</div>' +
         '</div></div>' +
         '<div class="sheet-header-actions"><button class="btn btn-gold" onclick="saveCharacter()">💾 Spara</button></div></div>' +
+        '<div class="sheet-tabs">' +
+        '<button class="sheet-tab active" onclick="switchSheetTab(this, \'overview\')">Översikt</button>' +
+        '<button class="sheet-tab" onclick="switchSheetTab(this, \'abilities\')">Egenskaper</button>' +
+        '<button class="sheet-tab" onclick="switchSheetTab(this, \'skills\')">Färdigheter</button>' +
+        '<button class="sheet-tab" onclick="switchSheetTab(this, \'equipment\')">Utrustning</button>' +
+        '<button class="sheet-tab" onclick="switchSheetTab(this, \'notes\')">Anteckningar</button>' +
+        '</div>' +
+        '<div class="sheet-tab-content active" id="tab-overview">' +
         '<div class="sheet-body-grid">' +
         '<div class="sheet-column">' +
         '<div class="sheet-panel"><h3 class="panel-title">Grundegenskaper</h3><div class="attrs-grid">' +
         ['STY','FYS','SMI','INT','PSY'].map(function(a) {
             return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
         }).join('') + '</div></div>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Specialförmågor</h3>' +
+        '<div style="padding: 0.5rem;"><p><strong>Släktförmåga:</strong> ' + (char.kinAbility || '—') + '</p>' +
+        '<p><strong>Hjälteförmåga:</strong> ' + (char.heroicAbility || '—') + '</p></div>' +
+        '</div></div>' +
+        '<div class="sheet-column">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Mynt</h3><div class="currency-grid">' +
+        '<div class="currency-item"><span>🥇 Guld</span><input type="number" class="currency-input" value="' + (currency.guld || 0) + '" data-currency="guld"></div>' +
+        '<div class="currency-item"><span>🥈 Silver</span><input type="number" class="currency-input" value="' + (currency.silver || 0) + '" data-currency="silver"></div>' +
+        '<div class="currency-item"><span>🥉 Brons</span><input type="number" class="currency-input" value="' + (currency.brons || 0) + '" data-currency="brons"></div>' +
+        '</div></div>' +
+        '</div></div></div>' +
+        '<div class="sheet-tab-content" id="tab-abilities">' +
+        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Grundegenskaper</h3><div class="attrs-grid">' +
+        ['STY','FYS','SMI','INT','PSY'].map(function(a) {
+            return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
+        }).join('') + '</div></div></div></div></div>' +
+        '<div class="sheet-tab-content" id="tab-skills">' +
+        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
         '<div class="sheet-panel"><h3 class="panel-title">Färdigheter</h3>' +
         Object.keys(ALL_SKILLS).map(function(attr) {
             return '<div class="skill-group"><div class="skill-group-header">' + attr + '</div>' +
                 ALL_SKILLS[attr].map(function(skill) {
                     return '<div class="skill-row"><span class="skill-name">' + skill + '</span><input type="number" class="skill-input" value="' + (skills[skill] || 0) + '" data-skill="' + skill + '"></div>';
                 }).join('') + '</div>';
-        }).join('') + '</div></div>' +
-        '<div class="sheet-column">' +
+        }).join('') + '</div></div></div></div>' +
+        '<div class="sheet-tab-content" id="tab-equipment">' +
+        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
         '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()">+</button></h3>' +
         '<div id="inventoryList">' + (inventory.length === 0 ? '<div class="empty-inventory">Tom</div>' : 
             inventory.map(function(item, i) {
                 var name = typeof item === 'string' ? item : (item.name || '');
                 return '<div class="inventory-item"><input type="text" class="item-name-input" value="' + name + '"><button class="btn-icon-sm" onclick="this.parentElement.remove()">×</button></div>';
-            }).join('')) + '</div></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Mynt</h3><div class="currency-grid">' +
-        '<div class="currency-item"><span>🥇 Guld</span><input type="number" class="currency-input" value="' + (currency.guld || 0) + '" data-currency="guld"></div>' +
-        '<div class="currency-item"><span>🥈 Silver</span><input type="number" class="currency-input" value="' + (currency.silver || 0) + '" data-currency="silver"></div>' +
-        '<div class="currency-item"><span>🥉 Brons</span><input type="number" class="currency-input" value="' + (currency.brons || 0) + '" data-currency="brons"></div>' +
-        '</div></div>' +
+            }).join('')) + '</div></div></div></div></div>' +
+        '<div class="sheet-tab-content" id="tab-notes">' +
+        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
         '<div class="sheet-panel"><h3 class="panel-title">Anteckningar</h3><textarea class="bio-textarea" data-field="notes">' + (char.notes || '') + '</textarea></div>' +
-        '</div></div></div>';
+        '</div></div></div>' +
+        '</div>';
 }
 
 // Inventory
@@ -297,6 +351,23 @@ function showToast(msg, type) {
     document.body.appendChild(t);
     setTimeout(function() { t.classList.add('show'); }, 10);
     setTimeout(function() { t.remove(); }, 3000);
+}
+
+// Sheet tabs
+function switchSheetTab(btn, tabId) {
+    document.querySelectorAll('.sheet-tab').forEach(function(t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.sheet-tab-content').forEach(function(c) { c.classList.remove('active'); });
+    var content = document.getElementById('tab-' + tabId);
+    if (content) content.classList.add('active');
+}
+
+// Progress bar update
+function updateProgressBar(input, max) {
+    var current = parseInt(input.value) || 0;
+    var percent = Math.min(100, max > 0 ? (current / max * 100) : 0);
+    var bar = input.closest('.hp-vp-progress-bar').querySelector('.progress-bar-fill');
+    if (bar) bar.style.width = percent + '%';
 }
 
 // Init

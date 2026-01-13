@@ -19,6 +19,7 @@ function showLandingPage() {
     if (landing) landing.classList.remove('hidden');
     if (app) app.classList.add('hidden');
     if (modal) modal.classList.remove('active');
+    document.body.classList.remove('app-active');
 }
 
 function showApp() {
@@ -28,6 +29,7 @@ function showApp() {
     if (landing) landing.classList.add('hidden');
     if (app) app.classList.remove('hidden');
     if (modal) modal.classList.remove('active');
+    document.body.classList.add('app-active');
 }
 
 function onUserLoggedIn(user) {
