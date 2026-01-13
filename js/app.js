@@ -640,6 +640,8 @@ function viewParty(id) {
         }
         
         // Setup message listener
+        // Note: Using window.currentPartyMessageUnsubscribe for cleanup on navigation
+        // This is acceptable since only one party view can be active at a time
         if (typeof window.currentPartyMessageUnsubscribe !== 'undefined' && window.currentPartyMessageUnsubscribe) {
             window.currentPartyMessageUnsubscribe();
         }
@@ -754,10 +756,17 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
 
 function renderMessage(msg) {
     var time = '';
-    if (msg.timestamp && msg.timestamp.toDate) {
-        time = msg.timestamp.toDate().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-    } else if (msg.timestamp) {
-        time = 'Nu';
+    if (msg.timestamp) {
+        if (typeof msg.timestamp.toDate === 'function') {
+            // Firestore Timestamp object
+            time = msg.timestamp.toDate().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+        } else if (msg.timestamp instanceof Date) {
+            // JavaScript Date object
+            time = msg.timestamp.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+        } else {
+            // Fallback for pending messages
+            time = 'Nu';
+        }
     }
     return '<div style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--bg-elevated); border-radius: var(--radius-sm);">' +
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">' +
@@ -1099,14 +1108,18 @@ function savePartyNotes(partyId) {
     PartyService.getParty(partyId).then(function(party) {
         if (party.ownerId !== user.uid) {
             showToast('Endast ägaren kan redigera anteckningar', 'error');
-            return;
+            return Promise.reject(new Error('Inte ägare'));
         }
         
         return PartyService.updateParty(partyId, { notes: notes.value });
-    }).then(function() {
-        showToast('Anteckningar sparade!', 'success');
+    }).then(function(result) {
+        if (result !== undefined) {
+            showToast('Anteckningar sparade!', 'success');
+        }
     }).catch(function(err) {
-        showToast('Fel: ' + err.message, 'error');
+        if (err.message !== 'Inte ägare') {
+            showToast('Fel: ' + err.message, 'error');
+        }
     });
 }
 

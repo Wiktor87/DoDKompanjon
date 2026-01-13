@@ -9,7 +9,14 @@ var PartyService = {
         return code;
     },
     
-    ensureUniqueInviteCode: function() {
+    ensureUniqueInviteCode: function(retryCount) {
+        retryCount = retryCount || 0;
+        var maxRetries = 10;
+        
+        if (retryCount >= maxRetries) {
+            return Promise.reject(new Error('Kunde inte generera en unik inbjudningskod efter ' + maxRetries + ' försök'));
+        }
+        
         var self = this;
         var code = this.generateInviteCode();
         
@@ -22,8 +29,8 @@ var PartyService = {
                 if (snapshot.empty) {
                     return code;
                 } else {
-                    // Code exists, try again (recursive with limit)
-                    return self.ensureUniqueInviteCode();
+                    // Code exists, try again
+                    return self.ensureUniqueInviteCode(retryCount + 1);
                 }
             });
     },
