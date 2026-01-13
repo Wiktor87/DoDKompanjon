@@ -126,7 +126,7 @@ function loadCharactersList() {
     CharacterService.getUserCharacters().then(function(characters) {
         if (countEl) countEl.textContent = characters.length + ' karaktär' + (characters.length !== 1 ? 'er' : '');
         if (characters.length === 0) {
-            container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🎭</div><h3>Inga karaktärer ännu</h3><button class="btn btn-gold" onclick="openCharacterCreator()">✨ Skapa Karaktär</button></div>';
+            container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🎭</div><h3>Inga karaktärer ännu</h3><button class="btn btn-gold" onclick="openCharacterCreator()">Skapa din första</button></div>';
         } else {
             container.innerHTML = characters.map(renderCharacterCardFull).join('');
         }
