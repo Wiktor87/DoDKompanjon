@@ -1,7 +1,8 @@
 // Party Service
 var PartyService = {
     generateInviteCode: function() {
-        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding similar looking chars
+        // Excluding confusing chars: I, L, O, 0, 1
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         var code = '';
         for (var i = 0; i < 6; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
