@@ -21,16 +21,16 @@ var KIN_DATA = {
 };
 
 var PROFESSION_DATA = {
-    'Bard': { ability: 'Inspirera', skills: ['Uppträda', 'Övertala'] },
-    'Hantverkare': { ability: 'Mästerverk', skills: ['Hantverk', 'Bildning'] },
-    'Jägare': { ability: 'Spårare', skills: ['Djur & Natur', 'Smyga'] },
-    'Krigare': { ability: 'Vapenmästare', skills: ['Närkamp', 'Styrkeprov'] },
-    'Lärd': { ability: 'Kunskapsbank', skills: ['Bildning', 'Språk'] },
-    'Magiker': { ability: 'Trollkonst', skills: ['Bildning', 'Upptäcka'] },
-    'Nasare': { ability: 'Lönnmord', skills: ['Smyga', 'Fingerfärdighet'] },
-    'Riddare': { ability: 'Beskyddare', skills: ['Närkamp', 'Rida'] },
-    'Sjöfarare': { ability: 'Sjöben', skills: ['Simma & Dyka', 'Styrkeprov'] },
-    'Tjuv': { ability: 'Smidig', skills: ['Fingerfärdighet', 'Smyga'] }
+    'Bard': { ability: 'Inspirera', skills: { 'Uppträda': 10, 'Övertala': 10, 'Språk': 10 } },
+    'Hantverkare': { ability: 'Mästerverk', skills: { 'Hantverk': 10, 'Bildning': 10, 'Styrkeprov': 10 } },
+    'Jägare': { ability: 'Spårare', skills: { 'Djur & Natur': 10, 'Smyga': 10, 'Upptäcka': 10 } },
+    'Krigare': { ability: 'Vapenmästare', skills: { 'Närkamp': 10, 'Styrkeprov': 10, 'Simma & Dyka': 10 } },
+    'Lärd': { ability: 'Kunskapsbank', skills: { 'Bildning': 10, 'Språk': 10, 'Läkekonst': 10 } },
+    'Magiker': { ability: 'Trollkonst', skills: { 'Bildning': 10, 'Upptäcka': 10, 'Genomskåda': 10 } },
+    'Nasare': { ability: 'Lönnmord', skills: { 'Smyga': 10, 'Fingerfärdighet': 10, 'Undvika': 10 } },
+    'Riddare': { ability: 'Beskyddare', skills: { 'Närkamp': 10, 'Rida': 10, 'Övertala': 10 } },
+    'Sjöfarare': { ability: 'Sjöben', skills: { 'Simma & Dyka': 10, 'Styrkeprov': 10, 'Hantverk': 10 } },
+    'Tjuv': { ability: 'Smidig', skills: { 'Fingerfärdighet': 10, 'Smyga': 10, 'Undvika': 10 } }
 };
 
 var AGE_DATA = {
@@ -226,6 +226,11 @@ function createCharacter() {
         movement: 10,
         notes: ''
     };
+    
+    // Apply profession skills
+    if (creatorData.profession && PROFESSION_DATA[creatorData.profession]) {
+        charData.skills = Object.assign({}, PROFESSION_DATA[creatorData.profession].skills);
+    }
     
     CharacterService.createCharacter(charData).then(function() {
         closeCharacterCreator();

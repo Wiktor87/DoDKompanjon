@@ -3,10 +3,17 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
-var KIN_ICONS = {
-    'Människa': '👤', 'Alv': '🧝', 'Dvärg': '🧔',
-    'Halvling': '🧒', 'Anka': '🦆', 'Vargfolk': '🐺', 'default': '⚔️'
-};
+// Use emoji fallbacks if icons.js not loaded, otherwise will be replaced
+function getKinIcon(kin) {
+    if (typeof getIconSVG !== 'undefined') {
+        return getIconSVG('kin', kin) || getIconSVG('kin', 'default');
+    }
+    var fallback = {
+        'Människa': '👤', 'Alv': '🧝', 'Dvärg': '🧔',
+        'Halvling': '🧒', 'Anka': '🦆', 'Vargfolk': '🐺', 'default': '⚔️'
+    };
+    return fallback[kin] || fallback.default;
+}
 
 var PROFESSION_ICONS = {
     'Bard': '🎵', 'Hantverkare': '🔨', 'Jägare': '🏹', 'Krigare': '⚔️',
@@ -105,7 +112,7 @@ function loadDashboard() {
 }
 
 function renderCharacterCardCompact(char) {
-    var icon = KIN_ICONS[char.kin] || KIN_ICONS.default;
+    var icon = getKinIcon(char.kin);
     var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
     var kp = char.currentKP || (char.attributes && char.attributes.FYS) || '?';
     var vp = char.currentVP || (char.attributes && char.attributes.PSY) || '?';
@@ -141,7 +148,7 @@ function loadCharactersList() {
 }
 
 function renderCharacterCardFull(char) {
-    var icon = KIN_ICONS[char.kin] || KIN_ICONS.default;
+    var icon = getKinIcon(char.kin);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
     return '<div class="character-card-full" onclick="viewCharacter(\'' + char.id + '\')">' +
@@ -180,7 +187,7 @@ function viewCharacter(id) {
 }
 
 function renderFullCharacterSheet(char) {
-    var icon = KIN_ICONS[char.kin] || KIN_ICONS.default;
+    var icon = getKinIcon(char.kin);
     var attrs = char.attributes || {};
     var skills = char.skills || {};
     var inventory = char.inventory || [];
