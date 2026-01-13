@@ -176,8 +176,6 @@ function renderCharacterCardFull(char) {
         '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button>' +
         '</div></div></div>';
 }
-}
-}
 
 // View Character
 function viewCharacter(id) {
