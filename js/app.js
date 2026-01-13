@@ -49,10 +49,14 @@ function showSection(sectionId) {
 
 function goToLanding() {
     console.log('🏠 goToLanding');
-    // Always go to landing page regardless of login status
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('landingPage').classList.remove('hidden');
-    document.body.classList.remove('app-active');
+    // Go to landing page while preserving auth state
+    if (typeof showLandingPage === 'function') {
+        showLandingPage();
+    } else {
+        document.getElementById('app').classList.add('hidden');
+        document.getElementById('landingPage').classList.remove('hidden');
+        document.body.classList.remove('app-active');
+    }
     return false;
 }
 

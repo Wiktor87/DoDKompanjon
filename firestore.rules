@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Characters: users can only access their own characters
+    match /characters/{characterId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.ownerId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.ownerId;
+    }
+    
+    // Groups/Parties: users can read groups they're members of or that are public
+    match /parties/{partyId} {
+      // Allow reading if user is owner, member, or group is public
+      allow read: if request.auth != null && 
+        (resource.data.ownerId == request.auth.uid || 
+         request.auth.uid in resource.data.memberIds ||
+         resource.data.isPublic == true);
+      
+      // Allow creating for any authenticated user
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.ownerId;
+      
+      // Allow update/delete for owner only
+      allow update, delete: if request.auth != null && 
+        resource.data.ownerId == request.auth.uid;
+    }
+    
+    // Join requests collection for group join feature
+    match /joinRequests/{requestId} {
+      // Anyone authenticated can read join requests
+      allow read: if request.auth != null;
+      
+      // Anyone authenticated can create a join request
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.requesterId;
+      
+      // Can update/delete if requester or group owner
+      allow update, delete: if request.auth != null && 
+        (resource.data.requesterId == request.auth.uid ||
+         resource.data.groupOwnerId == request.auth.uid);
+    }
+  }
+}
