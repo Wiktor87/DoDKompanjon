@@ -157,11 +157,11 @@ function renderCharacterCardFull(char) {
     var icon = getKinIcon(char.kin);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
-    return '<div class="character-card-full" onclick="viewCharacter(\'' + char.id + '\')">' +
-        '<div class="card-header"><div class="card-portrait">' + icon + '</div>' +
+    return '<div class="character-card-full">' +
+        '<div class="card-header" onclick="viewCharacter(\'' + char.id + '\')"><div class="card-portrait">' + icon + '</div>' +
         '<div class="card-identity"><div class="card-name">' + (char.name || 'Namnlös') + '</div>' +
         '<div class="card-subtitle">' + [char.kin, char.profession].filter(Boolean).join(' ') + '</div></div></div>' +
-        '<div class="card-body"><div class="card-stats-grid">' +
+        '<div class="card-body" onclick="viewCharacter(\'' + char.id + '\')"><div class="card-stats-grid">' +
         ['STY','FYS','SMI','INT','PSY'].map(function(a) {
             return '<div class="stat-box"><div class="stat-name">' + a + '</div><div class="stat-value">' + (attrs[a] || '—') + '</div></div>';
         }).join('') + '</div>' +
@@ -171,7 +171,11 @@ function renderCharacterCardFull(char) {
         '<div class="derived-stat"><div class="derived-label">Förfl.</div><div class="derived-value mv">10</div></div>' +
         '</div></div>' +
         '<div class="card-footer"><span>' + profIcon + ' ' + (char.heroicAbility || '—') + '</span>' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button></div></div>';
+        '<div style="display: flex; gap: 0.5rem;">' +
+        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button>' +
+        '</div></div></div>';
+}
 }
 
 // View Character
@@ -271,8 +275,11 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-column">' +
         '<div class="sheet-panel"><h3 class="panel-title">Rustning & Skydd</h3>' +
         '<div style="padding: 0.5rem;">' +
-        '<div class="skill-row"><span class="skill-name">Rustning</span><input type="text" class="item-name-input" value="' + (char.armor || '') + '" data-field="armor"></div>' +
-        '<div class="skill-row"><span class="skill-name">Hjälm</span><input type="text" class="item-name-input" value="' + (char.helmet || '') + '" data-field="helmet"></div>' +
+        '<div class="skill-row"><span class="skill-name">Rustning (Typ)</span><input type="text" class="item-name-input" value="' + (char.armor || '') + '" data-field="armor" placeholder="t.ex. Läderharnesk"></div>' +
+        '<div class="skill-row"><span class="skill-name">Skyddsvärde</span><input type="number" class="skill-input" value="' + (char.armorProtection || 0) + '" data-field="armorProtection"></div>' +
+        '<div class="skill-row"><span class="skill-name">Rustning Nackdelar</span><input type="text" class="item-name-input" value="' + (char.armorDisadvantages || '') + '" data-field="armorDisadvantages" placeholder="t.ex. -1 SMI"></div>' +
+        '<div class="skill-row"><span class="skill-name">Hjälm (Typ)</span><input type="text" class="item-name-input" value="' + (char.helmet || '') + '" data-field="helmet" placeholder="t.ex. Järnhjälm"></div>' +
+        '<div class="skill-row"><span class="skill-name">Hjälm Skyddsvärde</span><input type="number" class="skill-input" value="' + (char.helmetProtection || 0) + '" data-field="helmetProtection"></div>' +
         '</div></div>' +
         '<div class="sheet-panel"><h3 class="panel-title">Mynt</h3><div class="currency-grid">' +
         '<div class="currency-item"><span>🥇 Guldmynt (GM)</span><input type="number" class="currency-input" value="' + (currency.guld || 0) + '" data-currency="guld"></div>' +
@@ -384,7 +391,10 @@ function saveCharacter() {
         experiencePoints: parseInt((document.querySelector('[data-field="experiencePoints"]') || {}).value) || 0,
         heroPoints: parseInt((document.querySelector('[data-field="heroPoints"]') || {}).value) || 0,
         armor: (document.querySelector('[data-field="armor"]') || {}).value || '',
+        armorProtection: parseInt((document.querySelector('[data-field="armorProtection"]') || {}).value) || 0,
+        armorDisadvantages: (document.querySelector('[data-field="armorDisadvantages"]') || {}).value || '',
         helmet: (document.querySelector('[data-field="helmet"]') || {}).value || '',
+        helmetProtection: parseInt((document.querySelector('[data-field="helmetProtection"]') || {}).value) || 0,
         playerName: (document.querySelector('[data-field="playerName"]') || {}).value || '',
         characterAge: (document.querySelector('[data-field="characterAge"]') || {}).value || '',
         gender: (document.querySelector('[data-field="gender"]') || {}).value || '',
@@ -567,14 +577,41 @@ function viewParty(id) {
     modal.classList.add('active');
     container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
     
+    var user = getCurrentUser();
+    var isOwner = false;
+    
     PartyService.getParty(id).then(function(party) {
-        return Promise.all([
+        isOwner = user && party.ownerId === user.uid;
+        
+        var promises = [
             Promise.resolve(party),
             CharacterService.getUserCharacters()
-        ]);
+        ];
+        
+        // Load join requests if owner
+        if (isOwner) {
+            promises.push(
+                db.collection('joinRequests')
+                    .where('partyId', '==', id)
+                    .where('status', '==', 'pending')
+                    .get()
+                    .then(function(snapshot) {
+                        var requests = [];
+                        snapshot.forEach(function(doc) {
+                            requests.push(Object.assign({ id: doc.id }, doc.data()));
+                        });
+                        return requests;
+                    })
+            );
+        } else {
+            promises.push(Promise.resolve([]));
+        }
+        
+        return Promise.all(promises);
     }).then(function(results) {
         var party = results[0];
         var allChars = results[1];
+        var joinRequests = results[2] || [];
         
         // Filter characters that are in this party
         var partyChars = allChars.filter(function(char) {
@@ -586,17 +623,39 @@ function viewParty(id) {
             return (party.characterIds || []).indexOf(char.id) === -1;
         });
         
-        container.innerHTML = renderPartyView(party, partyChars, availableChars);
+        container.innerHTML = renderPartyView(party, partyChars, availableChars, joinRequests, isOwner);
     }).catch(function(err) {
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
     });
 }
 
-function renderPartyView(party, partyChars, availableChars) {
-    return '<div style="padding: 1rem;">' +
+function renderPartyView(party, partyChars, availableChars, joinRequests, isOwner) {
+    var html = '<div style="padding: 1rem;">' +
         '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
-        '<p style="color: var(--text-secondary); margin-bottom: 2rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
-        '<div style="margin-bottom: 2rem;">' +
+        '<p style="color: var(--text-secondary); margin-bottom: 2rem;">' + (party.description || 'Ingen beskrivning') + '</p>';
+    
+    // Show join requests if owner and there are pending requests
+    if (isOwner && joinRequests && joinRequests.length > 0) {
+        html += '<div style="margin-bottom: 2rem; background: var(--bg-elevated); border: 1px solid var(--accent-gold); border-radius: var(--radius-lg); padding: 1rem;">' +
+            '<h3 style="margin-bottom: 1rem;">📬 Väntande förfrågningar (' + joinRequests.length + ')</h3>';
+        
+        joinRequests.forEach(function(request) {
+            html += '<div class="join-request-item">' +
+                '<div class="join-request-info">' +
+                '<div class="join-request-char">' + request.characterName + '</div>' +
+                '<div class="join-request-user">Från: ' + request.requesterName + '</div>' +
+                '</div>' +
+                '<div class="join-request-actions">' +
+                '<button class="btn btn-gold btn-xs" onclick="acceptJoinRequest(\'' + request.id + '\', \'' + party.id + '\', \'' + request.characterId + '\')">✓ Godkänn</button>' +
+                '<button class="btn btn-ghost btn-xs" onclick="declineJoinRequest(\'' + request.id + '\')">✗ Neka</button>' +
+                '</div>' +
+                '</div>';
+        });
+        
+        html += '</div>';
+    }
+    
+    html += '<div style="margin-bottom: 2rem;">' +
         '<h3 style="margin-bottom: 1rem;">Karaktärer i gruppen (' + partyChars.length + ')</h3>' +
         '<div class="character-cards">' +
         (partyChars.length === 0 ? '<div class="empty-state"><p>Inga karaktärer i gruppen ännu</p></div>' :
@@ -614,6 +673,8 @@ function renderPartyView(party, partyChars, availableChars) {
             '</div>') +
         '</div>' +
         '</div>';
+    
+    return html;
 }
 
 function renderPartyCharacterCard(char, partyId) {
@@ -671,6 +732,137 @@ function deleteParty(id) {
     PartyService.deleteParty(id).then(function() {
         loadPartiesList();
         showToast('Grupp borttagen', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+// Add character to group
+var currentAddCharacterId = null;
+
+function openAddToGroupModal(charId) {
+    currentAddCharacterId = charId;
+    var modal = document.getElementById('addToGroupModal');
+    var groupsList = document.getElementById('groupsList');
+    
+    if (!modal || !groupsList) return;
+    
+    modal.classList.add('active');
+    groupsList.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar grupper...</p></div>';
+    
+    // Load user's parties
+    PartyService.getUserParties().then(function(parties) {
+        if (parties.length === 0) {
+            groupsList.innerHTML = '<div class="empty-state"><p>Du har inga grupper ännu. Skapa en grupp först.</p><button class="btn btn-gold" onclick="closeModal(\'addToGroupModal\');openCreateParty()">Skapa grupp</button></div>';
+            return;
+        }
+        
+        groupsList.innerHTML = parties.map(function(party) {
+            var isOwner = currentUser && party.ownerId === currentUser.uid;
+            var hasChar = (party.characterIds || []).indexOf(charId) !== -1;
+            
+            if (hasChar) {
+                return '<div class="group-select-item disabled">' +
+                    '<div><div class="group-name">👥 ' + party.name + '</div>' +
+                    '<div class="group-owner">Redan i denna grupp</div></div>' +
+                    '</div>';
+            }
+            
+            return '<div class="group-select-item" onclick="addCharToGroup(\'' + party.id + '\', \'' + charId + '\', ' + isOwner + ')">' +
+                '<div><div class="group-name">👥 ' + party.name + '</div>' +
+                '<div class="group-owner">' + (isOwner ? 'Din grupp' : 'Ägare: ' + party.ownerName) + '</div></div>' +
+                '<button class="btn btn-ghost btn-xs">' + (isOwner ? 'Lägg till' : 'Skicka förfrågan') + ' →</button>' +
+                '</div>';
+        }).join('');
+    }).catch(function(err) {
+        groupsList.innerHTML = '<div class="empty-state"><p>Fel: ' + err.message + '</p></div>';
+    });
+}
+
+function addCharToGroup(partyId, charId, isOwner) {
+    closeModal('addToGroupModal');
+    
+    if (isOwner) {
+        // Direct add for owner
+        PartyService.addCharacterToParty(partyId, charId).then(function() {
+            showToast('Karaktär tillagd i grupp!', 'success');
+            loadCharactersList();
+        }).catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
+    } else {
+        // Create join request for non-owner
+        createJoinRequest(partyId, charId);
+    }
+}
+
+function createJoinRequest(partyId, charId) {
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    // Get party and character info
+    Promise.all([
+        PartyService.getParty(partyId),
+        CharacterService.getCharacter(charId)
+    ]).then(function(results) {
+        var party = results[0];
+        var character = results[1];
+        
+        var request = {
+            partyId: partyId,
+            partyName: party.name,
+            characterId: charId,
+            characterName: character.name,
+            requesterId: user.uid,
+            requesterName: user.displayName || user.email,
+            groupOwnerId: party.ownerId,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        return db.collection('joinRequests').add(request);
+    }).then(function() {
+        showToast('Förfrågan skickad!', 'success');
+    }).catch(function(err) {
+        console.error('Join request error:', err);
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function acceptJoinRequest(requestId, partyId, characterId) {
+    // Add character to party
+    PartyService.addCharacterToParty(partyId, characterId).then(function() {
+        // Update request status
+        return db.collection('joinRequests').doc(requestId).update({
+            status: 'accepted',
+            processedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }).then(function() {
+        showToast('Karaktär godkänd och tillagd!', 'success');
+        viewParty(partyId); // Refresh view
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function declineJoinRequest(requestId) {
+    // Get the request to find party ID
+    db.collection('joinRequests').doc(requestId).get().then(function(doc) {
+        if (!doc.exists) throw new Error('Förfrågan hittades inte');
+        var partyId = doc.data().partyId;
+        
+        return db.collection('joinRequests').doc(requestId).update({
+            status: 'declined',
+            processedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function() {
+            return partyId;
+        });
+    }).then(function(partyId) {
+        showToast('Förfrågan nekad', 'success');
+        viewParty(partyId); // Refresh view
     }).catch(function(err) {
         showToast('Fel: ' + err.message, 'error');
     });
