@@ -277,7 +277,7 @@ body.app-active::before {
 .accordion-item.open .accordion-content { max-height: 1000px; }
 .accordion-body { padding: 1rem; }
 
-.attrs-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+.attrs-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
 .attr-item { text-align: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-sm); }
 .attr-label { display: block; font-size: 0.625rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem; }
 .attr-input { width: 100%; padding: 0.375rem; text-align: center; font-size: 1.25rem; font-weight: 700; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--accent-gold); }
