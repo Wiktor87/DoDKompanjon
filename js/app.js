@@ -157,11 +157,11 @@ function renderCharacterCardFull(char) {
     var icon = getKinIcon(char.kin);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
-    return '<div class="character-card-full">' +
-        '<div class="card-header" onclick="viewCharacter(\'' + char.id + '\')"><div class="card-portrait">' + icon + '</div>' +
+    return '<div class="character-card-full" onclick="viewCharacter(\'' + char.id + '\')">' +
+        '<div class="card-header"><div class="card-portrait">' + icon + '</div>' +
         '<div class="card-identity"><div class="card-name">' + (char.name || 'Namnlös') + '</div>' +
         '<div class="card-subtitle">' + [char.kin, char.profession].filter(Boolean).join(' ') + '</div></div></div>' +
-        '<div class="card-body" onclick="viewCharacter(\'' + char.id + '\')"><div class="card-stats-grid">' +
+        '<div class="card-body"><div class="card-stats-grid">' +
         ['STY','FYS','SMI','INT','PSY'].map(function(a) {
             return '<div class="stat-box"><div class="stat-name">' + a + '</div><div class="stat-value">' + (attrs[a] || '—') + '</div></div>';
         }).join('') + '</div>' +
@@ -170,11 +170,12 @@ function renderCharacterCardFull(char) {
         '<div class="derived-stat"><div class="derived-label">VP</div><div class="derived-value wp">' + (attrs.PSY || '?') + '</div></div>' +
         '<div class="derived-stat"><div class="derived-label">Förfl.</div><div class="derived-value mv">10</div></div>' +
         '</div></div>' +
-        '<div class="card-footer"><span>' + profIcon + ' ' + (char.heroicAbility || '—') + '</span>' +
+        '<div class="card-footer" style="cursor: default;"><span>' + profIcon + ' ' + (char.heroicAbility || '—') + '</span>' +
         '<div style="display: flex; gap: 0.5rem;">' +
         '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button>' +
         '</div></div></div>';
+}
 }
 }
 
@@ -747,6 +748,12 @@ function openAddToGroupModal(charId) {
     
     if (!modal || !groupsList) return;
     
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
     modal.classList.add('active');
     groupsList.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar grupper...</p></div>';
     
@@ -758,7 +765,7 @@ function openAddToGroupModal(charId) {
         }
         
         groupsList.innerHTML = parties.map(function(party) {
-            var isOwner = currentUser && party.ownerId === currentUser.uid;
+            var isOwner = user && party.ownerId === user.uid;
             var hasChar = (party.characterIds || []).indexOf(charId) !== -1;
             
             if (hasChar) {
