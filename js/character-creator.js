@@ -1,0 +1,240 @@
+// Character Creator
+var creatorData = {
+    step: 1,
+    name: '',
+    kin: null,
+    profession: null,
+    age: null,
+    attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10 },
+    kinAbility: '',
+    heroicAbility: '',
+    equipment: []
+};
+
+var KIN_DATA = {
+    'Människa': { ability: 'Anpassningsbar', description: 'Du får en extra hjälteförmåga vid start.', stats: {} },
+    'Alv': { ability: 'Mörkerseende', description: 'Du kan se i mörker som om det vore skymning.', stats: { INT: 2, STY: -2 } },
+    'Dvärg': { ability: 'Härdad', description: 'Du får +2 på alla räddningskast mot gift.', stats: { FYS: 2, SMI: -2 } },
+    'Halvling': { ability: 'Tur', description: 'En gång per dag kan du slå om ett misslyckat tärningsslag.', stats: { SMI: 2, STY: -2 } },
+    'Anka': { ability: 'Simmare', description: 'Du simmar dubbelt så snabbt och kan hålla andan dubbelt så länge.', stats: { PSY: 2, FYS: -2 } },
+    'Vargfolk': { ability: 'Väderkorn', description: 'Du har +2 på alla slag för att upptäcka saker med luktsinnet.', stats: { STY: 2, INT: -2 } }
+};
+
+var PROFESSION_DATA = {
+    'Bard': { ability: 'Inspirera', skills: ['Uppträda', 'Övertala'] },
+    'Hantverkare': { ability: 'Mästerverk', skills: ['Hantverk', 'Bildning'] },
+    'Jägare': { ability: 'Spårare', skills: ['Djur & Natur', 'Smyga'] },
+    'Krigare': { ability: 'Vapenmästare', skills: ['Närkamp', 'Styrkeprov'] },
+    'Lärd': { ability: 'Kunskapsbank', skills: ['Bildning', 'Språk'] },
+    'Magiker': { ability: 'Trollkonst', skills: ['Bildning', 'Upptäcka'] },
+    'Nasare': { ability: 'Lönnmord', skills: ['Smyga', 'Fingerfärdighet'] },
+    'Riddare': { ability: 'Beskyddare', skills: ['Närkamp', 'Rida'] },
+    'Sjöfarare': { ability: 'Sjöben', skills: ['Simma & Dyka', 'Styrkeprov'] },
+    'Tjuv': { ability: 'Smidig', skills: ['Fingerfärdighet', 'Smyga'] }
+};
+
+var AGE_DATA = {
+    'Ung': { mod: { base: -1 }, resources: 'D6' },
+    'Medelålders': { mod: {}, resources: 'D10' },
+    'Gammal': { mod: { base: 1 }, resources: 'D8' }
+};
+
+function showCharacterCreator() {
+    creatorData = {
+        step: 1, name: '', kin: null, profession: null, age: null,
+        attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10 },
+        kinAbility: '', heroicAbility: '', equipment: []
+    };
+    renderCreatorStep();
+}
+
+function renderCreatorStep() {
+    var container = document.getElementById('creatorContent');
+    if (!container) return;
+    
+    var html = '';
+    switch(creatorData.step) {
+        case 1: html = renderStep1Name(); break;
+        case 2: html = renderStep2Kin(); break;
+        case 3: html = renderStep3Profession(); break;
+        case 4: html = renderStep4Age(); break;
+        case 5: html = renderStep5Attributes(); break;
+        case 6: html = renderStep6Summary(); break;
+    }
+    container.innerHTML = html;
+    updateCreatorProgress();
+}
+
+function updateCreatorProgress() {
+    for (var i = 1; i <= 6; i++) {
+        var dot = document.getElementById('step' + i);
+        if (dot) {
+            dot.classList.remove('active', 'completed');
+            if (i < creatorData.step) dot.classList.add('completed');
+            else if (i === creatorData.step) dot.classList.add('active');
+        }
+    }
+}
+
+function renderStep1Name() {
+    return '<div class="creator-step"><h2>Vad heter din karaktär?</h2>' +
+        '<input type="text" id="charName" class="creator-input" placeholder="Ange namn" value="' + (creatorData.name || '') + '">' +
+        '<div class="creator-nav"><button class="btn btn-gold" onclick="nextStep()">Nästa →</button></div></div>';
+}
+
+function renderStep2Kin() {
+    var html = '<div class="creator-step"><h2>Välj släkte</h2><div class="kin-grid">';
+    Object.keys(KIN_DATA).forEach(function(kin) {
+        var data = KIN_DATA[kin];
+        var selected = creatorData.kin === kin ? ' selected' : '';
+        html += '<div class="kin-card' + selected + '" onclick="selectKin(\'' + kin + '\')">' +
+            '<div class="kin-name">' + kin + '</div>' +
+            '<div class="kin-ability">' + data.ability + '</div></div>';
+    });
+    html += '</div><div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
+        '<button class="btn btn-gold" onclick="nextStep()" ' + (creatorData.kin ? '' : 'disabled') + '>Nästa →</button></div></div>';
+    return html;
+}
+
+function renderStep3Profession() {
+    var html = '<div class="creator-step"><h2>Välj yrke</h2><div class="profession-grid">';
+    Object.keys(PROFESSION_DATA).forEach(function(prof) {
+        var data = PROFESSION_DATA[prof];
+        var selected = creatorData.profession === prof ? ' selected' : '';
+        html += '<div class="profession-card' + selected + '" onclick="selectProfession(\'' + prof + '\')">' +
+            '<div class="prof-name">' + prof + '</div>' +
+            '<div class="prof-ability">' + data.ability + '</div></div>';
+    });
+    html += '</div><div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
+        '<button class="btn btn-gold" onclick="nextStep()" ' + (creatorData.profession ? '' : 'disabled') + '>Nästa →</button></div></div>';
+    return html;
+}
+
+function renderStep4Age() {
+    var html = '<div class="creator-step"><h2>Välj ålder</h2><div class="age-grid">';
+    Object.keys(AGE_DATA).forEach(function(age) {
+        var selected = creatorData.age === age ? ' selected' : '';
+        html += '<div class="age-card' + selected + '" onclick="selectAge(\'' + age + '\')">' +
+            '<div class="age-name">' + age + '</div></div>';
+    });
+    html += '</div><div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
+        '<button class="btn btn-gold" onclick="nextStep()" ' + (creatorData.age ? '' : 'disabled') + '>Nästa →</button></div></div>';
+    return html;
+}
+
+function renderStep5Attributes() {
+    var attrs = creatorData.attributes;
+    var html = '<div class="creator-step"><h2>Grundegenskaper</h2>' +
+        '<p>Klicka på "Slå 4T6" för att slå fram dina egenskaper.</p>' +
+        '<div class="attrs-roll-grid">';
+    ['STY', 'FYS', 'SMI', 'INT', 'PSY'].forEach(function(attr) {
+        html += '<div class="attr-roll-item"><span class="attr-label">' + attr + '</span>' +
+            '<span class="attr-value" id="attr' + attr + '">' + attrs[attr] + '</span>' +
+            '<button class="btn btn-sm btn-outline" onclick="rollAttribute(\'' + attr + '\')">Slå 4T6</button></div>';
+    });
+    html += '</div><button class="btn btn-gold" onclick="rollAllAttributes()">Slå alla</button>' +
+        '<div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
+        '<button class="btn btn-gold" onclick="nextStep()">Nästa →</button></div></div>';
+    return html;
+}
+
+function renderStep6Summary() {
+    var html = '<div class="creator-step"><h2>Sammanfattning</h2>' +
+        '<div class="summary-card">' +
+        '<p><strong>Namn:</strong> ' + creatorData.name + '</p>' +
+        '<p><strong>Släkte:</strong> ' + creatorData.kin + '</p>' +
+        '<p><strong>Yrke:</strong> ' + creatorData.profession + '</p>' +
+        '<p><strong>Ålder:</strong> ' + creatorData.age + '</p>' +
+        '<p><strong>Egenskaper:</strong> STY ' + creatorData.attributes.STY + 
+        ', FYS ' + creatorData.attributes.FYS + 
+        ', SMI ' + creatorData.attributes.SMI + 
+        ', INT ' + creatorData.attributes.INT + 
+        ', PSY ' + creatorData.attributes.PSY + '</p></div>' +
+        '<div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
+        '<button class="btn btn-gold" onclick="createCharacter()">✨ Skapa karaktär</button></div></div>';
+    return html;
+}
+
+function selectKin(kin) {
+    creatorData.kin = kin;
+    creatorData.kinAbility = KIN_DATA[kin].ability;
+    renderCreatorStep();
+}
+
+function selectProfession(prof) {
+    creatorData.profession = prof;
+    creatorData.heroicAbility = PROFESSION_DATA[prof].ability;
+    renderCreatorStep();
+}
+
+function selectAge(age) {
+    creatorData.age = age;
+    renderCreatorStep();
+}
+
+function rollAttribute(attr) {
+    var rolls = [];
+    for (var i = 0; i < 4; i++) rolls.push(Math.floor(Math.random() * 6) + 1);
+    rolls.sort(function(a, b) { return b - a; });
+    var total = rolls[0] + rolls[1] + rolls[2];
+    creatorData.attributes[attr] = total;
+    var el = document.getElementById('attr' + attr);
+    if (el) el.textContent = total;
+}
+
+function rollAllAttributes() {
+    ['STY', 'FYS', 'SMI', 'INT', 'PSY'].forEach(rollAttribute);
+}
+
+function nextStep() {
+    if (creatorData.step === 1) {
+        var input = document.getElementById('charName');
+        if (input) creatorData.name = input.value;
+        if (!creatorData.name.trim()) {
+            alert('Ange ett namn');
+            return;
+        }
+    }
+    if (creatorData.step < 6) {
+        creatorData.step++;
+        renderCreatorStep();
+    }
+}
+
+function prevStep() {
+    if (creatorData.step > 1) {
+        creatorData.step--;
+        renderCreatorStep();
+    }
+}
+
+function createCharacter() {
+    var charData = {
+        name: creatorData.name,
+        kin: creatorData.kin,
+        profession: creatorData.profession,
+        age: creatorData.age,
+        attributes: creatorData.attributes,
+        kinAbility: creatorData.kinAbility,
+        heroicAbility: creatorData.heroicAbility,
+        skills: {},
+        weaponSkills: {},
+        inventory: [],
+        currency: { guld: 0, silver: 0, brons: 0 },
+        currentKP: creatorData.attributes.FYS,
+        currentVP: creatorData.attributes.PSY,
+        movement: 10,
+        notes: ''
+    };
+    
+    CharacterService.createCharacter(charData).then(function() {
+        closeCharacterCreator();
+        loadDashboard();
+        if (typeof loadCharactersList === 'function') loadCharactersList();
+        showToast('Karaktär skapad!', 'success');
+    }).catch(function(err) {
+        alert('Fel: ' + err.message);
+    });
+}
+
+console.log('✅ Character Creator loaded');
