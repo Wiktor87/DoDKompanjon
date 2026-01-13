@@ -59,7 +59,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .hero-bg { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-size: cover; background-position: center; opacity: 0.3; mask-image: linear-gradient(to bottom, black 0%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%); }
 .hero-content { position: relative; z-index: 1; }
 .hero-title-main { display: block; font-family: var(--font-display); font-size: 4rem; font-weight: 700; color: var(--text-primary); }
-.hero-title-sub { display: block; font-family: var(--font-display); font-size: 3rem; background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-title-sub { display: block; font-family: var(--font-display); font-size: 3rem; background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero-description { font-size: 1.25rem; color: var(--text-secondary); margin: 1.5rem 0 2rem; }
 .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 .features { padding: 4rem 3rem; background: var(--bg-primary); }
@@ -151,7 +151,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .modal-fullscreen .modal-content { max-width: 100%; width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
 .modal-content { background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 2rem; max-width: 450px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-large { max-width: 900px; }
-.close-modal { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.close-modal { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); transition: all 0.2s; }
 .close-modal:hover { background: var(--bg-hover); color: var(--text-primary); }
 
 /* Auth */
@@ -160,7 +160,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .auth-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-gold); }
 .auth-form { display: none; }
 .auth-form.active { display: block; }
-.auth-form input { width: 100%; padding: 0.875rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.875rem; margin-bottom: 1rem; }
+.auth-form input { width: 100%; padding: 0.875rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; }
 .auth-form input:focus { outline: none; border-color: var(--accent-gold); }
 .auth-divider { text-align: center; margin: 1.5rem 0; color: var(--text-muted); font-size: 0.813rem; }
 .auth-error { background: rgba(197,48,48,0.1); border: 1px solid var(--brand-red); color: var(--brand-red); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem; display: none; }
@@ -235,7 +235,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .bio-textarea:focus { border-color: var(--accent-gold); outline: none; color: var(--text-primary); }
 
 /* Toast */
-.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem 1.5rem; box-shadow: 0 16px 48px rgba(0,0,0,0.6); opacity: 0; transition: all 0.3s; z-index: 3000; }
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem 1.5rem; opacity: 0; transition: all 0.3s ease; z-index: 2000; }
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .toast-success { border-color: var(--accent-green); }
 .toast-error { border-color: var(--brand-red); }
