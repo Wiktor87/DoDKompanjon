@@ -3,6 +3,10 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
+// Game constants
+var DAMAGE_BONUS_DIVISOR = 5;
+var DAMAGE_BONUS_BASE = -2;
+
 // Use emoji fallbacks if icons.js not loaded, otherwise will be replaced
 function getKinIcon(kin) {
     if (typeof getIconSVG !== 'undefined') {
@@ -22,13 +26,13 @@ var PROFESSION_ICONS = {
 };
 
 var ALL_SKILLS = {
-    STY: ['Styrkeprov', 'Närkamp', 'Simma & Dyka'],
-    SMI: ['Undvika', 'Smyga', 'Fingerfärdighet', 'Rida'],
-    INT: ['Läkekonst', 'Djur & Natur', 'Upptäcka', 'Bildning', 'Språk', 'Hantverk'],
+    STY: ['Styrkeprov', 'Närkamp'],
+    SMI: ['Fingerfärdighet', 'Rida', 'Simfötter', 'Smyga', 'Undvika'],
+    INT: ['Finna Dolda Ting', 'Första Hjälpen', 'Hantverk', 'Jakt & Fiske', 'Upptäcka Fara', 'Värdera', 'Bildning', 'Språk'],
     PSY: ['Genomskåda', 'Övertala', 'Uppträda']
 };
 
-var WEAPON_SKILLS = ['Svärd', 'Yxa', 'Hammare', 'Kniv', 'Spjut', 'Sköld', 'Båge', 'Armborst', 'Slunga', 'Stav'];
+var WEAPON_SKILLS = ['Armborst', 'Båge', 'Kastspjut', 'Sköld', 'Slagsmål', 'Svärd/Kniv', 'Yxa/Hammare', 'Stångvapen'];
 
 // Navigation
 function showSection(sectionId) {
@@ -40,6 +44,7 @@ function showSection(sectionId) {
     var section = document.getElementById(sectionId);
     if (section) section.classList.add('active');
     if (sectionId === 'characters') loadCharactersList();
+    if (sectionId === 'parties') loadPartiesList();
 }
 
 function goToLanding() {
@@ -190,6 +195,7 @@ function renderFullCharacterSheet(char) {
     var icon = getKinIcon(char.kin);
     var attrs = char.attributes || {};
     var skills = char.skills || {};
+    var weaponSkills = char.weaponSkills || {};
     var inventory = char.inventory || [];
     var currency = char.currency || { guld: 0, silver: 0, brons: 0 };
     var maxKp = attrs.FYS || 0;
@@ -199,6 +205,10 @@ function renderFullCharacterSheet(char) {
     var kpPercent = maxKp > 0 ? (currentKp / maxKp * 100) : 0;
     var vpPercent = maxVp > 0 ? (currentVp / maxVp * 100) : 0;
     
+    // Calculate secondary attributes
+    var movement = char.movement || 10;
+    var damageBonus = Math.floor((attrs.STY || 10) / DAMAGE_BONUS_DIVISOR) + DAMAGE_BONUS_BASE;
+    
     return '<div class="character-sheet-full">' +
         '<div class="sheet-header-full">' +
         '<div class="sheet-portrait-large">' + icon + '</div>' +
@@ -207,14 +217,14 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-subtitle-row">' + [char.kin, char.profession, char.age].filter(Boolean).join(' • ') + '</div>' +
         '<div class="sheet-hp-vp-bar">' +
         '<div class="hp-vp-progress-bar">' +
-        '<div class="progress-label"><span class="progress-label-text">❤️ Kroppspoäng</span>' +
+        '<div class="progress-label"><span class="progress-label-text">❤️ Kroppspoäng (KP)</span>' +
         '<div class="progress-bar-input-group">' +
         '<input type="number" class="progress-bar-input" value="' + currentKp + '" data-field="currentKP" onchange="updateProgressBar(this, ' + maxKp + ')"> / ' + maxKp +
         '</div></div>' +
         '<div class="progress-bar-track"><div class="progress-bar-fill hp" style="width: ' + kpPercent + '%"></div></div>' +
         '</div>' +
         '<div class="hp-vp-progress-bar">' +
-        '<div class="progress-label"><span class="progress-label-text">💜 Viljekraft</span>' +
+        '<div class="progress-label"><span class="progress-label-text">💜 Viljepoäng (VP)</span>' +
         '<div class="progress-bar-input-group">' +
         '<input type="number" class="progress-bar-input" value="' + currentVp + '" data-field="currentVP" onchange="updateProgressBar(this, ' + maxVp + ')"> / ' + maxVp +
         '</div></div>' +
@@ -226,53 +236,105 @@ function renderFullCharacterSheet(char) {
         '<button class="sheet-tab active" onclick="switchSheetTab(this, \'overview\')">Översikt</button>' +
         '<button class="sheet-tab" onclick="switchSheetTab(this, \'abilities\')">Egenskaper</button>' +
         '<button class="sheet-tab" onclick="switchSheetTab(this, \'skills\')">Färdigheter</button>' +
+        '<button class="sheet-tab" onclick="switchSheetTab(this, \'combat\')">Strid</button>' +
         '<button class="sheet-tab" onclick="switchSheetTab(this, \'equipment\')">Utrustning</button>' +
+        '<button class="sheet-tab" onclick="switchSheetTab(this, \'personal\')">Personligt</button>' +
         '<button class="sheet-tab" onclick="switchSheetTab(this, \'notes\')">Anteckningar</button>' +
         '</div>' +
         '<div class="sheet-tab-content active" id="tab-overview">' +
         '<div class="sheet-body-grid">' +
         '<div class="sheet-column">' +
         '<div class="sheet-panel"><h3 class="panel-title">Grundegenskaper</h3><div class="attrs-grid">' +
-        ['STY','FYS','SMI','INT','PSY'].map(function(a) {
+        ['STY','FYS','SMI','INT','PSY','KAR'].map(function(a) {
             return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
         }).join('') + '</div></div>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Sekundära Egenskaper</h3>' +
+        '<div style="padding: 0.5rem;">' +
+        '<div class="skill-row"><span class="skill-name">Förflyttning (FÖR)</span><input type="number" class="skill-input" value="' + movement + '" data-field="movement"></div>' +
+        '<div class="skill-row"><span class="skill-name">Skadebonus</span><input type="text" class="skill-input" value="' + (damageBonus >= 0 ? '+' + damageBonus : damageBonus) + '" readonly></div>' +
+        '</div></div>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Poäng</h3>' +
+        '<div style="padding: 0.5rem;">' +
+        '<div class="skill-row"><span class="skill-name">Erfarenhetspoäng (EP)</span><input type="number" class="skill-input" value="' + (char.experiencePoints || 0) + '" data-field="experiencePoints"></div>' +
+        '<div class="skill-row"><span class="skill-name">Hjältepoäng</span><input type="number" class="skill-input" value="' + (char.heroPoints || 0) + '" data-field="heroPoints"></div>' +
+        '</div></div>' +
         '<div class="sheet-panel"><h3 class="panel-title">Specialförmågor</h3>' +
-        '<div style="padding: 0.5rem;"><p><strong>Släktförmåga:</strong> ' + (char.kinAbility || '—') + '</p>' +
-        '<p><strong>Hjälteförmåga:</strong> ' + (char.heroicAbility || '—') + '</p></div>' +
+        '<div style="padding: 0.5rem;"><p><strong>Hjälteförmåga:</strong> ' + (char.heroicAbility || '—') + '</p></div>' +
         '</div></div>' +
         '<div class="sheet-column">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Rustning & Skydd</h3>' +
+        '<div style="padding: 0.5rem;">' +
+        '<div class="skill-row"><span class="skill-name">Rustning</span><input type="text" class="item-name-input" value="' + (char.armor || '') + '" data-field="armor"></div>' +
+        '<div class="skill-row"><span class="skill-name">Hjälm</span><input type="text" class="item-name-input" value="' + (char.helmet || '') + '" data-field="helmet"></div>' +
+        '</div></div>' +
         '<div class="sheet-panel"><h3 class="panel-title">Mynt</h3><div class="currency-grid">' +
-        '<div class="currency-item"><span>🥇 Guld</span><input type="number" class="currency-input" value="' + (currency.guld || 0) + '" data-currency="guld"></div>' +
-        '<div class="currency-item"><span>🥈 Silver</span><input type="number" class="currency-input" value="' + (currency.silver || 0) + '" data-currency="silver"></div>' +
-        '<div class="currency-item"><span>🥉 Brons</span><input type="number" class="currency-input" value="' + (currency.brons || 0) + '" data-currency="brons"></div>' +
+        '<div class="currency-item"><span>🥇 Guldmynt (GM)</span><input type="number" class="currency-input" value="' + (currency.guld || 0) + '" data-currency="guld"></div>' +
+        '<div class="currency-item"><span>🥈 Silvermynt (SM)</span><input type="number" class="currency-input" value="' + (currency.silver || 0) + '" data-currency="silver"></div>' +
+        '<div class="currency-item"><span>🥉 Kopparmynt (KM)</span><input type="number" class="currency-input" value="' + (currency.brons || 0) + '" data-currency="brons"></div>' +
         '</div></div>' +
         '</div></div></div>' +
         '<div class="sheet-tab-content" id="tab-abilities">' +
         '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
         '<div class="sheet-panel"><h3 class="panel-title">Grundegenskaper</h3><div class="attrs-grid">' +
-        ['STY','FYS','SMI','INT','PSY'].map(function(a) {
+        ['STY','FYS','SMI','INT','PSY','KAR'].map(function(a) {
             return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
         }).join('') + '</div></div></div></div></div>' +
         '<div class="sheet-tab-content" id="tab-skills">' +
         '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
         '<div class="sheet-panel"><h3 class="panel-title">Färdigheter</h3>' +
         Object.keys(ALL_SKILLS).map(function(attr) {
-            return '<div class="skill-group"><div class="skill-group-header">' + attr + '</div>' +
+            return '<div class="skill-group"><div class="skill-group-header">' + attr + '-baserade</div>' +
                 ALL_SKILLS[attr].map(function(skill) {
                     return '<div class="skill-row"><span class="skill-name">' + skill + '</span><input type="number" class="skill-input" value="' + (skills[skill] || 0) + '" data-skill="' + skill + '"></div>';
                 }).join('') + '</div>';
         }).join('') + '</div></div></div></div>' +
+        '<div class="sheet-tab-content" id="tab-combat">' +
+        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Vapenfärdigheter</h3>' +
+        WEAPON_SKILLS.map(function(skill) {
+            return '<div class="skill-row"><span class="skill-name">' + skill + '</span><input type="number" class="skill-input" value="' + (weaponSkills[skill] || 0) + '" data-weapon-skill="' + skill + '"></div>';
+        }).join('') + '</div></div></div></div>' +
         '<div class="sheet-tab-content" id="tab-equipment">' +
         '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()">+</button></h3>' +
-        '<div id="inventoryList">' + (inventory.length === 0 ? '<div class="empty-inventory">Tom</div>' : 
+        '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()" aria-label="Lägg till nytt föremål i utrustning">+ Lägg till</button></h3>' +
+        '<div id="inventoryList">' + (inventory.length === 0 ? '<div class="empty-inventory">Ingen utrustning ännu. Klicka "+ Lägg till" för att lägga till föremål.</div>' : 
             inventory.map(function(item, i) {
-                var name = typeof item === 'string' ? item : (item.name || '');
-                return '<div class="inventory-item"><input type="text" class="item-name-input" value="' + name + '"><button class="btn-icon-sm" onclick="this.parentElement.remove()">×</button></div>';
+                var itemData = typeof item === 'string' ? { name: item, type: '', weight: '', notes: '' } : item;
+                return '<div class="inventory-item-full">' +
+                    '<div class="inv-row"><label>Namn:</label><input type="text" class="inv-input" value="' + (itemData.name || '') + '" placeholder="Föremålsnamn" data-inv-field="name"></div>' +
+                    '<div class="inv-row"><label>Typ:</label><select class="inv-select" data-inv-field="type">' +
+                    '<option value="" ' + (!itemData.type ? 'selected' : '') + '>Välj typ</option>' +
+                    '<option value="Vapen" ' + (itemData.type === 'Vapen' ? 'selected' : '') + '>Vapen</option>' +
+                    '<option value="Rustning" ' + (itemData.type === 'Rustning' ? 'selected' : '') + '>Rustning</option>' +
+                    '<option value="Övrigt" ' + (itemData.type === 'Övrigt' ? 'selected' : '') + '>Övrigt</option>' +
+                    '</select></div>' +
+                    '<div class="inv-row"><label>Vikt:</label><input type="text" class="inv-input-sm" value="' + (itemData.weight || '') + '" placeholder="t.ex. 2 kg" data-inv-field="weight"></div>' +
+                    '<div class="inv-row"><label>Anteckningar:</label><input type="text" class="inv-input" value="' + (itemData.notes || '') + '" placeholder="Beskrivning" data-inv-field="notes"></div>' +
+                    '<button class="btn-icon-sm btn-delete" onclick="this.parentElement.remove()">🗑️</button>' +
+                    '</div>';
             }).join('')) + '</div></div></div></div></div>' +
+        '<div class="sheet-tab-content" id="tab-personal">' +
+        '<div class="sheet-body-grid">' +
+        '<div class="sheet-column">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Personliga Uppgifter</h3>' +
+        '<div style="padding: 0.5rem;">' +
+        '<div class="skill-row"><span class="skill-name">Spelarens namn</span><input type="text" class="item-name-input" value="' + (char.playerName || '') + '" data-field="playerName" placeholder="Ditt namn"></div>' +
+        '<div class="skill-row"><span class="skill-name">Ålder</span><input type="text" class="item-name-input" value="' + (char.characterAge || '') + '" data-field="characterAge" placeholder="t.ex. 25 år"></div>' +
+        '<div class="skill-row"><span class="skill-name">Kön</span><input type="text" class="item-name-input" value="' + (char.gender || '') + '" data-field="gender"></div>' +
+        '<div class="skill-row"><span class="skill-name">Längd</span><input type="text" class="item-name-input" value="' + (char.height || '') + '" data-field="height" placeholder="t.ex. 180 cm"></div>' +
+        '<div class="skill-row"><span class="skill-name">Vikt</span><input type="text" class="item-name-input" value="' + (char.weight || '') + '" data-field="weight" placeholder="t.ex. 75 kg"></div>' +
+        '</div></div>' +
+        '</div>' +
+        '<div class="sheet-column">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Utseende</h3>' +
+        '<textarea class="bio-textarea" data-field="appearance" placeholder="Beskriv karaktärens utseende...">' + (char.appearance || '') + '</textarea></div>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Nackdelar</h3>' +
+        '<textarea class="bio-textarea" data-field="disadvantages" placeholder="Lista karaktärens nackdelar...">' + (char.disadvantages || '') + '</textarea></div>' +
+        '</div></div></div>' +
         '<div class="sheet-tab-content" id="tab-notes">' +
         '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Anteckningar</h3><textarea class="bio-textarea" data-field="notes">' + (char.notes || '') + '</textarea></div>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Bakgrund</h3><textarea class="bio-textarea" data-field="background" placeholder="Beskriv karaktärens bakgrund...">' + (char.background || '') + '</textarea></div>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Anteckningar</h3><textarea class="bio-textarea" data-field="notes" placeholder="Allmänna anteckningar...">' + (char.notes || '') + '</textarea></div>' +
         '</div></div></div>' +
         '</div>';
 }
@@ -284,8 +346,17 @@ function addInventoryItem() {
     var empty = list.querySelector('.empty-inventory');
     if (empty) empty.remove();
     var div = document.createElement('div');
-    div.className = 'inventory-item';
-    div.innerHTML = '<input type="text" class="item-name-input" placeholder="Nytt föremål"><button class="btn-icon-sm" onclick="this.parentElement.remove()">×</button>';
+    div.className = 'inventory-item-full';
+    div.innerHTML = '<div class="inv-row"><label>Namn:</label><input type="text" class="inv-input" placeholder="Föremålsnamn" data-inv-field="name"></div>' +
+        '<div class="inv-row"><label>Typ:</label><select class="inv-select" data-inv-field="type">' +
+        '<option value="">Välj typ</option>' +
+        '<option value="Vapen">Vapen</option>' +
+        '<option value="Rustning">Rustning</option>' +
+        '<option value="Övrigt">Övrigt</option>' +
+        '</select></div>' +
+        '<div class="inv-row"><label>Vikt:</label><input type="text" class="inv-input-sm" placeholder="t.ex. 2 kg" data-inv-field="weight"></div>' +
+        '<div class="inv-row"><label>Anteckningar:</label><input type="text" class="inv-input" placeholder="Beskrivning" data-inv-field="notes"></div>' +
+        '<button class="btn-icon-sm btn-delete" onclick="this.parentElement.remove()">🗑️</button>';
     list.appendChild(div);
     div.querySelector('input').focus();
 }
@@ -302,6 +373,19 @@ function saveCharacter() {
         name: (document.querySelector('[data-field="name"]') || {}).value || '',
         currentKP: parseInt((document.querySelector('[data-field="currentKP"]') || {}).value) || 0,
         currentVP: parseInt((document.querySelector('[data-field="currentVP"]') || {}).value) || 0,
+        movement: parseInt((document.querySelector('[data-field="movement"]') || {}).value) || 10,
+        experiencePoints: parseInt((document.querySelector('[data-field="experiencePoints"]') || {}).value) || 0,
+        heroPoints: parseInt((document.querySelector('[data-field="heroPoints"]') || {}).value) || 0,
+        armor: (document.querySelector('[data-field="armor"]') || {}).value || '',
+        helmet: (document.querySelector('[data-field="helmet"]') || {}).value || '',
+        playerName: (document.querySelector('[data-field="playerName"]') || {}).value || '',
+        characterAge: (document.querySelector('[data-field="characterAge"]') || {}).value || '',
+        gender: (document.querySelector('[data-field="gender"]') || {}).value || '',
+        height: (document.querySelector('[data-field="height"]') || {}).value || '',
+        weight: (document.querySelector('[data-field="weight"]') || {}).value || '',
+        appearance: (document.querySelector('[data-field="appearance"]') || {}).value || '',
+        disadvantages: (document.querySelector('[data-field="disadvantages"]') || {}).value || '',
+        background: (document.querySelector('[data-field="background"]') || {}).value || '',
         notes: (document.querySelector('[data-field="notes"]') || {}).value || ''
     };
     updates.attributes = {};
@@ -313,9 +397,20 @@ function saveCharacter() {
         var v = parseInt(el.value) || 0;
         if (v > 0) updates.skills[el.dataset.skill] = v;
     });
+    updates.weaponSkills = {};
+    document.querySelectorAll('[data-weapon-skill]').forEach(function(el) {
+        var v = parseInt(el.value) || 0;
+        if (v > 0) updates.weaponSkills[el.dataset.weaponSkill] = v;
+    });
     updates.inventory = [];
-    document.querySelectorAll('.inventory-item .item-name-input').forEach(function(el) {
-        if (el.value.trim()) updates.inventory.push({ name: el.value.trim() });
+    document.querySelectorAll('.inventory-item-full').forEach(function(el) {
+        var item = {
+            name: (el.querySelector('[data-inv-field="name"]') || {}).value || '',
+            type: (el.querySelector('[data-inv-field="type"]') || {}).value || '',
+            weight: (el.querySelector('[data-inv-field="weight"]') || {}).value || '',
+            notes: (el.querySelector('[data-inv-field="notes"]') || {}).value || ''
+        };
+        if (item.name.trim()) updates.inventory.push(item);
     });
     updates.currency = {
         guld: parseInt((document.querySelector('[data-currency="guld"]') || {}).value) || 0,
@@ -370,6 +465,210 @@ function updateProgressBar(input, max) {
     if (bar) bar.style.width = percent + '%';
 }
 
+// Party functions
+function openCreateParty() {
+    var modal = document.getElementById('partyModal');
+    if (modal) {
+        document.getElementById('partyName').value = '';
+        document.getElementById('partyDescription').value = '';
+        modal.classList.add('active');
+    }
+}
+
+function createParty() {
+    var name = document.getElementById('partyName').value;
+    var description = document.getElementById('partyDescription').value;
+    
+    if (!name.trim()) {
+        showToast('Ange ett gruppnamn', 'error');
+        return;
+    }
+    
+    var partyData = {
+        name: name.trim(),
+        description: description.trim()
+    };
+    
+    if (typeof PartyService === 'undefined') {
+        showToast('PartyService inte laddat', 'error');
+        return;
+    }
+    
+    PartyService.createParty(partyData).then(function() {
+        closeModal('partyModal');
+        loadPartiesList();
+        showToast('Grupp skapad!', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function loadPartiesList() {
+    console.log('📋 loadPartiesList');
+    var container = document.getElementById('partiesGrid');
+    var countEl = document.getElementById('partyCount');
+    if (!container) return;
+    
+    if (typeof PartyService === 'undefined') {
+        container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Laddar...</h3></div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading-placeholder" style="grid-column:1/-1"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getUserParties().then(function(parties) {
+        if (countEl) countEl.textContent = parties.length + ' grupp' + (parties.length !== 1 ? 'er' : '');
+        if (parties.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👥</div><h3>Inga grupper ännu</h3><p>Skapa en grupp för att samla dina karaktärer och dela med andra spelare.</p><button class="btn btn-gold" onclick="openCreateParty()">Skapa grupp</button></div>';
+        } else {
+            container.innerHTML = parties.map(renderPartyCard).join('');
+        }
+    }).catch(function(err) {
+        container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Fel</h3><p>' + err.message + '</p></div>';
+    });
+}
+
+function renderPartyCard(party) {
+    var memberCount = (party.memberIds || []).length;
+    var charCount = (party.characterIds || []).length;
+    
+    return '<div class="character-card-full" onclick="viewParty(\'' + party.id + '\')">' +
+        '<div class="card-header">' +
+        '<div class="card-portrait">👥</div>' +
+        '<div class="card-identity">' +
+        '<div class="card-name">' + (party.name || 'Namnlös grupp') + '</div>' +
+        '<div class="card-subtitle">Ägare: ' + (party.ownerName || 'Okänd') + '</div>' +
+        '</div></div>' +
+        '<div class="card-body">' +
+        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+        '<div style="display: flex; gap: 1rem; font-size: 0.875rem; color: var(--text-muted);">' +
+        '<span>👤 ' + memberCount + ' medlem' + (memberCount !== 1 ? 'mar' : '') + '</span>' +
+        '<span>🎭 ' + charCount + ' karaktär' + (charCount !== 1 ? 'er' : '') + '</span>' +
+        '</div></div>' +
+        '<div class="card-footer">' +
+        '<span></span>' +
+        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteParty(\'' + party.id + '\')">🗑️</button>' +
+        '</div></div>';
+}
+
+function viewParty(id) {
+    console.log('👁️ viewParty:', id);
+    var modal = document.getElementById('partyViewModal');
+    var container = document.getElementById('partyViewContainer');
+    if (!modal || !container) return;
+    
+    modal.classList.add('active');
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getParty(id).then(function(party) {
+        return Promise.all([
+            Promise.resolve(party),
+            CharacterService.getUserCharacters()
+        ]);
+    }).then(function(results) {
+        var party = results[0];
+        var allChars = results[1];
+        
+        // Filter characters that are in this party
+        var partyChars = allChars.filter(function(char) {
+            return (party.characterIds || []).indexOf(char.id) !== -1;
+        });
+        
+        // Characters not in party
+        var availableChars = allChars.filter(function(char) {
+            return (party.characterIds || []).indexOf(char.id) === -1;
+        });
+        
+        container.innerHTML = renderPartyView(party, partyChars, availableChars);
+    }).catch(function(err) {
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
+    });
+}
+
+function renderPartyView(party, partyChars, availableChars) {
+    return '<div style="padding: 1rem;">' +
+        '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
+        '<p style="color: var(--text-secondary); margin-bottom: 2rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+        '<div style="margin-bottom: 2rem;">' +
+        '<h3 style="margin-bottom: 1rem;">Karaktärer i gruppen (' + partyChars.length + ')</h3>' +
+        '<div class="character-cards">' +
+        (partyChars.length === 0 ? '<div class="empty-state"><p>Inga karaktärer i gruppen ännu</p></div>' :
+            partyChars.map(function(char) {
+                return renderPartyCharacterCard(char, party.id);
+            }).join('')) +
+        '</div></div>' +
+        '<div>' +
+        '<h3 style="margin-bottom: 1rem;">Lägg till karaktär</h3>' +
+        (availableChars.length === 0 ? '<p style="color: var(--text-muted);">Alla dina karaktärer är redan i gruppen</p>' :
+            '<div class="character-cards">' +
+            availableChars.map(function(char) {
+                return renderAddCharacterCard(char, party.id);
+            }).join('') +
+            '</div>') +
+        '</div>' +
+        '</div>';
+}
+
+function renderPartyCharacterCard(char, partyId) {
+    var icon = getKinIcon(char.kin);
+    var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
+    var attrs = char.attributes || {};
+    
+    return '<div class="character-card">' +
+        '<div class="char-portrait">' + icon + '</div>' +
+        '<div class="char-info">' +
+        '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+        '<div class="char-stats">' +
+        '<div class="char-stat">❤️ ' + (attrs.FYS || '?') + ' KP</div>' +
+        '<div class="char-stat">💜 ' + (attrs.PSY || '?') + ' VP</div>' +
+        '</div></div>' +
+        '<button class="btn btn-ghost btn-xs" onclick="removeCharFromParty(\'' + partyId + '\', \'' + char.id + '\')">Ta bort</button>' +
+        '</div>';
+}
+
+function renderAddCharacterCard(char, partyId) {
+    var icon = getKinIcon(char.kin);
+    var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
+    
+    return '<div class="character-card">' +
+        '<div class="char-portrait">' + icon + '</div>' +
+        '<div class="char-info">' +
+        '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+        '</div>' +
+        '<button class="btn btn-gold btn-xs" onclick="addCharToParty(\'' + partyId + '\', \'' + char.id + '\')">+ Lägg till</button>' +
+        '</div>';
+}
+
+function addCharToParty(partyId, charId) {
+    PartyService.addCharacterToParty(partyId, charId).then(function() {
+        viewParty(partyId);
+        showToast('Karaktär tillagd!', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function removeCharFromParty(partyId, charId) {
+    PartyService.removeCharacterFromParty(partyId, charId).then(function() {
+        viewParty(partyId);
+        showToast('Karaktär borttagen', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function deleteParty(id) {
+    if (!confirm('Ta bort gruppen?')) return;
+    PartyService.deleteParty(id).then(function() {
+        loadPartiesList();
+        showToast('Grupp borttagen', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready');
@@ -384,6 +683,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === this) this.classList.remove('active');
         };
     });
+    
+    // Party form handler
+    var partyForm = document.getElementById('partyForm');
+    if (partyForm) {
+        partyForm.onsubmit = function(e) {
+            e.preventDefault();
+            createParty();
+        };
+    }
+    
     console.log('✅ Init complete');
 });
 

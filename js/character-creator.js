@@ -5,7 +5,7 @@ var creatorData = {
     kin: null,
     profession: null,
     age: null,
-    attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10 },
+    attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10, KAR: 10 },
     kinAbility: '',
     heroicAbility: '',
     equipment: []
@@ -16,7 +16,7 @@ var KIN_DATA = {
     'Alv': { ability: 'Mörkerseende', description: 'Du kan se i mörker som om det vore skymning.', stats: { INT: 2, STY: -2 } },
     'Dvärg': { ability: 'Härdad', description: 'Du får +2 på alla räddningskast mot gift.', stats: { FYS: 2, SMI: -2 } },
     'Halvling': { ability: 'Tur', description: 'En gång per dag kan du slå om ett misslyckat tärningsslag.', stats: { SMI: 2, STY: -2 } },
-    'Anka': { ability: 'Simmare', description: 'Du simmar dubbelt så snabbt och kan hålla andan dubbelt så länge.', stats: { PSY: 2, FYS: -2 } },
+    'Anka': { ability: 'Simfötter', description: 'Du simmar dubbelt så snabbt och kan hålla andan dubbelt så länge.', stats: { PSY: 2, FYS: -2 } },
     'Vargfolk': { ability: 'Väderkorn', description: 'Du har +2 på alla slag för att upptäcka saker med luktsinnet.', stats: { STY: 2, INT: -2 } }
 };
 
@@ -42,7 +42,7 @@ var AGE_DATA = {
 function showCharacterCreator() {
     creatorData = {
         step: 1, name: '', kin: null, profession: null, age: null,
-        attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10 },
+        attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10, KAR: 10 },
         kinAbility: '', heroicAbility: '', equipment: []
     };
     renderCreatorStep();
@@ -127,7 +127,7 @@ function renderStep5Attributes() {
     var html = '<div class="creator-step"><h2>Grundegenskaper</h2>' +
         '<p>Klicka på "Slå 4T6" för att slå fram dina egenskaper.</p>' +
         '<div class="attrs-roll-grid">';
-    ['STY', 'FYS', 'SMI', 'INT', 'PSY'].forEach(function(attr) {
+    ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'].forEach(function(attr) {
         html += '<div class="attr-roll-item"><span class="attr-label">' + attr + '</span>' +
             '<span class="attr-value" id="attr' + attr + '">' + attrs[attr] + '</span>' +
             '<button class="btn btn-sm btn-outline" onclick="rollAttribute(\'' + attr + '\')">Slå 4T6</button></div>';
@@ -149,7 +149,8 @@ function renderStep6Summary() {
         ', FYS ' + creatorData.attributes.FYS + 
         ', SMI ' + creatorData.attributes.SMI + 
         ', INT ' + creatorData.attributes.INT + 
-        ', PSY ' + creatorData.attributes.PSY + '</p></div>' +
+        ', PSY ' + creatorData.attributes.PSY + 
+        ', KAR ' + creatorData.attributes.KAR + '</p></div>' +
         '<div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
         '<button class="btn btn-gold" onclick="createCharacter()">✨ Skapa karaktär</button></div></div>';
     return html;
@@ -183,7 +184,7 @@ function rollAttribute(attr) {
 }
 
 function rollAllAttributes() {
-    ['STY', 'FYS', 'SMI', 'INT', 'PSY'].forEach(rollAttribute);
+    ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'].forEach(rollAttribute);
 }
 
 function nextStep() {
