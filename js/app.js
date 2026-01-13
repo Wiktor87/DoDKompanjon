@@ -40,6 +40,7 @@ function showSection(sectionId) {
     var section = document.getElementById(sectionId);
     if (section) section.classList.add('active');
     if (sectionId === 'characters') loadCharactersList();
+    if (sectionId === 'parties') loadPartiesList();
 }
 
 function goToLanding() {
@@ -460,6 +461,210 @@ function updateProgressBar(input, max) {
     if (bar) bar.style.width = percent + '%';
 }
 
+// Party functions
+function openCreateParty() {
+    var modal = document.getElementById('partyModal');
+    if (modal) {
+        document.getElementById('partyName').value = '';
+        document.getElementById('partyDescription').value = '';
+        modal.classList.add('active');
+    }
+}
+
+function createParty() {
+    var name = document.getElementById('partyName').value;
+    var description = document.getElementById('partyDescription').value;
+    
+    if (!name.trim()) {
+        showToast('Ange ett gruppnamn', 'error');
+        return;
+    }
+    
+    var partyData = {
+        name: name.trim(),
+        description: description.trim()
+    };
+    
+    if (typeof PartyService === 'undefined') {
+        showToast('PartyService inte laddat', 'error');
+        return;
+    }
+    
+    PartyService.createParty(partyData).then(function() {
+        closeModal('partyModal');
+        loadPartiesList();
+        showToast('Grupp skapad!', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function loadPartiesList() {
+    console.log('📋 loadPartiesList');
+    var container = document.getElementById('partiesGrid');
+    var countEl = document.getElementById('partyCount');
+    if (!container) return;
+    
+    if (typeof PartyService === 'undefined') {
+        container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Laddar...</h3></div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading-placeholder" style="grid-column:1/-1"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getUserParties().then(function(parties) {
+        if (countEl) countEl.textContent = parties.length + ' grupp' + (parties.length !== 1 ? 'er' : '');
+        if (parties.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👥</div><h3>Inga grupper ännu</h3><p>Skapa en grupp för att samla dina karaktärer och dela med andra spelare.</p><button class="btn btn-gold" onclick="openCreateParty()">Skapa grupp</button></div>';
+        } else {
+            container.innerHTML = parties.map(renderPartyCard).join('');
+        }
+    }).catch(function(err) {
+        container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Fel</h3><p>' + err.message + '</p></div>';
+    });
+}
+
+function renderPartyCard(party) {
+    var memberCount = (party.memberIds || []).length;
+    var charCount = (party.characterIds || []).length;
+    
+    return '<div class="character-card-full" onclick="viewParty(\'' + party.id + '\')">' +
+        '<div class="card-header">' +
+        '<div class="card-portrait">👥</div>' +
+        '<div class="card-identity">' +
+        '<div class="card-name">' + (party.name || 'Namnlös grupp') + '</div>' +
+        '<div class="card-subtitle">Ägare: ' + (party.ownerName || 'Okänd') + '</div>' +
+        '</div></div>' +
+        '<div class="card-body">' +
+        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+        '<div style="display: flex; gap: 1rem; font-size: 0.875rem; color: var(--text-muted);">' +
+        '<span>👤 ' + memberCount + ' medlem' + (memberCount !== 1 ? 'mar' : '') + '</span>' +
+        '<span>🎭 ' + charCount + ' karaktär' + (charCount !== 1 ? 'er' : '') + '</span>' +
+        '</div></div>' +
+        '<div class="card-footer">' +
+        '<span></span>' +
+        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteParty(\'' + party.id + '\')">🗑️</button>' +
+        '</div></div>';
+}
+
+function viewParty(id) {
+    console.log('👁️ viewParty:', id);
+    var modal = document.getElementById('partyViewModal');
+    var container = document.getElementById('partyViewContainer');
+    if (!modal || !container) return;
+    
+    modal.classList.add('active');
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getParty(id).then(function(party) {
+        return Promise.all([
+            Promise.resolve(party),
+            CharacterService.getUserCharacters()
+        ]);
+    }).then(function(results) {
+        var party = results[0];
+        var allChars = results[1];
+        
+        // Filter characters that are in this party
+        var partyChars = allChars.filter(function(char) {
+            return (party.characterIds || []).indexOf(char.id) !== -1;
+        });
+        
+        // Characters not in party
+        var availableChars = allChars.filter(function(char) {
+            return (party.characterIds || []).indexOf(char.id) === -1;
+        });
+        
+        container.innerHTML = renderPartyView(party, partyChars, availableChars);
+    }).catch(function(err) {
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
+    });
+}
+
+function renderPartyView(party, partyChars, availableChars) {
+    return '<div style="padding: 1rem;">' +
+        '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
+        '<p style="color: var(--text-secondary); margin-bottom: 2rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+        '<div style="margin-bottom: 2rem;">' +
+        '<h3 style="margin-bottom: 1rem;">Karaktärer i gruppen (' + partyChars.length + ')</h3>' +
+        '<div class="character-cards">' +
+        (partyChars.length === 0 ? '<div class="empty-state"><p>Inga karaktärer i gruppen ännu</p></div>' :
+            partyChars.map(function(char) {
+                return renderPartyCharacterCard(char, party.id);
+            }).join('')) +
+        '</div></div>' +
+        '<div>' +
+        '<h3 style="margin-bottom: 1rem;">Lägg till karaktär</h3>' +
+        (availableChars.length === 0 ? '<p style="color: var(--text-muted);">Alla dina karaktärer är redan i gruppen</p>' :
+            '<div class="character-cards">' +
+            availableChars.map(function(char) {
+                return renderAddCharacterCard(char, party.id);
+            }).join('') +
+            '</div>') +
+        '</div>' +
+        '</div>';
+}
+
+function renderPartyCharacterCard(char, partyId) {
+    var icon = getKinIcon(char.kin);
+    var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
+    var attrs = char.attributes || {};
+    
+    return '<div class="character-card">' +
+        '<div class="char-portrait">' + icon + '</div>' +
+        '<div class="char-info">' +
+        '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+        '<div class="char-stats">' +
+        '<div class="char-stat">❤️ ' + (attrs.FYS || '?') + ' KP</div>' +
+        '<div class="char-stat">💜 ' + (attrs.PSY || '?') + ' VP</div>' +
+        '</div></div>' +
+        '<button class="btn btn-ghost btn-xs" onclick="removeCharFromParty(\'' + partyId + '\', \'' + char.id + '\')">Ta bort</button>' +
+        '</div>';
+}
+
+function renderAddCharacterCard(char, partyId) {
+    var icon = getKinIcon(char.kin);
+    var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
+    
+    return '<div class="character-card">' +
+        '<div class="char-portrait">' + icon + '</div>' +
+        '<div class="char-info">' +
+        '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+        '</div>' +
+        '<button class="btn btn-gold btn-xs" onclick="addCharToParty(\'' + partyId + '\', \'' + char.id + '\')">+ Lägg till</button>' +
+        '</div>';
+}
+
+function addCharToParty(partyId, charId) {
+    PartyService.addCharacterToParty(partyId, charId).then(function() {
+        viewParty(partyId);
+        showToast('Karaktär tillagd!', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function removeCharFromParty(partyId, charId) {
+    PartyService.removeCharacterFromParty(partyId, charId).then(function() {
+        viewParty(partyId);
+        showToast('Karaktär borttagen', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function deleteParty(id) {
+    if (!confirm('Ta bort gruppen?')) return;
+    PartyService.deleteParty(id).then(function() {
+        loadPartiesList();
+        showToast('Grupp borttagen', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready');
@@ -474,6 +679,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === this) this.classList.remove('active');
         };
     });
+    
+    // Party form handler
+    var partyForm = document.getElementById('partyForm');
+    if (partyForm) {
+        partyForm.onsubmit = function(e) {
+            e.preventDefault();
+            createParty();
+        };
+    }
+    
     console.log('✅ Init complete');
 });
 

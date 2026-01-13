@@ -80,6 +80,7 @@
                 <nav class="app-nav">
                     <button type="button" class="nav-tab active" data-section="home">Översikt</button>
                     <button type="button" class="nav-tab" data-section="characters">Karaktärer</button>
+                    <button type="button" class="nav-tab" data-section="parties">Grupp</button>
                     <button type="button" class="nav-tab" data-section="campaigns">Kampanjer</button>
                     <button type="button" class="nav-tab" data-section="adventures">Äventyr</button>
                 </nav>
@@ -124,6 +125,20 @@
                     <button class="btn btn-gold" onclick="openCharacterCreator()">✨ Ny Karaktär</button>
                 </div>
                 <div id="charactersGrid" class="characters-grid">
+                    <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
+                </div>
+            </section>
+
+            <!-- Parties -->
+            <section id="parties" class="section">
+                <div class="section-header-bar">
+                    <div>
+                        <h1>Grupper</h1>
+                        <p id="partyCount">0 grupper</p>
+                    </div>
+                    <button class="btn btn-gold" onclick="openCreateParty()">✨ Ny Grupp</button>
+                </div>
+                <div id="partiesGrid" class="characters-grid">
                     <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
                 </div>
             </section>
@@ -195,6 +210,29 @@
         </div>
     </div>
 
+    <!-- Party Modal -->
+    <div id="partyModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('partyModal')">×</button>
+            <h2>Skapa Grupp</h2>
+            <form id="partyForm">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Gruppens namn</label>
+                <input type="text" id="partyName" class="creator-input" placeholder="t.ex. Äventyrssällskapet" required style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Beskrivning</label>
+                <textarea id="partyDescription" class="bio-textarea" placeholder="Beskriv gruppen..." style="margin-bottom: 1.5rem;"></textarea>
+                <button type="submit" class="btn btn-gold btn-block">Skapa Grupp</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Party View Modal -->
+    <div id="partyViewModal" class="modal modal-fullscreen">
+        <div class="modal-content modal-large">
+            <button class="close-modal" onclick="closeModal('partyViewModal')">×</button>
+            <div id="partyViewContainer"></div>
+        </div>
+    </div>
+
     <!-- Character Sheet Modal -->
     <div id="characterSheetModal" class="modal modal-fullscreen">
         <div class="modal-content modal-large">
@@ -207,6 +245,7 @@
     <script src="js/icons.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/character-service.js"></script>
+    <script src="js/party-service.js"></script>
     <script src="js/character-creator.js"></script>
     <script src="js/landing.js"></script>
     <script src="js/app.js"></script>
