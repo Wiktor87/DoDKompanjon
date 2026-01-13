@@ -122,14 +122,16 @@ function renderCharacterCardCompact(char) {
     var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
     var kp = char.currentKP || (char.attributes && char.attributes.FYS) || '?';
     var vp = char.currentVP || (char.attributes && char.attributes.PSY) || '?';
-    return '<div class="character-card" onclick="viewCharacter(\'' + char.id + '\')">' +
-        '<div class="char-portrait">' + icon + '</div>' +
-        '<div class="char-info"><div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+    return '<div class="character-card">' +
+        '<div class="char-portrait" onclick="viewCharacter(\'' + char.id + '\')">' + icon + '</div>' +
+        '<div class="char-info" onclick="viewCharacter(\'' + char.id + '\')" style="flex: 1; cursor: pointer;"><div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
         '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
         '<div class="char-stats">' +
         '<div class="char-stat"><span>❤️</span><span>' + kp + '</span><span>KP</span></div>' +
         '<div class="char-stat"><span>💜</span><span>' + vp + '</span><span>VP</span></div>' +
-        '</div></div></div>';
+        '</div></div>' +
+        '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥</button>' +
+        '</div>';
 }
 
 // Characters List
@@ -241,7 +243,10 @@ function renderFullCharacterSheet(char) {
         '<div class="progress-bar-track"><div class="progress-bar-fill vp" style="width: ' + vpPercent + '%"></div></div>' +
         '</div>' +
         '</div></div>' +
-        '<div class="sheet-header-actions"><button class="btn btn-gold" onclick="saveCharacter()">💾 Spara</button></div></div>' +
+        '<div class="sheet-header-actions">' +
+        '<button class="btn btn-ghost" onclick="openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
+        '<button class="btn btn-gold" onclick="saveCharacter()">💾 Spara</button>' +
+        '</div></div>' +
         '<div class="sheet-tabs">' +
         '<button class="sheet-tab active" onclick="switchSheetTab(this, \'overview\')">Översikt</button>' +
         '<button class="sheet-tab" onclick="switchSheetTab(this, \'abilities\')">Egenskaper</button>' +
@@ -569,11 +574,11 @@ function renderPartyCard(party) {
 
 function viewParty(id) {
     console.log('👁️ viewParty:', id);
-    var modal = document.getElementById('partyViewModal');
     var container = document.getElementById('partyViewContainer');
-    if (!modal || !container) return;
+    if (!container) return;
     
-    modal.classList.add('active');
+    // Switch to party view section
+    showSection('partyView');
     container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
     
     var user = getCurrentUser();
@@ -606,11 +611,15 @@ function viewParty(id) {
             promises.push(Promise.resolve([]));
         }
         
+        // Load messages
+        promises.push(PartyService.getMessages(id));
+        
         return Promise.all(promises);
     }).then(function(results) {
         var party = results[0];
         var allChars = results[1];
         var joinRequests = results[2] || [];
+        var messages = results[3] || [];
         
         // Filter characters that are in this party
         var partyChars = allChars.filter(function(char) {
@@ -622,16 +631,53 @@ function viewParty(id) {
             return (party.characterIds || []).indexOf(char.id) === -1;
         });
         
-        container.innerHTML = renderPartyView(party, partyChars, availableChars, joinRequests, isOwner);
+        container.innerHTML = renderPartyView(party, partyChars, availableChars, joinRequests, messages, isOwner);
+        
+        // Auto-scroll chat to bottom
+        var chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Setup message listener
+        if (window.messageUnsubscribe) {
+            window.messageUnsubscribe();
+        }
+        window.messageUnsubscribe = PartyService.listenToMessages(id, function(newMessages) {
+            var chatContainer = document.getElementById('chatMessages');
+            if (chatContainer) {
+                chatContainer.innerHTML = newMessages.map(renderMessage).join('');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        });
     }).catch(function(err) {
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
     });
 }
 
-function renderPartyView(party, partyChars, availableChars, joinRequests, isOwner) {
+function closePartyView() {
+    if (window.messageUnsubscribe) {
+        window.messageUnsubscribe();
+        window.messageUnsubscribe = null;
+    }
+    showSection('parties');
+}
+
+function renderPartyView(party, partyChars, availableChars, joinRequests, messages, isOwner) {
     var html = '<div style="padding: 1rem;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">' +
+        '<div>' +
         '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
-        '<p style="color: var(--text-secondary); margin-bottom: 2rem;">' + (party.description || 'Ingen beskrivning') + '</p>';
+        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+        '</div>' +
+        '<div style="text-align: right;">' +
+        '<div style="background: var(--bg-elevated); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 2px solid var(--accent-gold); margin-bottom: 0.5rem;">' +
+        '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase;">Inbjudningskod</div>' +
+        '<div style="display: flex; align-items: center; gap: 0.5rem;">' +
+        '<code style="font-size: 1.25rem; font-weight: 700; color: var(--accent-gold); letter-spacing: 0.1em;">' + (party.inviteCode || '------') + '</code>' +
+        '<button class="btn btn-ghost btn-xs" onclick="copyInviteCode(\'' + (party.inviteCode || '') + '\')">📋 Kopiera</button>' +
+        '</div></div>' +
+        '</div></div>';
     
     // Show join requests if owner and there are pending requests
     if (isOwner && joinRequests && joinRequests.length > 0) {
@@ -654,6 +700,20 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, isOwne
         html += '</div>';
     }
     
+    // Notes section (owner can edit)
+    if (isOwner) {
+        html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+            '<h3 style="margin-bottom: 0.5rem; font-size: 1rem;">📝 Anteckningar (synliga för alla medlemmar)</h3>' +
+            '<textarea id="partyNotes" class="bio-textarea" placeholder="Lägg till anteckningar för gruppen..." style="margin-bottom: 0.5rem;">' + (party.notes || '') + '</textarea>' +
+            '<button class="btn btn-gold btn-xs" onclick="savePartyNotes(\'' + party.id + '\')">💾 Spara anteckningar</button>' +
+            '</div>';
+    } else if (party.notes) {
+        html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+            '<h3 style="margin-bottom: 0.5rem; font-size: 1rem;">📝 Anteckningar från ägaren</h3>' +
+            '<p style="color: var(--text-secondary); white-space: pre-wrap;">' + party.notes + '</p>' +
+            '</div>';
+    }
+    
     html += '<div style="margin-bottom: 2rem;">' +
         '<h3 style="margin-bottom: 1rem;">Karaktärer i gruppen (' + partyChars.length + ')</h3>' +
         '<div class="character-cards">' +
@@ -661,19 +721,45 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, isOwne
             partyChars.map(function(char) {
                 return renderPartyCharacterCard(char, party.id);
             }).join('')) +
-        '</div></div>' +
-        '<div>' +
-        '<h3 style="margin-bottom: 1rem;">Lägg till karaktär</h3>' +
-        (availableChars.length === 0 ? '<p style="color: var(--text-muted);">Alla dina karaktärer är redan i gruppen</p>' :
-            '<div class="character-cards">' +
-            availableChars.map(function(char) {
-                return renderAddCharacterCard(char, party.id);
-            }).join('') +
-            '</div>') +
+        '</div></div>';
+    
+    if (isOwner) {
+        html += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem;">Lägg till karaktär</h3>' +
+            (availableChars.length === 0 ? '<p style="color: var(--text-muted);">Alla dina karaktärer är redan i gruppen</p>' :
+                '<div class="character-cards">' +
+                availableChars.map(function(char) {
+                    return renderAddCharacterCard(char, party.id);
+                }).join('') +
+                '</div>') +
+            '</div>';
+    }
+    
+    // Chat section
+    html += '<div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+        '<h3 style="margin-bottom: 1rem;">💬 Gruppchatt</h3>' +
+        '<div id="chatMessages" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-md);">' +
+        (messages && messages.length > 0 ? messages.map(renderMessage).join('') : '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Inga meddelanden ännu</p>') +
+        '</div>' +
+        '<form onsubmit="sendChatMessage(\'' + party.id + '\'); return false;" style="display: flex; gap: 0.5rem;">' +
+        '<input type="text" id="chatInput" class="creator-input" placeholder="Skriv ett meddelande..." required style="margin: 0; flex: 1;">' +
+        '<button type="submit" class="btn btn-gold">Skicka</button>' +
+        '</form>' +
         '</div>' +
         '</div>';
     
     return html;
+}
+
+function renderMessage(msg) {
+    var time = msg.timestamp && msg.timestamp.toDate ? msg.timestamp.toDate().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) : '';
+    return '<div style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--bg-elevated); border-radius: var(--radius-sm);">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">' +
+        '<span style="font-weight: 600; font-size: 0.875rem; color: var(--accent-gold);">' + (msg.userName || 'Okänd') + '</span>' +
+        '<span style="font-size: 0.75rem; color: var(--text-muted);">' + time + '</span>' +
+        '</div>' +
+        '<p style="color: var(--text-secondary); font-size: 0.875rem; word-wrap: break-word;">' + (msg.message || '') + '</p>' +
+        '</div>';
 }
 
 function renderPartyCharacterCard(char, partyId) {
@@ -873,6 +959,136 @@ function declineJoinRequest(requestId) {
     });
 }
 
+// Join group functions
+function openJoinGroupModal() {
+    var modal = document.getElementById('joinGroupModal');
+    if (modal) {
+        document.getElementById('groupInviteCode').value = '';
+        document.getElementById('foundGroupContainer').innerHTML = '';
+        modal.classList.add('active');
+    }
+}
+
+function searchGroupByCode() {
+    var code = document.getElementById('groupInviteCode').value;
+    var container = document.getElementById('foundGroupContainer');
+    
+    if (!code || !code.trim()) {
+        showToast('Ange en inbjudningskod', 'error');
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Söker...</p></div>';
+    
+    PartyService.searchPartyByCode(code).then(function(party) {
+        var user = getCurrentUser();
+        var isMember = (party.memberIds || []).indexOf(user.uid) !== -1;
+        
+        if (isMember) {
+            container.innerHTML = '<div style="background: var(--bg-elevated); border: 1px solid var(--accent-gold); border-radius: var(--radius-lg); padding: 1rem; text-align: center;">' +
+                '<h3 style="color: var(--accent-gold);">✓ Du är redan medlem</h3>' +
+                '<p style="color: var(--text-secondary); margin: 0.5rem 0;">Du är redan medlem i denna grupp.</p>' +
+                '<button class="btn btn-gold btn-sm" onclick="closeModal(\'joinGroupModal\');viewParty(\'' + party.id + '\')">Visa grupp</button>' +
+                '</div>';
+        } else {
+            container.innerHTML = '<div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+                '<h3 style="margin-bottom: 0.5rem;">👥 ' + party.name + '</h3>' +
+                '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+                '<p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Ägare: ' + party.ownerName + '</p>' +
+                '<div id="joinCharactersList"></div>' +
+                '</div>';
+            
+            // Load user's characters
+            CharacterService.getUserCharacters().then(function(characters) {
+                var charList = document.getElementById('joinCharactersList');
+                if (!charList) return;
+                
+                if (characters.length === 0) {
+                    charList.innerHTML = '<p style="color: var(--text-muted); margin-bottom: 1rem;">Du har inga karaktärer att lägga till. Skapa en karaktär först.</p>';
+                } else {
+                    charList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">Välj en karaktär att skicka förfrågan med:</p>' +
+                        '<div class="character-cards" style="grid-template-columns: 1fr;">' +
+                        characters.map(function(char) {
+                            var icon = getKinIcon(char.kin);
+                            var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
+                            return '<div class="character-card" onclick="requestJoinWithCharacter(\'' + party.id + '\', \'' + char.id + '\')" style="cursor: pointer;">' +
+                                '<div class="char-portrait">' + icon + '</div>' +
+                                '<div class="char-info">' +
+                                '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+                                '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+                                '</div>' +
+                                '<button class="btn btn-gold btn-xs">Skicka förfrågan →</button>' +
+                                '</div>';
+                        }).join('') +
+                        '</div>';
+                }
+            });
+        }
+    }).catch(function(err) {
+        container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--brand-red);">' +
+            '<p>❌ ' + err.message + '</p>' +
+            '</div>';
+    });
+}
+
+function requestJoinWithCharacter(partyId, charId) {
+    createJoinRequest(partyId, charId);
+    closeModal('joinGroupModal');
+}
+
+function copyInviteCode(code) {
+    if (!code) {
+        showToast('Ingen kod att kopiera', 'error');
+        return;
+    }
+    
+    // Copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(function() {
+            showToast('Inbjudningskod kopierad!', 'success');
+        }).catch(function() {
+            showToast('Kunde inte kopiera', 'error');
+        });
+    } else {
+        // Fallback for older browsers
+        var input = document.createElement('input');
+        input.value = code;
+        document.body.appendChild(input);
+        input.select();
+        try {
+            document.execCommand('copy');
+            showToast('Inbjudningskod kopierad!', 'success');
+        } catch (err) {
+            showToast('Kunde inte kopiera', 'error');
+        }
+        document.body.removeChild(input);
+    }
+}
+
+function sendChatMessage(partyId) {
+    var input = document.getElementById('chatInput');
+    if (!input) return;
+    
+    var message = input.value.trim();
+    if (!message) return;
+    
+    PartyService.sendMessage(partyId, message).then(function() {
+        input.value = '';
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+function savePartyNotes(partyId) {
+    var notes = document.getElementById('partyNotes').value;
+    
+    PartyService.updateParty(partyId, { notes: notes }).then(function() {
+        showToast('Anteckningar sparade!', 'success');
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready');
@@ -894,6 +1110,15 @@ document.addEventListener('DOMContentLoaded', function() {
         partyForm.onsubmit = function(e) {
             e.preventDefault();
             createParty();
+        };
+    }
+    
+    // Join group form handler
+    var joinGroupForm = document.getElementById('joinGroupForm');
+    if (joinGroupForm) {
+        joinGroupForm.onsubmit = function(e) {
+            e.preventDefault();
+            searchGroupByCode();
         };
     }
     

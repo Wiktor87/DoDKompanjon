@@ -1,14 +1,27 @@
 // Party Service
 var PartyService = {
+    generateInviteCode: function() {
+        var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding similar looking chars
+        var code = '';
+        for (var i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    },
+    
     createParty: function(data) {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
+        
+        var inviteCode = this.generateInviteCode();
         
         var party = Object.assign({}, data, {
             ownerId: user.uid,
             ownerName: user.displayName || user.email,
             memberIds: [user.uid],
             characterIds: [],
+            inviteCode: inviteCode,
+            notes: '',
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -16,6 +29,69 @@ var PartyService = {
         return db.collection('parties').add(party).then(function(ref) {
             return Object.assign({ id: ref.id }, party);
         });
+    },
+    
+    searchPartyByCode: function(code) {
+        if (!code || !code.trim()) {
+            return Promise.reject(new Error('Inbjudningskod krävs'));
+        }
+        
+        return db.collection('parties')
+            .where('inviteCode', '==', code.toUpperCase().trim())
+            .limit(1)
+            .get()
+            .then(function(snapshot) {
+                if (snapshot.empty) {
+                    throw new Error('Ingen grupp hittades med den koden');
+                }
+                var doc = snapshot.docs[0];
+                return Object.assign({ id: doc.id }, doc.data());
+            });
+    },
+    
+    sendMessage: function(partyId, message) {
+        var user = getCurrentUser();
+        if (!user) return Promise.reject(new Error('Inte inloggad'));
+        
+        var msg = {
+            partyId: partyId,
+            userId: user.uid,
+            userName: user.displayName || user.email,
+            message: message,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        return db.collection('parties').doc(partyId)
+            .collection('messages').add(msg);
+    },
+    
+    getMessages: function(partyId, limit) {
+        limit = limit || 50;
+        return db.collection('parties').doc(partyId)
+            .collection('messages')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get()
+            .then(function(snapshot) {
+                var messages = [];
+                snapshot.forEach(function(doc) {
+                    messages.push(Object.assign({ id: doc.id }, doc.data()));
+                });
+                return messages.reverse(); // Show oldest first
+            });
+    },
+    
+    listenToMessages: function(partyId, callback) {
+        return db.collection('parties').doc(partyId)
+            .collection('messages')
+            .orderBy('timestamp', 'asc')
+            .onSnapshot(function(snapshot) {
+                var messages = [];
+                snapshot.forEach(function(doc) {
+                    messages.push(Object.assign({ id: doc.id }, doc.data()));
+                });
+                callback(messages);
+            });
     },
     
     getUserParties: function() {

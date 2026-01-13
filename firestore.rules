@@ -14,13 +14,16 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.ownerId;
     }
     
-    // Groups/Parties: users can read groups they're members of or that are public
+    // Groups/Parties: users can read groups they're members of or search by invite code
     match /parties/{partyId} {
-      // Allow reading if user is owner, member, or group is public
+      // Allow reading if user is owner, member, or searching by invite code
       allow read: if request.auth != null && 
         (resource.data.ownerId == request.auth.uid || 
          request.auth.uid in resource.data.memberIds ||
          resource.data.isPublic == true);
+      
+      // Allow querying by inviteCode for join functionality
+      allow list: if request.auth != null;
       
       // Allow creating for any authenticated user
       allow create: if request.auth != null &&
@@ -29,6 +32,21 @@ service cloud.firestore {
       // Allow update/delete for owner only
       allow update, delete: if request.auth != null && 
         resource.data.ownerId == request.auth.uid;
+      
+      // Messages subcollection - party members can read/write
+      match /messages/{messageId} {
+        allow read: if request.auth != null && 
+          (get(/databases/$(database)/documents/parties/$(partyId)).data.ownerId == request.auth.uid ||
+           request.auth.uid in get(/databases/$(database)/documents/parties/$(partyId)).data.memberIds);
+        
+        allow create: if request.auth != null && 
+          (get(/databases/$(database)/documents/parties/$(partyId)).data.ownerId == request.auth.uid ||
+           request.auth.uid in get(/databases/$(database)/documents/parties/$(partyId)).data.memberIds) &&
+          request.auth.uid == request.resource.data.userId;
+        
+        allow update, delete: if request.auth != null && 
+          resource.data.userId == request.auth.uid;
+      }
     }
     
     // Join requests collection for group join feature

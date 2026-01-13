@@ -141,7 +141,10 @@
                         <h1>Grupper</h1>
                         <p id="partyCount">0 grupper</p>
                     </div>
-                    <button class="btn btn-gold" onclick="openCreateParty()">✨ Ny Grupp</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" onclick="openJoinGroupModal()">🔍 Gå med i grupp</button>
+                        <button class="btn btn-gold" onclick="openCreateParty()">✨ Ny Grupp</button>
+                    </div>
                 </div>
                 <div id="partiesGrid" class="characters-grid">
                     <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
@@ -171,6 +174,14 @@
                 <div class="character-sheet-wrapper">
                     <button class="btn btn-outline" onclick="closeCharacterSheet()" style="margin-bottom: 1rem;">← Tillbaka</button>
                     <div id="characterSheetContainer"></div>
+                </div>
+            </section>
+
+            <!-- Party View -->
+            <section id="partyView" class="section">
+                <div class="character-sheet-wrapper">
+                    <button class="btn btn-outline" onclick="closePartyView()" style="margin-bottom: 1rem;">← Tillbaka</button>
+                    <div id="partyViewContainer"></div>
                 </div>
             </section>
         </main>
@@ -260,6 +271,20 @@
                 <p style="margin-bottom: 1rem; color: var(--text-secondary);">Välj vilken grupp du vill lägga till karaktären i:</p>
                 <div id="groupsList"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Join Group Modal -->
+    <div id="joinGroupModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('joinGroupModal')">×</button>
+            <h2>Gå med i grupp</h2>
+            <form id="joinGroupForm">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">Ange gruppens inbjudningskod</label>
+                <input type="text" id="groupInviteCode" class="creator-input" placeholder="t.ex. ABC123" required style="margin-bottom: 1rem; text-transform: uppercase;">
+                <button type="submit" class="btn btn-gold btn-block">Sök grupp</button>
+            </form>
+            <div id="foundGroupContainer" style="margin-top: 1.5rem;"></div>
         </div>
     </div>
 
