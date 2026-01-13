@@ -37,8 +37,13 @@ function showSection(sectionId) {
 
 function goToLanding() {
     console.log('🏠 goToLanding');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('landingPage').classList.remove('hidden');
+    // Don't logout - just go to home section if logged in
+    if (typeof isUserLoggedIn === 'function' && isUserLoggedIn()) {
+        showSection('home');
+    } else {
+        document.getElementById('app').classList.add('hidden');
+        document.getElementById('landingPage').classList.remove('hidden');
+    }
     return false;
 }
 

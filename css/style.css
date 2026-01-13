@@ -33,17 +33,17 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
     display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
     padding: 0.75rem 1.5rem; border: none; border-radius: var(--radius-md);
     font-family: var(--font-body); font-size: 0.875rem; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
+    cursor: pointer; transition: all 0.2s; text-decoration: none;
 }
-.btn-primary { background: var(--brand-red); color: white; }
+.btn-primary { background: var(--brand-red); color: white !important; }
 .btn-primary:hover { background: #a52828; }
-.btn-gold { background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); color: #1a1a1a; }
+.btn-gold { background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); color: #1a1a1a !important; }
 .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(212,175,55,0.4); }
-.btn-ghost { background: transparent; color: var(--text-secondary); }
-.btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
-.btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
+.btn-ghost { background: transparent; color: var(--text-secondary) !important; }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary) !important; }
+.btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary) !important; }
 .btn-outline:hover { border-color: var(--accent-gold); }
-.btn-google { background: white; color: #333; }
+.btn-google { background: white; color: #333 !important; }
 .btn-block { width: 100%; }
 .btn-sm { padding: 0.5rem 1rem; font-size: 0.813rem; }
 .btn-xl { padding: 1rem 2rem; font-size: 1rem; }
@@ -73,7 +73,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .landing-footer { padding: 2rem; text-align: center; color: var(--text-muted); }
 
 /* App Header */
-.app-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 100; }
+.app-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 1100; }
 .header-top { background: var(--bg-primary); border-bottom: 1px solid var(--border-default); }
 .header-content { max-width: 1600px; margin: 0 auto; padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .header-brand { text-decoration: none; }
@@ -145,10 +145,10 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .coming-soon-icon { font-size: 4rem; margin-bottom: 1rem; }
 
 /* Modals */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 999; padding: 1rem; }
 .modal.active { display: flex; }
-.modal-fullscreen { padding: 0; }
-.modal-fullscreen .modal-content { max-width: 100%; width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+.modal-fullscreen { padding: 0; top: 0; }
+.modal-fullscreen .modal-content { max-width: 100%; width: 100%; height: 100%; max-height: 100%; border-radius: 0; overflow-y: auto; }
 .modal-content { background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 2rem; max-width: 450px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
 .modal-large { max-width: 900px; }
 .close-modal { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); transition: all 0.2s; }
