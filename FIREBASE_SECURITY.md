@@ -24,6 +24,17 @@ service cloud.firestore {
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.ownerId;
     }
+    
+    // Groups/Parties: users can read groups they're members of
+    match /parties/{partyId} {
+      allow read: if request.auth != null && 
+        (resource.data.ownerId == request.auth.uid || 
+         request.auth.uid in resource.data.memberIds);
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.ownerId;
+      allow update, delete: if request.auth != null && 
+        resource.data.ownerId == request.auth.uid;
+    }
   }
 }
 ```
