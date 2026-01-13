@@ -34,24 +34,9 @@ var ICONS = {
     }
 };
 
-// Helper function to get icon HTML
-function getIcon(category, name, className) {
-    className = className || '';
-    var icon = ICONS[category] && ICONS[category][name];
-    if (!icon && ICONS[category] && ICONS[category]['default']) {
-        icon = ICONS[category]['default'];
-    }
-    if (!icon) return '';
-    
-    var div = document.createElement('div');
-    if (className) div.className = className;
-    div.innerHTML = icon;
-    return div.innerHTML;
-}
-
 // Helper to get inline SVG icon
 function getIconSVG(category, name) {
-    return (ICONS[category] && ICONS[category][name]) || '';
+    return (ICONS[category] && ICONS[category][name]) || (ICONS[category] && ICONS[category]['default']) || '';
 }
 
 console.log('✅ Icons loaded');

@@ -229,7 +229,7 @@ function createCharacter() {
     
     // Apply profession skills
     if (creatorData.profession && PROFESSION_DATA[creatorData.profession]) {
-        charData.skills = Object.assign({}, PROFESSION_DATA[creatorData.profession].skills);
+        charData.skills = { ...PROFESSION_DATA[creatorData.profession].skills };
     }
     
     CharacterService.createCharacter(charData).then(function() {

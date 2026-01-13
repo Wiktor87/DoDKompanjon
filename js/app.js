@@ -365,7 +365,7 @@ function switchSheetTab(btn, tabId) {
 // Progress bar update
 function updateProgressBar(input, max) {
     var current = parseInt(input.value) || 0;
-    var percent = max > 0 ? (current / max * 100) : 0;
+    var percent = Math.min(100, max > 0 ? (current / max * 100) : 0);
     var bar = input.closest('.hp-vp-progress-bar').querySelector('.progress-bar-fill');
     if (bar) bar.style.width = percent + '%';
 }
