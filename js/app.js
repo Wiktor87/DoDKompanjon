@@ -3,6 +3,10 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
+// Game constants
+var DAMAGE_BONUS_DIVISOR = 5;
+var DAMAGE_BONUS_BASE = -2;
+
 // Use emoji fallbacks if icons.js not loaded, otherwise will be replaced
 function getKinIcon(kin) {
     if (typeof getIconSVG !== 'undefined') {
@@ -203,7 +207,7 @@ function renderFullCharacterSheet(char) {
     
     // Calculate secondary attributes
     var movement = char.movement || 10;
-    var damageBonus = Math.floor((attrs.STY || 10) / 5) - 2;
+    var damageBonus = Math.floor((attrs.STY || 10) / DAMAGE_BONUS_DIVISOR) + DAMAGE_BONUS_BASE;
     
     return '<div class="character-sheet-full">' +
         '<div class="sheet-header-full">' +
@@ -220,7 +224,7 @@ function renderFullCharacterSheet(char) {
         '<div class="progress-bar-track"><div class="progress-bar-fill hp" style="width: ' + kpPercent + '%"></div></div>' +
         '</div>' +
         '<div class="hp-vp-progress-bar">' +
-        '<div class="progress-label"><span class="progress-label-text">💜 Viljepoenäng (VP)</span>' +
+        '<div class="progress-label"><span class="progress-label-text">💜 Viljepoäng (VP)</span>' +
         '<div class="progress-bar-input-group">' +
         '<input type="number" class="progress-bar-input" value="' + currentVp + '" data-field="currentVP" onchange="updateProgressBar(this, ' + maxVp + ')"> / ' + maxVp +
         '</div></div>' +
@@ -292,7 +296,7 @@ function renderFullCharacterSheet(char) {
         }).join('') + '</div></div></div></div>' +
         '<div class="sheet-tab-content" id="tab-equipment">' +
         '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()">+ Lägg till</button></h3>' +
+        '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()" aria-label="Lägg till nytt föremål i utrustning">+ Lägg till</button></h3>' +
         '<div id="inventoryList">' + (inventory.length === 0 ? '<div class="empty-inventory">Ingen utrustning ännu. Klicka "+ Lägg till" för att lägga till föremål.</div>' : 
             inventory.map(function(item, i) {
                 var itemData = typeof item === 'string' ? { name: item, type: '', weight: '', notes: '' } : item;

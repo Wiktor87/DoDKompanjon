@@ -21,17 +21,13 @@ var PartyService = {
     getUserParties: function() {
         var user = getCurrentUser();
         if (!user) {
-            console.log('[PartyService] No user');
             return Promise.resolve([]);
         }
-        
-        console.log('[PartyService] Fetching parties for:', user.uid);
         
         return db.collection('parties')
             .where('memberIds', 'array-contains', user.uid)
             .get()
             .then(function(snapshot) {
-                console.log('[PartyService] Found:', snapshot.size);
                 var parties = [];
                 snapshot.forEach(function(doc) {
                     parties.push(Object.assign({ id: doc.id }, doc.data()));
