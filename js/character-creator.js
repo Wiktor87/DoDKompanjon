@@ -16,7 +16,7 @@ var KIN_DATA = {
     'Alv': { ability: 'Mörkerseende', description: 'Du kan se i mörker som om det vore skymning.', stats: { INT: 2, STY: -2 } },
     'Dvärg': { ability: 'Härdad', description: 'Du får +2 på alla räddningskast mot gift.', stats: { FYS: 2, SMI: -2 } },
     'Halvling': { ability: 'Tur', description: 'En gång per dag kan du slå om ett misslyckat tärningsslag.', stats: { SMI: 2, STY: -2 } },
-    'Anka': { ability: 'Simmare', description: 'Du simmar dubbelt så snabbt och kan hålla andan dubbelt så länge.', stats: { PSY: 2, FYS: -2 } },
+    'Anka': { ability: 'Simfötter', description: 'Du simmar dubbelt så snabbt och kan hålla andan dubbelt så länge.', stats: { PSY: 2, FYS: -2 } },
     'Vargfolk': { ability: 'Väderkorn', description: 'Du har +2 på alla slag för att upptäcka saker med luktsinnet.', stats: { STY: 2, INT: -2 } }
 };
 

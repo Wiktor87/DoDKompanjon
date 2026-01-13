@@ -39,7 +39,7 @@ body {
     min-height: 100vh;
 }
 body.app-active {
-    background: linear-gradient(135deg, #2a2419 0%, #1a1812 100%);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-dark) 100%);
     background-attachment: fixed;
 }
 body.app-active::before {

@@ -237,8 +237,7 @@ function renderFullCharacterSheet(char) {
             return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
         }).join('') + '</div></div>' +
         '<div class="sheet-panel"><h3 class="panel-title">Specialförmågor</h3>' +
-        '<div style="padding: 0.5rem;"><p><strong>Släktförmåga:</strong> ' + (char.kinAbility || '—') + '</p>' +
-        '<p><strong>Hjälteförmåga:</strong> ' + (char.heroicAbility || '—') + '</p></div>' +
+        '<div style="padding: 0.5rem;"><p><strong>Hjälteförmåga:</strong> ' + (char.heroicAbility || '—') + '</p></div>' +
         '</div></div>' +
         '<div class="sheet-column">' +
         '<div class="sheet-panel"><h3 class="panel-title">Mynt</h3><div class="currency-grid">' +
