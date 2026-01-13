@@ -9,25 +9,46 @@ var PartyService = {
         return code;
     },
     
+    ensureUniqueInviteCode: function() {
+        var self = this;
+        var code = this.generateInviteCode();
+        
+        // Check if code exists
+        return db.collection('parties')
+            .where('inviteCode', '==', code)
+            .limit(1)
+            .get()
+            .then(function(snapshot) {
+                if (snapshot.empty) {
+                    return code;
+                } else {
+                    // Code exists, try again (recursive with limit)
+                    return self.ensureUniqueInviteCode();
+                }
+            });
+    },
+    
     createParty: function(data) {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
-        var inviteCode = this.generateInviteCode();
+        var self = this;
         
-        var party = Object.assign({}, data, {
-            ownerId: user.uid,
-            ownerName: user.displayName || user.email,
-            memberIds: [user.uid],
-            characterIds: [],
-            inviteCode: inviteCode,
-            notes: '',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        return db.collection('parties').add(party).then(function(ref) {
-            return Object.assign({ id: ref.id }, party);
+        return this.ensureUniqueInviteCode().then(function(inviteCode) {
+            var party = Object.assign({}, data, {
+                ownerId: user.uid,
+                ownerName: user.displayName || user.email,
+                memberIds: [user.uid],
+                characterIds: [],
+                inviteCode: inviteCode,
+                notes: '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            return db.collection('parties').add(party).then(function(ref) {
+                return Object.assign({ id: ref.id }, party);
+            });
         });
     },
     

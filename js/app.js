@@ -640,10 +640,10 @@ function viewParty(id) {
         }
         
         // Setup message listener
-        if (window.messageUnsubscribe) {
-            window.messageUnsubscribe();
+        if (typeof window.currentPartyMessageUnsubscribe !== 'undefined' && window.currentPartyMessageUnsubscribe) {
+            window.currentPartyMessageUnsubscribe();
         }
-        window.messageUnsubscribe = PartyService.listenToMessages(id, function(newMessages) {
+        window.currentPartyMessageUnsubscribe = PartyService.listenToMessages(id, function(newMessages) {
             var chatContainer = document.getElementById('chatMessages');
             if (chatContainer) {
                 chatContainer.innerHTML = newMessages.map(renderMessage).join('');
@@ -656,9 +656,10 @@ function viewParty(id) {
 }
 
 function closePartyView() {
-    if (window.messageUnsubscribe) {
-        window.messageUnsubscribe();
-        window.messageUnsubscribe = null;
+    // Clean up message listener
+    if (typeof window.currentPartyMessageUnsubscribe !== 'undefined' && window.currentPartyMessageUnsubscribe) {
+        window.currentPartyMessageUnsubscribe();
+        window.currentPartyMessageUnsubscribe = null;
     }
     showSection('parties');
 }
@@ -752,7 +753,12 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
 }
 
 function renderMessage(msg) {
-    var time = msg.timestamp && msg.timestamp.toDate ? msg.timestamp.toDate().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) : '';
+    var time = '';
+    if (msg.timestamp && msg.timestamp.toDate) {
+        time = msg.timestamp.toDate().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    } else if (msg.timestamp) {
+        time = 'Nu';
+    }
     return '<div style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--bg-elevated); border-radius: var(--radius-sm);">' +
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">' +
         '<span style="font-weight: 600; font-size: 0.875rem; color: var(--accent-gold);">' + (msg.userName || 'Okänd') + '</span>' +
@@ -1080,9 +1086,24 @@ function sendChatMessage(partyId) {
 }
 
 function savePartyNotes(partyId) {
-    var notes = document.getElementById('partyNotes').value;
+    var notes = document.getElementById('partyNotes');
+    if (!notes) return;
     
-    PartyService.updateParty(partyId, { notes: notes }).then(function() {
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    // Verify ownership before updating
+    PartyService.getParty(partyId).then(function(party) {
+        if (party.ownerId !== user.uid) {
+            showToast('Endast ägaren kan redigera anteckningar', 'error');
+            return;
+        }
+        
+        return PartyService.updateParty(partyId, { notes: notes.value });
+    }).then(function() {
         showToast('Anteckningar sparade!', 'success');
     }).catch(function(err) {
         showToast('Fel: ' + err.message, 'error');

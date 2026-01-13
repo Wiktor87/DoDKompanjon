@@ -23,7 +23,8 @@ service cloud.firestore {
          resource.data.isPublic == true);
       
       // Allow querying by inviteCode for join functionality
-      allow list: if request.auth != null;
+      allow list: if request.auth != null && 
+        request.query.limit <= 1;
       
       // Allow creating for any authenticated user
       allow create: if request.auth != null &&
