@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drakar och Demoner Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <!-- LANDING PAGE -->
+    <div id="landingPage">
+        <div class="landing-header">
+            <nav class="landing-nav">
+                <a href="#" class="nav-brand"><img src="DoDC_Logo.png" alt="D&D Kompanjon" class="brand-logo"></a>
+                <div class="nav-actions">
+                    <button id="loginBtn" class="btn btn-ghost">Logga in</button>
+                    <button id="signupBtn" class="btn btn-primary">Skapa konto</button>
+                </div>
+            </nav>
+            <section class="hero">
+                <div class="hero-bg" style="background-image: url('banner_img_02.png');"></div>
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="hero-title-main">Ditt Äventyr</span>
+                        <span class="hero-title-sub">Börjar Här</span>
+                    </h1>
+                    <p class="hero-description">Skapa karaktärer, organisera kampanjer och dela äventyr med dina vänner.</p>
+                    <div class="hero-cta">
+                        <button class="btn btn-gold btn-xl signup-trigger">⚔️ Börja Äventyra</button>
+                        <button class="btn btn-outline btn-xl" onclick="scrollToFeatures()">Utforska funktioner</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-heading">Allt du behöver för ditt äventyr</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎭</div>
+                        <h3>Karaktärsskapare</h3>
+                        <p>Skapa karaktärer med alla DoD 2023-regler.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📜</div>
+                        <h3>Kampanjhantering</h3>
+                        <p>Organisera dina kampanjer och bjud in spelare.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🗺️</div>
+                        <h3>Äventyrsbibliotek</h3>
+                        <p>Skriv och dela äventyr med communityn.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer class="landing-footer">© 2025 DoD Companion</footer>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app" class="hidden">
+        <header class="app-header">
+            <div class="header-top">
+                <div class="header-content">
+                    <a href="javascript:void(0)" class="header-brand" onclick="goToLanding()">
+                        <img src="DoDC_Logo.png" alt="D&D Kompanjon" class="brand-logo">
+                    </a>
+                    <div class="user-menu">
+                        <span class="user-name" id="userName">Användare</span>
+                        <button id="logoutBtn" class="btn btn-ghost btn-sm">Logga ut</button>
+                    </div>
+                </div>
+            </div>
+            <div class="header-sub">
+                <nav class="app-nav">
+                    <button type="button" class="nav-tab active" data-section="home">Översikt</button>
+                    <button type="button" class="nav-tab" data-section="characters">Karaktärer</button>
+                    <button type="button" class="nav-tab" data-section="campaigns">Kampanjer</button>
+                    <button type="button" class="nav-tab" data-section="adventures">Äventyr</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- Home -->
+            <section id="home" class="section active">
+                <div class="home-welcome">
+                    <h1>Välkommen, <span id="welcomeName">Äventyrare</span>!</h1>
+                </div>
+                <div class="quick-actions-grid">
+                    <button class="quick-action-card" onclick="openCharacterCreator()">
+                        <div class="qa-icon">🎭</div>
+                        <div class="qa-content"><h3>Skapa Karaktär</h3><p>Bygg din nästa hjälte</p></div>
+                    </button>
+                    <button class="quick-action-card" onclick="showSection('characters')">
+                        <div class="qa-icon">📋</div>
+                        <div class="qa-content"><h3>Mina Karaktärer</h3><p>Se och hantera dina hjältar</p></div>
+                    </button>
+                    <button class="quick-action-card" onclick="showSection('campaigns')">
+                        <div class="qa-icon">⚔️</div>
+                        <div class="qa-content"><h3>Kampanjer</h3><p>Hantera dina äventyr</p></div>
+                    </button>
+                </div>
+                <div class="home-section">
+                    <h2>🎭 Dina Karaktärer</h2>
+                    <div id="homeCharacters" class="character-cards">
+                        <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Characters -->
+            <section id="characters" class="section">
+                <div class="section-header-bar">
+                    <div>
+                        <h1>Mina Karaktärer</h1>
+                        <p id="characterCount">0 karaktärer</p>
+                    </div>
+                    <button class="btn btn-gold" onclick="openCharacterCreator()">✨ Ny Karaktär</button>
+                </div>
+                <div id="charactersGrid" class="characters-grid">
+                    <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
+                </div>
+            </section>
+
+            <!-- Campaigns -->
+            <section id="campaigns" class="section">
+                <h1>Kampanjer</h1>
+                <div class="coming-soon">
+                    <div class="coming-soon-icon">🚧</div>
+                    <h2>Kommer snart!</h2>
+                </div>
+            </section>
+
+            <!-- Adventures -->
+            <section id="adventures" class="section">
+                <h1>Äventyr</h1>
+                <div class="coming-soon">
+                    <div class="coming-soon-icon">🗺️</div>
+                    <h2>Kommer snart!</h2>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">×</button>
+            <h2>Välkommen</h2>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Logga in</button>
+                <button class="auth-tab" data-tab="register">Skapa konto</button>
+            </div>
+            <div id="authError" class="auth-error"></div>
+            
+            <form id="loginForm" class="auth-form active">
+                <input type="email" id="loginEmail" placeholder="E-post" required>
+                <input type="password" id="loginPassword" placeholder="Lösenord" required>
+                <button type="submit" class="btn btn-gold btn-block">Logga in</button>
+                <div class="auth-divider"><span>eller</span></div>
+                <button type="button" id="googleLoginBtn" class="btn btn-google btn-block">Fortsätt med Google</button>
+            </form>
+            
+            <form id="registerForm" class="auth-form">
+                <input type="text" id="registerUsername" placeholder="Användarnamn" required>
+                <input type="email" id="registerEmail" placeholder="E-post" required>
+                <input type="password" id="registerPassword" placeholder="Lösenord" required>
+                <button type="submit" class="btn btn-gold btn-block">Skapa konto</button>
+                <div class="auth-divider"><span>eller</span></div>
+                <button type="button" id="googleSignupBtn" class="btn btn-google btn-block">Fortsätt med Google</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Character Creator Modal -->
+    <div id="characterCreatorModal" class="modal modal-fullscreen">
+        <div class="modal-content modal-large">
+            <button class="close-modal" onclick="closeCharacterCreator()">×</button>
+            <h2>Skapa Karaktär</h2>
+            <div class="creator-progress">
+                <div class="progress-dot" id="step1"></div>
+                <div class="progress-dot" id="step2"></div>
+                <div class="progress-dot" id="step3"></div>
+                <div class="progress-dot" id="step4"></div>
+                <div class="progress-dot" id="step5"></div>
+                <div class="progress-dot" id="step6"></div>
+            </div>
+            <div id="creatorContent"></div>
+        </div>
+    </div>
+
+    <!-- Character Sheet Modal -->
+    <div id="characterSheetModal" class="modal modal-fullscreen">
+        <div class="modal-content modal-large">
+            <button class="close-modal" onclick="closeModal('characterSheetModal')">×</button>
+            <div id="characterSheetContainer"></div>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/character-service.js"></script>
+    <script src="js/character-creator.js"></script>
+    <script src="js/landing.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
