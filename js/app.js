@@ -294,8 +294,19 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()">+ Lägg till</button></h3>' +
         '<div id="inventoryList">' + (inventory.length === 0 ? '<div class="empty-inventory">Ingen utrustning ännu. Klicka "+ Lägg till" för att lägga till föremål.</div>' : 
             inventory.map(function(item, i) {
-                var name = typeof item === 'string' ? item : (item.name || '');
-                return '<div class="inventory-item"><input type="text" class="item-name-input" value="' + name + '" placeholder="Föremålsnamn"><button class="btn-icon-sm" onclick="this.parentElement.remove()">×</button></div>';
+                var itemData = typeof item === 'string' ? { name: item, type: '', weight: '', notes: '' } : item;
+                return '<div class="inventory-item-full">' +
+                    '<div class="inv-row"><label>Namn:</label><input type="text" class="inv-input" value="' + (itemData.name || '') + '" placeholder="Föremålsnamn" data-inv-field="name"></div>' +
+                    '<div class="inv-row"><label>Typ:</label><select class="inv-select" data-inv-field="type">' +
+                    '<option value="" ' + (!itemData.type ? 'selected' : '') + '>Välj typ</option>' +
+                    '<option value="Vapen" ' + (itemData.type === 'Vapen' ? 'selected' : '') + '>Vapen</option>' +
+                    '<option value="Rustning" ' + (itemData.type === 'Rustning' ? 'selected' : '') + '>Rustning</option>' +
+                    '<option value="Övrigt" ' + (itemData.type === 'Övrigt' ? 'selected' : '') + '>Övrigt</option>' +
+                    '</select></div>' +
+                    '<div class="inv-row"><label>Vikt:</label><input type="text" class="inv-input-sm" value="' + (itemData.weight || '') + '" placeholder="t.ex. 2 kg" data-inv-field="weight"></div>' +
+                    '<div class="inv-row"><label>Anteckningar:</label><input type="text" class="inv-input" value="' + (itemData.notes || '') + '" placeholder="Beskrivning" data-inv-field="notes"></div>' +
+                    '<button class="btn-icon-sm btn-delete" onclick="this.parentElement.remove()">🗑️</button>' +
+                    '</div>';
             }).join('')) + '</div></div></div></div></div>' +
         '<div class="sheet-tab-content" id="tab-personal">' +
         '<div class="sheet-body-grid">' +
@@ -330,8 +341,17 @@ function addInventoryItem() {
     var empty = list.querySelector('.empty-inventory');
     if (empty) empty.remove();
     var div = document.createElement('div');
-    div.className = 'inventory-item';
-    div.innerHTML = '<input type="text" class="item-name-input" placeholder="Nytt föremål"><button class="btn-icon-sm" onclick="this.parentElement.remove()">×</button>';
+    div.className = 'inventory-item-full';
+    div.innerHTML = '<div class="inv-row"><label>Namn:</label><input type="text" class="inv-input" placeholder="Föremålsnamn" data-inv-field="name"></div>' +
+        '<div class="inv-row"><label>Typ:</label><select class="inv-select" data-inv-field="type">' +
+        '<option value="">Välj typ</option>' +
+        '<option value="Vapen">Vapen</option>' +
+        '<option value="Rustning">Rustning</option>' +
+        '<option value="Övrigt">Övrigt</option>' +
+        '</select></div>' +
+        '<div class="inv-row"><label>Vikt:</label><input type="text" class="inv-input-sm" placeholder="t.ex. 2 kg" data-inv-field="weight"></div>' +
+        '<div class="inv-row"><label>Anteckningar:</label><input type="text" class="inv-input" placeholder="Beskrivning" data-inv-field="notes"></div>' +
+        '<button class="btn-icon-sm btn-delete" onclick="this.parentElement.remove()">🗑️</button>';
     list.appendChild(div);
     div.querySelector('input').focus();
 }
@@ -378,8 +398,14 @@ function saveCharacter() {
         if (v > 0) updates.weaponSkills[el.dataset.weaponSkill] = v;
     });
     updates.inventory = [];
-    document.querySelectorAll('.inventory-item .item-name-input').forEach(function(el) {
-        if (el.value.trim()) updates.inventory.push({ name: el.value.trim() });
+    document.querySelectorAll('.inventory-item-full').forEach(function(el) {
+        var item = {
+            name: (el.querySelector('[data-inv-field="name"]') || {}).value || '',
+            type: (el.querySelector('[data-inv-field="type"]') || {}).value || '',
+            weight: (el.querySelector('[data-inv-field="weight"]') || {}).value || '',
+            notes: (el.querySelector('[data-inv-field="notes"]') || {}).value || ''
+        };
+        if (item.name.trim()) updates.inventory.push(item);
     });
     updates.currency = {
         guld: parseInt((document.querySelector('[data-currency="guld"]') || {}).value) || 0,
