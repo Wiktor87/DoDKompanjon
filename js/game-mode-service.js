@@ -102,7 +102,7 @@ var GameModeService = {
     rollInitiative: function(characters) {
         return characters.map(function(char) {
             var smi = (char.attributes && char.attributes.SMI) || 10;
-            var roll = Math.floor(Math.random() * 20) + 1; // 1d20
+            var roll = Math.floor(Math.random() * 10) + 1; // 1d10 (range 1-10)
             return {
                 oderId: char.id,
                 type: 'character',
@@ -150,9 +150,13 @@ var GameModeService = {
     
     // Mass actions - damage all characters
     damageAll: function(characterIds, amount) {
+        var results = { updated: [], skipped: [], errors: [] };
         var promises = characterIds.map(function(charId) {
             return db.collection('characters').doc(charId).get().then(function(doc) {
-                if (!doc.exists) return;
+                if (!doc.exists) {
+                    results.skipped.push({ id: charId, reason: 'not found' });
+                    return;
+                }
                 var char = doc.data();
                 var attrs = char.attributes || {};
                 var maxKP = attrs.FYS || 0;
@@ -161,17 +165,27 @@ var GameModeService = {
                 return db.collection('characters').doc(charId).update({
                     currentKP: newKP,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(function() {
+                    results.updated.push({ id: charId, name: char.name });
+                }).catch(function(error) {
+                    results.skipped.push({ id: charId, name: char.name, reason: 'permission denied' });
                 });
             });
         });
-        return Promise.all(promises);
+        return Promise.all(promises).then(function() {
+            return results;
+        });
     },
     
     // Mass actions - rest all characters
     restAll: function(characterIds, restType) {
+        var results = { updated: [], skipped: [], errors: [] };
         var promises = characterIds.map(function(charId) {
             return db.collection('characters').doc(charId).get().then(function(doc) {
-                if (!doc.exists) return;
+                if (!doc.exists) {
+                    results.skipped.push({ id: charId, reason: 'not found' });
+                    return;
+                }
                 var char = doc.data();
                 var attrs = char.attributes || {};
                 var maxKP = attrs.FYS || 0;
@@ -192,10 +206,16 @@ var GameModeService = {
                     update.currentVP = maxVP;
                 }
                 
-                return db.collection('characters').doc(charId).update(update);
+                return db.collection('characters').doc(charId).update(update).then(function() {
+                    results.updated.push({ id: charId, name: char.name });
+                }).catch(function(error) {
+                    results.skipped.push({ id: charId, name: char.name, reason: 'permission denied' });
+                });
             });
         });
-        return Promise.all(promises);
+        return Promise.all(promises).then(function() {
+            return results;
+        });
     },
     
     // Session notes
@@ -219,6 +239,8 @@ var GameModeService = {
                 hp: 10,
                 maxHp: 10,
                 armor: 0,
+                undvika: 10,
+                movement: 10,
                 notes: ''
             }, monster);
             

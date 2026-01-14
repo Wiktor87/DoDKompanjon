@@ -106,6 +106,9 @@ var GameModeUI = {
         // Initiative Tracker
         html += this.renderInitiativeTracker();
         
+        // Monsters Panel
+        html += this.renderMonstersPanel();
+        
         // Quick Notes
         html += this.renderQuickNotes();
         
@@ -340,10 +343,13 @@ var GameModeUI = {
                 var itemClass = 'initiative-item';
                 if (index === currentIndex) itemClass += ' current';
                 
+                var diceIcon = '🎲';
+                var rollDisplay = item.roll ? ' 🎲' + item.roll : '';
+                
                 html += '<div class="' + itemClass + '">' +
                     '<span class="initiative-number">' + (index + 1) + '.</span>' +
                     '<span class="initiative-name">' + item.name + '</span>' +
-                    '<span class="initiative-total">(' + item.total + ')</span>' +
+                    '<span class="initiative-total">' + rollDisplay + ' (' + item.total + ')</span>' +
                     '</div>';
             });
             
@@ -384,6 +390,121 @@ var GameModeUI = {
             '</div>';
         
         return html;
+    },
+    
+    // Render monsters panel
+    renderMonstersPanel: function() {
+        var monsters = (this.currentSession && this.currentSession.monsters) || [];
+        
+        var html = '<div class="monsters-panel">' +
+            '<div class="monsters-header">' +
+            '<h3>👹 Monster</h3>' +
+            '</div>';
+        
+        if (monsters.length === 0) {
+            html += '<p style="color: var(--text-muted); padding: 1rem; text-align: center;">Inga monster tillagda</p>';
+        } else {
+            html += '<div class="monsters-grid">';
+            monsters.forEach(function(monster) {
+                html += this.renderMonsterCard(monster);
+            }.bind(this));
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        
+        return html;
+    },
+    
+    // Render monster card
+    renderMonsterCard: function(monster) {
+        return '<div class="monster-card" data-monster-id="' + monster.id + '">' +
+            '<div class="monster-header">' +
+            '<span class="monster-name">🐺 ' + this.escapeHtml(monster.name) + '</span>' +
+            '<button class="btn-remove-monster" onclick="GameModeUI.removeMonster(\'' + monster.id + '\')">✕</button>' +
+            '</div>' +
+            '<div class="monster-hp">' +
+            '<label>KP:</label>' +
+            '<span class="monster-hp-value">' + monster.hp + '/' + monster.maxHp + '</span>' +
+            '<button class="btn-sm" onclick="GameModeUI.adjustMonsterHP(\'' + monster.id + '\', -1)">−</button>' +
+            '<button class="btn-sm" onclick="GameModeUI.adjustMonsterHP(\'' + monster.id + '\', 1)">+</button>' +
+            '</div>' +
+            '<div class="monster-stats">' +
+            '<div class="monster-stat">' +
+            '<span class="stat-icon">🛡️</span>' +
+            '<span class="stat-value">' + monster.armor + '</span>' +
+            '<span class="stat-label">Rustning</span>' +
+            '</div>' +
+            '<div class="monster-stat">' +
+            '<span class="stat-icon">🔄</span>' +
+            '<span class="stat-value">' + (monster.undvika || 0) + '</span>' +
+            '<span class="stat-label">Undvika</span>' +
+            '</div>' +
+            '<div class="monster-stat">' +
+            '<span class="stat-icon">🏃</span>' +
+            '<span class="stat-value">' + (monster.movement || 10) + '</span>' +
+            '<span class="stat-label">Förfl.</span>' +
+            '</div>' +
+            '</div>' +
+            (monster.notes ? '<div class="monster-notes">' + this.escapeHtml(monster.notes) + '</div>' : '') +
+            '</div>';
+    },
+    
+    // Escape HTML to prevent XSS
+    escapeHtml: function(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    },
+    
+    // Remove monster
+    removeMonster: function(monsterId) {
+        var self = this;
+        if (!confirm('Ta bort detta monster?')) return;
+        
+        GameModeService.removeMonster(self.currentSession.id, monsterId)
+            .then(function() {
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.render();
+                }
+            })
+            .catch(function(error) {
+                console.error('Error removing monster:', error);
+                alert('Kunde inte ta bort monster: ' + error.message);
+            });
+    },
+    
+    // Adjust monster HP
+    adjustMonsterHP: function(monsterId, delta) {
+        var self = this;
+        var monsters = (self.currentSession && self.currentSession.monsters) || [];
+        var monster = monsters.find(function(m) { return m.id === monsterId; });
+        if (!monster) return;
+        
+        var newHP = Math.max(0, Math.min(monster.maxHp, monster.hp + delta));
+        
+        GameModeService.updateMonster(self.currentSession.id, monsterId, { hp: newHP })
+            .then(function() {
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.render();
+                }
+            })
+            .catch(function(error) {
+                console.error('Error updating monster HP:', error);
+            });
     },
     
     // Handle KP/VP pip clicks
@@ -510,8 +631,21 @@ var GameModeUI = {
         
         var characterIds = this.characters.map(function(c) { return c.id; });
         GameModeService.damageAll(characterIds, amount)
-            .then(function() {
-                console.log('Damage applied to all characters');
+            .then(function(results) {
+                var message = 'Skada applicerad!\n\n';
+                if (results.updated.length > 0) {
+                    message += 'Uppdaterade (' + results.updated.length + '):\n';
+                    results.updated.forEach(function(char) {
+                        message += '✓ ' + char.name + '\n';
+                    });
+                }
+                if (results.skipped.length > 0) {
+                    message += '\nHoppades över (' + results.skipped.length + '):\n';
+                    results.skipped.forEach(function(char) {
+                        message += '✗ ' + (char.name || char.id) + ' (' + char.reason + ')\n';
+                    });
+                }
+                alert(message);
             })
             .catch(function(error) {
                 console.error('Error applying damage:', error);
@@ -525,8 +659,21 @@ var GameModeUI = {
         
         var characterIds = this.characters.map(function(c) { return c.id; });
         GameModeService.restAll(characterIds, restType)
-            .then(function() {
-                console.log('Rest applied to all characters');
+            .then(function(results) {
+                var message = 'Vila applicerad!\n\n';
+                if (results.updated.length > 0) {
+                    message += 'Uppdaterade (' + results.updated.length + '):\n';
+                    results.updated.forEach(function(char) {
+                        message += '✓ ' + char.name + '\n';
+                    });
+                }
+                if (results.skipped.length > 0) {
+                    message += '\nHoppades över (' + results.skipped.length + '):\n';
+                    results.skipped.forEach(function(char) {
+                        message += '✗ ' + (char.name || char.id) + ' (' + char.reason + ')\n';
+                    });
+                }
+                alert(message);
             })
             .catch(function(error) {
                 console.error('Error applying rest:', error);
@@ -536,6 +683,7 @@ var GameModeUI = {
     
     // Open add monster modal
     openAddMonsterModal: function() {
+        var self = this;
         var name = prompt('Monsternamn:');
         if (!name) return;
         
@@ -547,17 +695,35 @@ var GameModeUI = {
         armor = parseInt(armor, 10);
         if (isNaN(armor)) armor = 0;
         
+        var undvika = prompt('Undvika:', '10');
+        undvika = parseInt(undvika, 10);
+        if (isNaN(undvika)) undvika = 10;
+        
+        var movement = prompt('Förflyttning:', '10');
+        movement = parseInt(movement, 10);
+        if (isNaN(movement)) movement = 10;
+        
         var monster = {
             name: name,
             hp: hp,
             maxHp: hp,
             armor: armor,
+            undvika: undvika,
+            movement: movement,
             notes: ''
         };
         
         GameModeService.addMonster(this.currentSession.id, monster)
             .then(function() {
                 console.log('Monster added');
+                // Refresh session to show new monster
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.render();
+                }
             })
             .catch(function(error) {
                 console.error('Error adding monster:', error);
