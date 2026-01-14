@@ -38,6 +38,7 @@
                         <button type="button" class="nav-tab" data-section="parties" data-require-auth="true">Grupp</button>
                         <button type="button" class="nav-tab" data-section="campaigns" data-require-auth="true">Kampanjer</button>
                         <button type="button" class="nav-tab" data-section="adventures" data-require-auth="true">Äventyr</button>
+                        <button type="button" class="nav-tab" data-section="homebrew" data-require-auth="true">🧪 Hemmabryggt</button>
                     </nav>
                 </div>
             </header>
@@ -132,6 +133,7 @@
                     <button type="button" class="nav-tab" data-section="parties">Grupp</button>
                     <button type="button" class="nav-tab" data-section="campaigns">Kampanjer</button>
                     <button type="button" class="nav-tab" data-section="adventures">Äventyr</button>
+                    <button type="button" class="nav-tab" data-section="homebrew">🧪 Hemmabryggt</button>
                 </nav>
             </div>
         </header>
@@ -252,6 +254,21 @@
                 <div class="coming-soon">
                     <div class="coming-soon-icon">🗺️</div>
                     <h2>Kommer snart!</h2>
+                </div>
+            </section>
+
+            <!-- Hemmabryggt (Homebrew) -->
+            <section id="homebrew" class="section">
+                <div class="homebrew-wrapper">
+                    <!-- Navigation buttons -->
+                    <div class="homebrew-nav">
+                        <button class="homebrew-nav-btn active" data-homebrew-view="browse">Utforska Homebrew</button>
+                        <button class="homebrew-nav-btn" data-homebrew-view="collection">Min Samling</button>
+                        <button class="homebrew-nav-btn" data-homebrew-view="create">Skapa Nytt</button>
+                    </div>
+                    
+                    <!-- Content area -->
+                    <div id="homebrewContent"></div>
                 </div>
             </section>
 
@@ -389,6 +406,9 @@
     <script src="js/auth.js"></script>
     <script src="js/character-service.js"></script>
     <script src="js/party-service.js"></script>
+    <script src="js/homebrew-service.js"></script>
+    <script src="js/user-profile-service.js"></script>
+    <script src="js/homebrew-ui.js"></script>
     <script src="js/character-creator.js"></script>
     <script src="js/landing.js"></script>
     <script src="js/app.js"></script>

@@ -91,6 +91,11 @@ function showSection(sectionId) {
     
     if (sectionId === 'characters') loadCharactersList();
     if (sectionId === 'parties') loadPartiesList();
+    if (sectionId === 'homebrew') {
+        if (typeof HomebrewUI !== 'undefined') {
+            HomebrewUI.init();
+        }
+    }
 }
 
 function goToLanding() {

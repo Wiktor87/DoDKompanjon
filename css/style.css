@@ -1853,3 +1853,773 @@ body.app-active::before {
 .mt-2-v2 {
     margin-top: 1rem;
 }
+
+/* ============================================
+   HEMMABRYGGT (HOMEBREW) STYLES
+   ============================================ */
+
+/* Homebrew Colors - Exact from JSX mockup */
+:root {
+    --homebrew-bg-main: linear-gradient(135deg, #0d0d0d 0%, #1a1d24 100%);
+    --homebrew-bg-header: rgba(13, 13, 13, 0.95);
+    --homebrew-bg-card: linear-gradient(145deg, #1e2128 0%, #22262f 100%);
+    --homebrew-bg-input: #0d0d0d;
+    --homebrew-bg-dark: #1e2128;
+    --homebrew-border-default: #2d3341;
+    --homebrew-gold-primary: #d4af37;
+    --homebrew-gold-light: #f0d875;
+    --homebrew-gold-dark: #8b7335;
+    --homebrew-text-primary: #f5f5f5;
+    --homebrew-text-secondary: #a0a8b8;
+    --homebrew-text-muted: #6b7280;
+    --homebrew-red-monster: #dc2626;
+    --homebrew-red-monster-bg: rgba(197, 48, 48, 0.1);
+}
+
+/* Homebrew Wrapper */
+.homebrew-wrapper {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Navigation Buttons */
+.homebrew-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--homebrew-border-default);
+}
+
+.homebrew-nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--homebrew-text-secondary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+}
+
+.homebrew-nav-btn:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.homebrew-nav-btn.active {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--homebrew-gold-primary);
+}
+
+/* Browse View */
+.homebrew-browse {
+    width: 100%;
+}
+
+.homebrew-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.homebrew-title {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--homebrew-text-primary);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.homebrew-search-bar {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.homebrew-search-input {
+    width: 100%;
+    background: var(--homebrew-bg-input);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    color: var(--homebrew-text-primary);
+    font-size: 1rem;
+    font-family: var(--font-body);
+}
+
+.homebrew-search-input::placeholder {
+    color: var(--homebrew-text-muted);
+}
+
+.homebrew-search-input:focus {
+    outline: none;
+    border-color: var(--homebrew-gold-primary);
+}
+
+/* Category Tabs */
+.homebrew-categories {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.homebrew-category-tab {
+    background: var(--homebrew-bg-dark);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    color: var(--homebrew-text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.homebrew-category-tab:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: var(--homebrew-gold-dark);
+}
+
+.homebrew-category-tab.active {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--homebrew-gold-primary);
+    color: var(--homebrew-gold-primary);
+}
+
+.category-icon {
+    font-size: 1.25rem;
+}
+
+.category-label {
+    font-weight: 600;
+}
+
+/* Filter Bar */
+.homebrew-filter-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.homebrew-sort-select {
+    background: var(--homebrew-bg-input);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--homebrew-text-primary);
+    font-family: var(--font-body);
+    cursor: pointer;
+}
+
+.homebrew-sort-select:focus {
+    outline: none;
+    border-color: var(--homebrew-gold-primary);
+}
+
+/* Homebrew Grid */
+.homebrew-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Homebrew Card */
+.homebrew-card {
+    background: var(--homebrew-bg-card);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.homebrew-card:hover {
+    border-color: var(--homebrew-gold-dark);
+    transform: translateY(-2px);
+}
+
+.homebrew-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.homebrew-type-badge {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--homebrew-gold-primary);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.homebrew-rating {
+    color: var(--homebrew-gold-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.homebrew-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--homebrew-text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.homebrew-card-description {
+    color: var(--homebrew-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.homebrew-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--homebrew-border-default);
+}
+
+/* Author Info */
+.homebrew-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.homebrew-author:hover {
+    opacity: 0.8;
+}
+
+.author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--homebrew-gold-dark);
+    color: var(--homebrew-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.author-avatar-large {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--homebrew-gold-dark);
+    color: var(--homebrew-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.author-name {
+    font-size: 0.875rem;
+    color: var(--homebrew-text-secondary);
+    font-weight: 500;
+}
+
+.homebrew-stats {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.stat-item {
+    font-size: 0.8rem;
+    color: var(--homebrew-text-muted);
+}
+
+/* Add Button */
+.homebrew-add-btn {
+    background: linear-gradient(135deg, var(--homebrew-gold-primary), var(--homebrew-gold-light));
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: #1a1a1a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    font-family: var(--font-body);
+}
+
+.homebrew-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+/* Collection View */
+.homebrew-collection {
+    width: 100%;
+}
+
+.collection-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--homebrew-border-default);
+    padding-bottom: 0.5rem;
+}
+
+.collection-tab {
+    background: transparent;
+    border: none;
+    color: var(--homebrew-text-secondary);
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.collection-tab:hover {
+    color: var(--homebrew-gold-light);
+}
+
+.collection-tab.active {
+    color: var(--homebrew-gold-primary);
+    border-bottom-color: var(--homebrew-gold-primary);
+}
+
+.collection-content {
+    min-height: 400px;
+}
+
+.collection-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.collection-item {
+    background: var(--homebrew-bg-card);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s;
+}
+
+.collection-item:hover {
+    border-color: var(--homebrew-gold-dark);
+}
+
+.collection-item-icon {
+    font-size: 2rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.collection-item-content {
+    flex-grow: 1;
+}
+
+.collection-item-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--homebrew-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.collection-item-type {
+    font-size: 0.875rem;
+    color: var(--homebrew-text-muted);
+}
+
+.collection-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.collection-action-btn {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--homebrew-gold-dark);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    color: var(--homebrew-gold-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+}
+
+.collection-action-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--homebrew-gold-primary);
+}
+
+.collection-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.collection-empty p {
+    color: var(--homebrew-text-secondary);
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Create View */
+.homebrew-create {
+    width: 100%;
+}
+
+.create-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.type-card {
+    background: var(--homebrew-bg-card);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.type-card:hover {
+    border-color: var(--homebrew-gold-primary);
+    background: rgba(212, 175, 55, 0.05);
+    transform: translateY(-4px);
+}
+
+.type-icon {
+    font-size: 3rem;
+}
+
+.type-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--homebrew-text-primary);
+}
+
+/* Create Form */
+.homebrew-create-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.btn-back {
+    background: transparent;
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--homebrew-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+}
+
+.btn-back:hover {
+    border-color: var(--homebrew-gold-primary);
+    color: var(--homebrew-gold-primary);
+}
+
+.form-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--homebrew-text-primary);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    color: var(--homebrew-text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    background: var(--homebrew-bg-input);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    color: var(--homebrew-text-primary);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--homebrew-gold-primary);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Visibility Options */
+.form-visibility {
+    margin-bottom: 2rem;
+}
+
+.form-visibility h3 {
+    color: var(--homebrew-text-primary);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.visibility-options {
+    display: flex;
+    gap: 1rem;
+}
+
+.visibility-option {
+    flex: 1;
+    cursor: pointer;
+}
+
+.visibility-option input[type="radio"] {
+    display: none;
+}
+
+.visibility-option span {
+    display: block;
+    background: var(--homebrew-bg-input);
+    border: 2px solid var(--homebrew-border-default);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    color: var(--homebrew-text-secondary);
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+.visibility-option input[type="radio"]:checked + span {
+    border-color: var(--homebrew-gold-primary);
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--homebrew-gold-primary);
+}
+
+.visibility-option:hover span {
+    border-color: var(--homebrew-gold-dark);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+/* Author Profile Modal */
+.homebrew-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+}
+
+.modal-content {
+    background: var(--homebrew-bg-dark);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 16px;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--homebrew-border-default);
+}
+
+.modal-header h2 {
+    color: var(--homebrew-text-primary);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    letter-spacing: 2px;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--homebrew-text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--homebrew-gold-primary);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.author-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.author-info h3 {
+    color: var(--homebrew-text-primary);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.author-member-since {
+    color: var(--homebrew-text-muted);
+    font-size: 0.875rem;
+}
+
+.author-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-box {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--homebrew-gold-dark);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--homebrew-gold-primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--homebrew-text-secondary);
+}
+
+.author-bio {
+    color: var(--homebrew-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.author-homebrews {
+    margin-top: 2rem;
+}
+
+.author-homebrews h3 {
+    color: var(--homebrew-text-primary);
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Loading and Empty States */
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--homebrew-text-secondary);
+}
+
+.homebrew-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--homebrew-text-secondary);
+}
+
+.error {
+    text-align: center;
+    padding: 3rem;
+    color: var(--homebrew-red-monster);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .homebrew-wrapper {
+        padding: 1rem;
+    }
+    
+    .homebrew-nav {
+        flex-wrap: wrap;
+    }
+    
+    .homebrew-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .homebrew-categories {
+        flex-wrap: wrap;
+    }
+    
+    .create-type-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .author-stats-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .visibility-options {
+        flex-direction: column;
+    }
+    
+    .homebrew-title {
+        font-size: 2rem;
+    }
+}
