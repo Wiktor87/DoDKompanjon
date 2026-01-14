@@ -37,12 +37,20 @@ var WEAPON_SKILLS = ['Armborst', 'Båge', 'Kastspjut', 'Sköld', 'Slagsmål', 'S
 // Navigation
 function showSection(sectionId) {
     console.log('📍 showSection:', sectionId);
-    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+    var navTabs = document.querySelectorAll('.nav-tab');
+    navTabs.forEach(function(t) { 
+        if (t) t.classList.remove('active'); 
+    });
     var tab = document.querySelector('.nav-tab[data-section="' + sectionId + '"]');
     if (tab) tab.classList.add('active');
-    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+    
+    var sections = document.querySelectorAll('.section');
+    sections.forEach(function(s) { 
+        if (s) s.classList.remove('active'); 
+    });
     var section = document.getElementById(sectionId);
     if (section) section.classList.add('active');
+    
     if (sectionId === 'characters') loadCharactersList();
     if (sectionId === 'parties') loadPartiesList();
 }

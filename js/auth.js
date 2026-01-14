@@ -252,6 +252,15 @@ document.addEventListener('DOMContentLoaded', function() {
             auth.signOut();
         };
     }
+    
+    // Forgot password link
+    var forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    if (forgotPasswordLink) {
+        forgotPasswordLink.onclick = function(e) {
+            e.preventDefault();
+            handleForgotPassword();
+        };
+    }
 });
 
 function showAuthError(message) {
@@ -290,4 +299,30 @@ function getCurrentUser() {
 
 function isUserLoggedIn() {
     return currentUser !== null;
+}
+
+function handleForgotPassword() {
+    var email = document.getElementById('loginEmail').value;
+    
+    if (!email || !email.trim()) {
+        // Prompt user to enter email
+        var userEmail = prompt('Ange din e-postadress för att återställa lösenordet:');
+        if (!userEmail || !userEmail.trim()) {
+            return;
+        }
+        email = userEmail.trim();
+    }
+    
+    console.log('Password reset requested for:', email);
+    
+    auth.sendPasswordResetEmail(email)
+        .then(function() {
+            alert('Ett e-postmeddelande för återställning av lösenord har skickats till ' + email + '. Kontrollera din inkorg.');
+            console.log('Password reset email sent successfully');
+        })
+        .catch(function(error) {
+            console.error('Password reset error:', error);
+            var errorMessage = getErrorMessage(error.code) || 'Kunde inte skicka återställnings-e-post. Kontrollera e-postadressen.';
+            showAuthError(errorMessage);
+        });
 }
