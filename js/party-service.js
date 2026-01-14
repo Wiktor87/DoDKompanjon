@@ -185,6 +185,24 @@ var PartyService = {
             characterIds: firebase.firestore.FieldValue.arrayRemove(characterId),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+    },
+    
+    setNextSession: function(partyId, formattedDate, timestamp) {
+        if (!partyId) {
+            return Promise.reject(new Error('Party ID krävs'));
+        }
+        
+        var user = getCurrentUser();
+        if (!user) {
+            return Promise.reject(new Error('Inte inloggad'));
+        }
+        
+        return db.collection('parties').doc(partyId).update({
+            nextSession: formattedDate,
+            nextSessionTimestamp: timestamp,
+            lastSessionNotificationSent: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
     }
 };
 

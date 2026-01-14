@@ -1014,6 +1014,30 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
         '</div></div>' +
         '</div></div>';
     
+    // Next Session section
+    if (party.nextSession || isOwner) {
+        html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">' +
+            '<h3 style="margin: 0; font-size: 1rem;">📅 Nästa Session</h3>';
+        
+        if (isOwner) {
+            html += '<button class="btn btn-gold btn-xs" onclick="openSessionScheduler(\'' + party.id + '\')">⚙️ Schemalägg</button>';
+        }
+        
+        html += '</div>';
+        
+        if (party.nextSession) {
+            html += '<div class="next-session-badge" style="margin-top: 0.75rem;">' +
+                '<div class="badge-label">Nästa session</div>' +
+                '<div class="badge-value">' + party.nextSession + '</div>' +
+                '</div>';
+        } else {
+            html += '<p style="color: var(--text-muted); margin-top: 0.5rem;">Ingen session schemalagd ännu</p>';
+        }
+        
+        html += '</div>';
+    }
+    
     // Show join requests if owner and there are pending requests
     if (isOwner && joinRequests && joinRequests.length > 0) {
         html += '<div style="margin-bottom: 2rem; background: var(--bg-elevated); border: 1px solid var(--accent-gold); border-radius: var(--radius-lg); padding: 1rem;">' +
@@ -1511,6 +1535,98 @@ function sendChatMessage(partyId) {
     }).catch(function(err) {
         showToast('Fel: ' + err.message, 'error');
     });
+}
+
+// Session Scheduler Modal
+function openSessionScheduler(partyId) {
+    // Create modal HTML
+    var modal = document.getElementById('sessionSchedulerModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sessionSchedulerModal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    // Get current date/time for default values
+    var now = new Date();
+    var dateStr = now.toISOString().split('T')[0];
+    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    
+    modal.innerHTML = 
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h2>📅 Schemalägg Session</h2>' +
+        '<button class="modal-close" onclick="closeSessionScheduler()">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<form id="sessionSchedulerForm" onsubmit="saveSession(\'' + partyId + '\'); return false;">' +
+        '<div class="form-group">' +
+        '<label for="sessionDate">Datum</label>' +
+        '<input type="date" id="sessionDate" class="creator-input" required value="' + dateStr + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<label for="sessionTime">Tid</label>' +
+        '<input type="time" id="sessionTime" class="creator-input" required value="' + timeStr + '">' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-outline" onclick="closeSessionScheduler()">Avbryt</button>' +
+        '<button type="submit" class="btn btn-gold">Spara</button>' +
+        '</div>' +
+        '</form>' +
+        '</div>' +
+        '</div>';
+    
+    modal.classList.add('active');
+}
+
+function closeSessionScheduler() {
+    var modal = document.getElementById('sessionSchedulerModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function saveSession(partyId) {
+    var dateInput = document.getElementById('sessionDate');
+    var timeInput = document.getElementById('sessionTime');
+    
+    if (!dateInput || !timeInput) return;
+    
+    var dateValue = dateInput.value;
+    var timeValue = timeInput.value;
+    
+    if (!dateValue || !timeValue) {
+        showToast('Fyll i både datum och tid', 'error');
+        return;
+    }
+    
+    // Combine date and time
+    var dateTime = new Date(dateValue + 'T' + timeValue);
+    
+    // Format for display in Swedish
+    var days = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+    var months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+    
+    var dayName = days[dateTime.getDay()];
+    var day = dateTime.getDate();
+    var month = months[dateTime.getMonth()];
+    var hours = dateTime.getHours().toString().padStart(2, '0');
+    var minutes = dateTime.getMinutes().toString().padStart(2, '0');
+    
+    var formattedDate = dayName + ' ' + day + ' ' + month + ', ' + hours + ':' + minutes;
+    
+    // Save to party
+    PartyService.setNextSession(partyId, formattedDate, firebase.firestore.Timestamp.fromDate(dateTime))
+        .then(function() {
+            showToast('Session schemalagd!', 'success');
+            closeSessionScheduler();
+            // Reload party view to show new session
+            viewParty(partyId);
+        })
+        .catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
 }
 
 function savePartyNotes(partyId) {
