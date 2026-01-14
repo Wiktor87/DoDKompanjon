@@ -63,5 +63,46 @@ service cloud.firestore {
         (resource.data.requesterId == request.auth.uid ||
          resource.data.groupOwnerId == request.auth.uid);
     }
+    
+    // Homebrew - public content readable by all authenticated users
+    match /homebrew/{homebrewId} {
+      allow read: if request.auth != null && 
+        (resource.data.visibility == 'public' ||
+         resource.data.authorId == request.auth.uid ||
+         (resource.data.visibility == 'group' && 
+          exists(/databases/$(database)/documents/parties/$(resource.data.groupId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/parties/$(resource.data.groupId)).data.memberIds));
+      
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.authorId;
+      
+      allow update, delete: if request.auth != null &&
+        resource.data.authorId == request.auth.uid;
+    }
+    
+    // User profiles - public read, owner write
+    match /userProfiles/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Collections - user's own only
+    match /homebrewCollections/{docId} {
+      allow read: if request.auth != null &&
+        (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Ratings - authenticated users
+    match /homebrewRatings/{ratingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+    }
   }
 }
