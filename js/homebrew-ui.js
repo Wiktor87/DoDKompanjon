@@ -36,22 +36,15 @@ var HomebrewUI = {
                 self.sortBy(sort);
             }
             
-            // Homebrew card click
-            if (e.target.closest('[data-homebrew-id]')) {
-                var card = e.target.closest('[data-homebrew-id]');
-                // Don't trigger if clicking on buttons inside
-                if (!e.target.matches('button') && !e.target.closest('button')) {
-                    var homebrewId = card.getAttribute('data-homebrew-id');
-                    self.showHomebrewDetail(homebrewId);
-                }
-            }
-            
             // Author click - use closest to handle clicks on child elements
             if (e.target.closest('.homebrew-author[data-author-id]')) {
-                e.stopPropagation(); // Prevent card click
-                var authorEl = e.target.closest('.homebrew-author[data-author-id]');
-                var authorId = authorEl.getAttribute('data-author-id');
-                self.showAuthorProfile(authorId);
+                // Only handle if NOT in detail modal (detail modal has its own onclick)
+                if (!e.target.closest('.homebrew-detail-modal')) {
+                    e.stopPropagation(); // Prevent card click
+                    var authorEl = e.target.closest('.homebrew-author[data-author-id]');
+                    var authorId = authorEl.getAttribute('data-author-id');
+                    self.showAuthorProfile(authorId);
+                }
             }
             
             // Save to collection
