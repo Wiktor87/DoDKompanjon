@@ -654,7 +654,7 @@ function viewParty(id) {
         });
     }).catch(function(err) {
         console.error('Error loading party:', err);
-        var errorMsg = err.message || 'Kunde inte ladda gruppen';
+        var errorMsg = (err && err.message) || 'Kunde inte ladda gruppen';
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + errorMsg + '</p><button class="btn btn-outline" onclick="closePartyView()">Tillbaka</button></div>';
     });
 }
@@ -991,17 +991,17 @@ function openJoinGroupModal() {
 }
 
 function searchGroupByCode() {
-    var code = document.getElementById('groupInviteCode').value;
+    var searchInput = document.getElementById('groupInviteCode').value;
     var container = document.getElementById('foundGroupContainer');
     
-    if (!code || !code.trim()) {
+    if (!searchInput || !searchInput.trim()) {
         showToast('Ange en inbjudningskod eller gruppnamn', 'error');
         return;
     }
     
     container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Söker...</p></div>';
     
-    var searchTerm = code.trim().toUpperCase();
+    var searchTerm = searchInput.trim().toUpperCase();
     
     // Try to search by invite code first
     PartyService.searchPartyByCode(searchTerm).then(function(party) {
@@ -1015,6 +1015,8 @@ function searchGroupByCode() {
 
 function searchGroupByName(searchTerm, container) {
     // Search for groups where the name contains the search term (case-insensitive)
+    // Note: This performs client-side filtering. For large datasets, consider
+    // implementing server-side search with Firestore queries or Algolia
     var user = getCurrentUser();
     if (!user) {
         container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--brand-red);"><p>❌ Du måste vara inloggad</p></div>';
@@ -1029,7 +1031,7 @@ function searchGroupByName(searchTerm, container) {
                 var data = doc.data();
                 var name = (data.name || '').toUpperCase();
                 // Match if name contains search term
-                if (name.indexOf(searchTerm) !== -1) {
+                if (name.includes(searchTerm)) {
                     matches.push(Object.assign({ id: doc.id }, data));
                 }
             });
