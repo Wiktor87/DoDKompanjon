@@ -34,6 +34,44 @@ var ALL_SKILLS = {
 
 var WEAPON_SKILLS = ['Armborst', 'Båge', 'Kastspjut', 'Sköld', 'Slagsmål', 'Svärd/Kniv', 'Yxa/Hammare', 'Stångvapen'];
 
+// Character Sheet V2 - Skills and Weapon Skills from JSX specifications
+var SKILLS = {
+    'Bestiologi': { attr: 'INT' },
+    'Bluffa': { attr: 'KAR' },
+    'Fingerfärdighet': { attr: 'SMI' },
+    'Finna dolda ting': { attr: 'INT' },
+    'Främmande språk': { attr: 'INT' },
+    'Hantverk': { attr: 'STY' },
+    'Hoppa & klättra': { attr: 'SMI' },
+    'Jakt & fiske': { attr: 'SMI' },
+    'Köpslå': { attr: 'KAR' },
+    'Läkekonst': { attr: 'INT' },
+    'Myter & legender': { attr: 'INT' },
+    'Rida': { attr: 'SMI' },
+    'Simma': { attr: 'SMI' },
+    'Sjökunnighet': { attr: 'INT' },
+    'Smyga': { attr: 'SMI' },
+    'Undvika': { attr: 'SMI' },
+    'Uppträda': { attr: 'KAR' },
+    'Upptäcka fara': { attr: 'INT' },
+    'Vildmarksvana': { attr: 'INT' },
+    'Övertala': { attr: 'KAR' }
+};
+
+var WEAPON_SKILLS_V2 = {
+    'Armborst': { attr: 'SMI' },
+    'Hammare': { attr: 'STY' },
+    'Kniv': { attr: 'SMI' },
+    'Pilbåge': { attr: 'SMI' },
+    'Slagsmål': { attr: 'STY' },
+    'Slunga': { attr: 'SMI' },
+    'Spjut': { attr: 'STY' },
+    'Stav': { attr: 'SMI' },
+    'Svärd': { attr: 'STY' },
+    'Yxa': { attr: 'STY' }
+};
+
+
 // Navigation
 function showSection(sectionId) {
     console.log('📍 showSection:', sectionId);
@@ -334,212 +372,444 @@ function renderCharacterCardFull(char) {
 
 // View Character
 function viewCharacter(id) {
-    console.log('👁️ viewCharacter:', id);
-    var container = document.getElementById('characterSheetContainer');
-    if (!container) return;
-    
-    // Switch to character sheet section
-    showSection('characterSheet');
-    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
-    
-    CharacterService.getCharacter(id).then(function(char) {
-        currentCharacter = char;
-        container.innerHTML = renderFullCharacterSheet(char);
-        // Setup listeners for kin/profession/age changes
-        setupKinChangeListener();
-    }).catch(function(err) {
-        console.error('Failed to load character:', err);
-        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
-    });
-}
-
-function closeCharacterSheet() {
-    showSection('characters');
-    currentCharacter = null;
-}
-
-function renderFullCharacterSheet(char) {
     var icon = getKinIcon(char.kin);
     var attrs = char.attributes || {};
     var skills = char.skills || {};
     var weaponSkills = char.weaponSkills || {};
-    var inventory = char.inventory || [];
-    var currency = char.currency || { guld: 0, silver: 0, brons: 0 };
+    var conditions = char.conditions || {};
+    var deathSaves = char.deathSaves || { successes: 0, failures: 0 };
     var maxKp = attrs.FYS || 0;
     var maxVp = attrs.PSY || 0;
-    var currentKp = char.currentKP || maxKp;
-    var currentVp = char.currentVP || maxVp;
-    var kpPercent = maxKp > 0 ? (currentKp / maxKp * 100) : 0;
-    var vpPercent = maxVp > 0 ? (currentVp / maxVp * 100) : 0;
+    var currentKp = char.currentKP !== undefined ? char.currentKP : maxKp;
+    var currentVp = char.currentVP !== undefined ? char.currentVP : maxVp;
     
-    // Calculate secondary attributes
-    var movement = char.movement || 10;
-    var damageBonus = Math.floor((attrs.STY || 10) / DAMAGE_BONUS_DIVISOR) + DAMAGE_BONUS_BASE;
+    // Condition labels
+    var conditionLabels = {
+        STY: 'Utmattad',
+        FYS: 'Krasslig',
+        SMI: 'Omtöcknad',
+        INT: 'Arg',
+        PSY: 'Rädd',
+        KAR: 'Uppgiven'
+    };
     
-    return '<div class="character-sheet-full">' +
-        '<div class="sheet-header-full">' +
-        '<div class="sheet-portrait-large">' + icon + '</div>' +
-        '<div class="sheet-header-info">' +
-        '<input type="text" class="sheet-name-input" value="' + (char.name || '') + '" data-field="name">' +
-        '<div class="sheet-subtitle-row">' + [char.kin, char.profession, char.age].filter(Boolean).join(' • ') + '</div>' +
-        '<div class="sheet-hp-vp-bar">' +
-        '<div class="hp-vp-progress-bar">' +
-        '<div class="progress-label"><span class="progress-label-text">❤️ Kroppspoäng (KP)</span>' +
-        '<div class="progress-bar-input-group">' +
-        '<input type="number" class="progress-bar-input" value="' + currentKp + '" data-field="currentKP" onchange="updateProgressBar(this, ' + maxKp + ')"> / ' + maxKp +
-        '</div></div>' +
-        '<div class="progress-bar-track"><div class="progress-bar-fill hp" style="width: ' + kpPercent + '%"></div></div>' +
-        '</div>' +
-        '<div class="hp-vp-progress-bar">' +
-        '<div class="progress-label"><span class="progress-label-text">💜 Viljepoäng (VP)</span>' +
-        '<div class="progress-bar-input-group">' +
-        '<input type="number" class="progress-bar-input" value="' + currentVp + '" data-field="currentVP" onchange="updateProgressBar(this, ' + maxVp + ')"> / ' + maxVp +
-        '</div></div>' +
-        '<div class="progress-bar-track"><div class="progress-bar-fill vp" style="width: ' + vpPercent + '%"></div></div>' +
-        '</div>' +
-        '</div></div>' +
-        '<div class="sheet-header-actions">' +
-        '<button class="btn btn-ghost" onclick="openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
-        '<button class="btn btn-gold" onclick="saveCharacter()">💾 Spara</button>' +
-        '</div></div>' +
-        '<div class="sheet-tabs">' +
-        '<button class="sheet-tab active" onclick="switchSheetTab(this, \'overview\')">Översikt</button>' +
-        '<button class="sheet-tab" onclick="switchSheetTab(this, \'abilities\')">Egenskaper</button>' +
-        '<button class="sheet-tab" onclick="switchSheetTab(this, \'skills\')">Färdigheter</button>' +
-        '<button class="sheet-tab" onclick="switchSheetTab(this, \'combat\')">Strid</button>' +
-        '<button class="sheet-tab" onclick="switchSheetTab(this, \'equipment\')">Utrustning</button>' +
-        '<button class="sheet-tab" onclick="switchSheetTab(this, \'personal\')">Personligt</button>' +
-        '<button class="sheet-tab" onclick="switchSheetTab(this, \'notes\')">Anteckningar</button>' +
-        '</div>' +
-        '<div class="sheet-tab-content active" id="tab-overview">' +
-        '<div class="sheet-body-grid">' +
-        '<div class="sheet-column">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Grundegenskaper</h3><div class="attrs-grid">' +
-        ['STY','FYS','SMI','INT','PSY','KAR'].map(function(a) {
-            return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
-        }).join('') + '</div></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Sekundära Egenskaper</h3>' +
-        '<div style="padding: 0.5rem;">' +
-        '<div class="skill-row"><span class="skill-name">Förflyttning (FÖR)</span><input type="number" class="skill-input" value="' + movement + '" data-field="movement"></div>' +
-        '<div class="skill-row"><span class="skill-name">Skadebonus</span><input type="text" class="skill-input" value="' + (damageBonus >= 0 ? '+' + damageBonus : damageBonus) + '" readonly></div>' +
-        '</div></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Poäng</h3>' +
-        '<div style="padding: 0.5rem;">' +
-        '<div class="skill-row"><span class="skill-name">Erfarenhetspoäng (EP)</span><input type="number" class="skill-input" value="' + (char.experiencePoints || 0) + '" data-field="experiencePoints"></div>' +
-        '<div class="skill-row"><span class="skill-name">Hjältepoäng</span><input type="number" class="skill-input" value="' + (char.heroPoints || 0) + '" data-field="heroPoints"></div>' +
-        '</div></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Specialförmågor</h3>' +
-        '<div style="padding: 0.5rem;"><p><strong>Hjälteförmåga:</strong> ' + (char.heroicAbility || '—') + '</p></div>' +
-        '</div></div>' +
-        '<div class="sheet-column">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Rustning & Skydd</h3>' +
-        '<div style="padding: 0.5rem;">' +
-        '<div class="skill-row"><span class="skill-name">Rustning (Typ)</span><input type="text" class="item-name-input" value="' + (char.armor || '') + '" data-field="armor" placeholder="t.ex. Läderharnesk"></div>' +
-        '<div class="skill-row"><span class="skill-name">Skyddsvärde</span><input type="number" class="skill-input" value="' + (char.armorProtection || 0) + '" data-field="armorProtection"></div>' +
-        '<div class="skill-row"><span class="skill-name">Rustning Nackdelar</span><input type="text" class="item-name-input" value="' + (char.armorDisadvantages || '') + '" data-field="armorDisadvantages" placeholder="t.ex. -1 SMI"></div>' +
-        '<div class="skill-row"><span class="skill-name">Hjälm (Typ)</span><input type="text" class="item-name-input" value="' + (char.helmet || '') + '" data-field="helmet" placeholder="t.ex. Järnhjälm"></div>' +
-        '<div class="skill-row"><span class="skill-name">Hjälm Skyddsvärde</span><input type="number" class="skill-input" value="' + (char.helmetProtection || 0) + '" data-field="helmetProtection"></div>' +
-        '</div></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Mynt</h3><div class="currency-grid">' +
-        '<div class="currency-item"><span>🥇 Guldmynt (GM)</span><input type="number" class="currency-input" value="' + (currency.guld || 0) + '" data-currency="guld"></div>' +
-        '<div class="currency-item"><span>🥈 Silvermynt (SM)</span><input type="number" class="currency-input" value="' + (currency.silver || 0) + '" data-currency="silver"></div>' +
-        '<div class="currency-item"><span>🥉 Kopparmynt (KM)</span><input type="number" class="currency-input" value="' + (currency.brons || 0) + '" data-currency="brons"></div>' +
-        '</div></div>' +
-        '</div></div></div>' +
-        '<div class="sheet-tab-content" id="tab-abilities">' +
-        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Grundegenskaper</h3><div class="attrs-grid">' +
-        ['STY','FYS','SMI','INT','PSY','KAR'].map(function(a) {
-            return '<div class="attr-item"><span class="attr-label">' + a + '</span><input type="number" class="attr-input" value="' + (attrs[a] || 10) + '" data-attr="' + a + '"></div>';
-        }).join('') + '</div></div></div></div></div>' +
-        '<div class="sheet-tab-content" id="tab-skills">' +
-        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Färdigheter</h3>' +
-        Object.keys(ALL_SKILLS).map(function(attr) {
-            return '<div class="skill-group"><div class="skill-group-header">' + attr + '-baserade</div>' +
-                ALL_SKILLS[attr].map(function(skill) {
-                    return '<div class="skill-row"><span class="skill-name">' + skill + '</span><input type="number" class="skill-input" value="' + (skills[skill] || 0) + '" data-skill="' + skill + '"></div>';
-                }).join('') + '</div>';
-        }).join('') + '</div></div></div></div>' +
-        '<div class="sheet-tab-content" id="tab-combat">' +
-        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Vapenfärdigheter</h3>' +
-        WEAPON_SKILLS.map(function(skill) {
-            return '<div class="skill-row"><span class="skill-name">' + skill + '</span><input type="number" class="skill-input" value="' + (weaponSkills[skill] || 0) + '" data-weapon-skill="' + skill + '"></div>';
-        }).join('') + '</div></div></div></div>' +
-        '<div class="sheet-tab-content" id="tab-equipment">' +
-        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Utrustning <button class="btn btn-ghost btn-xs" onclick="addInventoryItem()" aria-label="Lägg till nytt föremål i utrustning">+ Lägg till</button></h3>' +
-        '<div id="inventoryList">' + (inventory.length === 0 ? '<div class="empty-inventory">Ingen utrustning ännu. Klicka "+ Lägg till" för att lägga till föremål.</div>' : 
-            inventory.map(function(item, i) {
-                var itemData = typeof item === 'string' ? { name: item, type: '', weight: '', notes: '' } : item;
-                return '<div class="inventory-item-full">' +
-                    '<div class="inv-row"><label>Namn:</label><input type="text" class="inv-input" value="' + (itemData.name || '') + '" placeholder="Föremålsnamn" data-inv-field="name"></div>' +
-                    '<div class="inv-row"><label>Typ:</label><select class="inv-select" data-inv-field="type">' +
-                    '<option value="" ' + (!itemData.type ? 'selected' : '') + '>Välj typ</option>' +
-                    '<option value="Vapen" ' + (itemData.type === 'Vapen' ? 'selected' : '') + '>Vapen</option>' +
-                    '<option value="Rustning" ' + (itemData.type === 'Rustning' ? 'selected' : '') + '>Rustning</option>' +
-                    '<option value="Övrigt" ' + (itemData.type === 'Övrigt' ? 'selected' : '') + '>Övrigt</option>' +
-                    '</select></div>' +
-                    '<div class="inv-row"><label>Vikt:</label><input type="text" class="inv-input-sm" value="' + (itemData.weight || '') + '" placeholder="t.ex. 2 kg" data-inv-field="weight"></div>' +
-                    '<div class="inv-row"><label>Anteckningar:</label><input type="text" class="inv-input" value="' + (itemData.notes || '') + '" placeholder="Beskrivning" data-inv-field="notes"></div>' +
-                    '<button class="btn-icon-sm btn-delete" onclick="this.parentElement.remove()">🗑️</button>' +
-                    '</div>';
-            }).join('')) + '</div></div></div></div></div>' +
-        '<div class="sheet-tab-content" id="tab-personal">' +
-        '<div class="sheet-body-grid">' +
-        '<div class="sheet-column">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Karaktärsuppgifter</h3>' +
-        '<div style="padding: 0.5rem;">' +
-        (function() {
-            var kinOptions = typeof KIN_DATA !== 'undefined' ? Object.keys(KIN_DATA) : ['Människa', 'Alv', 'Dvärg', 'Halvling', 'Anka', 'Vargfolk'];
-            var kinSelect = '<select class="item-name-input" data-field="kin">';
-            kinOptions.forEach(function(k) {
-                kinSelect += '<option value="' + k + '"' + (char.kin === k ? ' selected' : '') + '>' + k + '</option>';
-            });
-            kinSelect += '</select>';
-            return '<div class="skill-row"><span class="skill-name">Släkte</span>' + kinSelect + '</div>';
-        })() +
-        (function() {
-            var profOptions = typeof PROFESSION_DATA !== 'undefined' ? Object.keys(PROFESSION_DATA) : ['Bard', 'Hantverkare', 'Jägare', 'Krigare', 'Lärd', 'Magiker', 'Nasare', 'Riddare', 'Sjöfarare', 'Tjuv'];
-            var profSelect = '<select class="item-name-input" data-field="profession">';
-            profOptions.forEach(function(p) {
-                profSelect += '<option value="' + p + '"' + (char.profession === p ? ' selected' : '') + '>' + p + '</option>';
-            });
-            profSelect += '</select>';
-            return '<div class="skill-row"><span class="skill-name">Yrke</span>' + profSelect + '</div>';
-        })() +
-        (function() {
-            var ageOptions = typeof AGE_DATA !== 'undefined' ? Object.keys(AGE_DATA) : ['Ung', 'Medelålders', 'Gammal'];
-            var ageSelect = '<select class="item-name-input" data-field="ageCategory">';
-            ageOptions.forEach(function(a) {
-                ageSelect += '<option value="' + a + '"' + (char.age === a ? ' selected' : '') + '>' + a + '</option>';
-            });
-            ageSelect += '</select>';
-            return '<div class="skill-row"><span class="skill-name">Ålderskategori</span>' + ageSelect + '</div>';
-        })() +
-        '</div></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Personliga Uppgifter</h3>' +
-        '<div style="padding: 0.5rem;">' +
-        '<div class="skill-row"><span class="skill-name">Spelarens namn</span><input type="text" class="item-name-input" value="' + (char.playerName || '') + '" data-field="playerName" placeholder="Ditt namn"></div>' +
-        '<div class="skill-row"><span class="skill-name">Ålder (fritext)</span><input type="text" class="item-name-input" value="' + (char.characterAge || '') + '" data-field="characterAge" placeholder="t.ex. 25 år"></div>' +
-        '<div class="skill-row"><span class="skill-name">Kön</span><input type="text" class="item-name-input" value="' + (char.gender || '') + '" data-field="gender"></div>' +
-        '<div class="skill-row"><span class="skill-name">Längd</span><input type="text" class="item-name-input" value="' + (char.height || '') + '" data-field="height" placeholder="t.ex. 180 cm"></div>' +
-        '<div class="skill-row"><span class="skill-name">Vikt</span><input type="text" class="item-name-input" value="' + (char.weight || '') + '" data-field="weight" placeholder="t.ex. 75 kg"></div>' +
-        '</div></div>' +
-        '</div>' +
-        '<div class="sheet-column">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Utseende</h3>' +
-        '<textarea class="bio-textarea" data-field="appearance" placeholder="Beskriv karaktärens utseende...">' + (char.appearance || '') + '</textarea></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Nackdelar</h3>' +
-        '<textarea class="bio-textarea" data-field="disadvantages" placeholder="Lista karaktärens nackdelar...">' + (char.disadvantages || '') + '</textarea></div>' +
-        '</div></div></div>' +
-        '<div class="sheet-tab-content" id="tab-notes">' +
-        '<div class="sheet-body-grid"><div class="sheet-column" style="grid-column: 1/-1;">' +
-        '<div class="sheet-panel"><h3 class="panel-title">Bakgrund</h3><textarea class="bio-textarea" data-field="background" placeholder="Beskriv karaktärens bakgrund...">' + (char.background || '') + '</textarea></div>' +
-        '<div class="sheet-panel"><h3 class="panel-title">Anteckningar</h3><textarea class="bio-textarea" data-field="notes" placeholder="Allmänna anteckningar...">' + (char.notes || '') + '</textarea></div>' +
-        '</div></div></div>' +
-        '</div>';
+    // Build HTML
+    var html = '<div class="character-sheet-v2" style="padding: 1.5rem; max-width: 1400px; margin: 0 auto;">';
+    
+    // Back button
+    html += '<button class="btn btn-outline" onclick="closeCharacterSheet()" style="margin-bottom: 1rem;">← Tillbaka</button>';
+    
+    // GOLD FRAME - Character Header
+    html += '<div class="gold-frame">';
+    html += '<div class="gold-frame-corner top-right"></div>';
+    html += '<div class="gold-frame-corner bottom-left"></div>';
+    html += '<div class="gold-frame-corner bottom-right"></div>';
+    
+    // Character header: Portrait, Name/Info, Save button
+    html += '<div class="char-header-v2">';
+    html += '<div class="char-portrait-v2">' + icon + '</div>';
+    html += '<div class="char-info-v2">';
+    html += '<input type="text" class="char-name-input-v2" value="' + (char.name || '') + '" data-field="name" placeholder="Karaktärens namn">';
+    html += '<div class="char-meta-v2">' + (char.kin || '—') + ' • ' + (char.profession || '—') + ' • ' + (char.age || '—') + '</div>';
+    html += '<div class="char-details-row-v2">';
+    html += '<span>Spelare: <input type="text" value="' + (char.playerName || '') + '" data-field="playerName" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
+    html += '<span>Svaghet: <input type="text" value="' + (char.weakness || '') + '" data-field="weakness" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
+    html += '<span>Minnesak: <input type="text" value="' + (char.memento || '') + '" data-field="memento" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
+    html += '</div></div>';
+    html += '<div class="char-actions-v2"><button class="btn btn-gold" onclick="saveCharacter()">💾 Spara</button></div>';
+    html += '</div>';
+    
+    // Attributes grid with condition diamonds
+    html += '<div class="attributes-grid-v2">';
+    ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'].forEach(function(attr) {
+        var isActive = conditions[attr] || false;
+        var activeClass = isActive ? ' condition-active' : '';
+        html += '<div class="attr-box-v2' + activeClass + '">';
+        html += '<div class="attr-label-v2">' + attr + '</div>';
+        html += '<input type="number" class="attr-value-input-v2" value="' + (attrs[attr] || 10) + '" data-attr="' + attr + '">';
+        html += '<div class="diamond-checkbox condition' + (isActive ? ' checked' : '') + '" data-condition="' + attr + '" onclick="toggleCondition(\'' + attr + '\')"></div>';
+        html += '<div class="condition-label-v2">' + conditionLabels[attr] + '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+    
+    // Secondary attributes row
+    html += '<div class="secondary-attrs-v2">';
+    html += '<div class="secondary-attr-v2">';
+    html += '<label>Skadebonus (STY)</label>';
+    html += '<input type="text" value="' + (char.damageBonusSTY || 'T4') + '" data-field="damageBonusSTY" placeholder="T4, T6, +1, etc.">';
+    html += '</div>';
+    html += '<div class="secondary-attr-v2">';
+    html += '<label>Skadebonus (SMI)</label>';
+    html += '<input type="text" value="' + (char.damageBonusSMI || 'T6') + '" data-field="damageBonusSMI" placeholder="T4, T6, +1, etc.">';
+    html += '</div>';
+    html += '<div class="secondary-attr-v2">';
+    html += '<label>FÖR</label>';
+    html += '<input type="number" value="' + (char.movement || 10) + '" data-field="movement">';
+    html += '</div>';
+    html += '<div class="secondary-attr-v2">';
+    html += '<label>Bär</label>';
+    html += '<input type="number" value="' + (char.carry || 0) + '" data-field="carry">';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '</div>'; // Close gold-frame
+    
+    // Tab navigation
+    html += '<div class="sheet-tabs-v2">';
+    html += '<button class="sheet-tab-v2 active" onclick="switchSheetTabV2(this, \'overview\')">Översikt</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'skills\')">Färdigheter</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'combat\')">Strid</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'equipment\')">Utrustning</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'notes\')">Anteckningar</button>';
+    html += '</div>';
+    
+    // Main layout - Content + Sidebar
+    html += '<div class="sheet-layout-v2">';
+    
+    // MAIN CONTENT AREA
+    html += '<div class="sheet-main-v2">';
+    
+    // Tab content: Overview
+    html += '<div class="sheet-tab-content-v2 active" id="tab-overview-v2">';
+    html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Översikt</h3></div>';
+    html += '<div class="sheet-panel-v2-content"><p style="color: var(--text-secondary);">Grundläggande karaktärsinformation visas här.</p></div></div>';
+    html += '</div>';
+    
+    // Tab content: Skills
+    html += '<div class="sheet-tab-content-v2" id="tab-skills-v2" style="display: none;">';
+    html += renderSkillsPanel(skills, SKILLS);
+    html += '</div>';
+    
+    // Tab content: Combat
+    html += '<div class="sheet-tab-content-v2" id="tab-combat-v2" style="display: none;">';
+    html += renderWeaponSkillsPanel(weaponSkills, WEAPON_SKILLS);
+    html += renderWeaponsTable(char.weapons || []);
+    html += '</div>';
+    
+    // Tab content: Equipment
+    html += '<div class="sheet-tab-content-v2" id="tab-equipment-v2" style="display: none;">';
+    html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Utrustning</h3></div>';
+    html += '<div class="sheet-panel-v2-content"><p style="color: var(--text-muted);">Utrustning kommer snart...</p></div></div>';
+    html += '</div>';
+    
+    // Tab content: Notes
+    html += '<div class="sheet-tab-content-v2" id="tab-notes-v2" style="display: none;">';
+    html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Anteckningar</h3></div>';
+    html += '<div class="sheet-panel-v2-content">';
+    html += '<textarea class="bio-textarea" data-field="notes" placeholder="Dina anteckningar..." style="width:100%;min-height:300px;">' + (char.notes || '') + '</textarea>';
+    html += '</div></div>';
+    html += '</div>';
+    
+    html += '</div>'; // Close sheet-main-v2
+    
+    // SIDEBAR
+    html += '<div class="sheet-sidebar-v2">';
+    
+    // KP Tracker
+    html += '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Kroppspoäng (KP)</h3></div>';
+    html += '<div class="pip-tracker-v2 kp">';
+    html += '<div class="pip-tracker-label-v2"><span>KP</span><span class="current-max">' + currentKp + ' / ' + maxKp + '</span></div>';
+    html += '<div class="pips-container-v2">';
+    for (var i = 1; i <= maxKp; i++) {
+        var filled = i <= currentKp ? ' filled' : '';
+        html += '<div class="pip-v2 kp-pip' + filled + '" data-pip-index="' + i + '" onclick="toggleKP(' + i + ')"></div>';
+    }
+    html += '</div>';
+    
+    // Death saves
+    html += '<div class="death-saves-v2">';
+    html += '<div class="death-save-group-v2"><label>Räddning:</label><div class="death-save-pips-v2">';
+    for (var s = 0; s < 3; s++) {
+        var successFilled = s < deathSaves.successes ? ' filled' : '';
+        html += '<div class="death-save-pip-v2 success' + successFilled + '" data-save-type="success" data-save-index="' + s + '" onclick="toggleDeathSave(\'success\', ' + s + ')"></div>';
+    }
+    html += '</div></div>';
+    html += '<div class="death-save-group-v2"><label>Misslyckande:</label><div class="death-save-pips-v2">';
+    for (var f = 0; f < 3; f++) {
+        var failureFilled = f < deathSaves.failures ? ' filled' : '';
+        html += '<div class="death-save-pip-v2 failure' + failureFilled + '" data-save-type="failure" data-save-index="' + f + '" onclick="toggleDeathSave(\'failure\', ' + f + ')"></div>';
+    }
+    html += '</div></div>';
+    html += '</div>'; // Close death-saves-v2
+    
+    html += '</div></div>'; // Close pip-tracker and panel
+    
+    // VP Tracker
+    html += '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Viljepoäng (VP)</h3></div>';
+    html += '<div class="pip-tracker-v2 vp">';
+    html += '<div class="pip-tracker-label-v2"><span>VP</span><span class="current-max">' + currentVp + ' / ' + maxVp + '</span></div>';
+    html += '<div class="pips-container-v2">';
+    for (var j = 1; j <= maxVp; j++) {
+        var vpFilled = j <= currentVp ? ' filled' : '';
+        html += '<div class="pip-v2 vp-pip' + vpFilled + '" data-pip-index="' + j + '" onclick="toggleVP(' + j + ')"></div>';
+    }
+    html += '</div></div></div>';
+    
+    // Armor & Helmet
+    html += '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Rustning & Hjälm</h3></div>';
+    html += '<div class="armor-grid-v2">';
+    html += '<div class="armor-item-v2"><label>Rustning</label><input type="text" value="' + (char.armor || '') + '" data-field="armor" placeholder="Plåt"></div>';
+    html += '<div class="armor-item-v2"><label>Skydd</label><input type="number" value="' + (char.armorProtection || 0) + '" data-field="armorProtection" placeholder="4"></div>';
+    html += '<div class="armor-item-v2"><label>Hjälm</label><input type="text" value="' + (char.helmet || '') + '" data-field="helmet" placeholder="Full"></div>';
+    html += '<div class="armor-item-v2"><label>Skydd</label><input type="number" value="' + (char.helmetProtection || 0) + '" data-field="helmetProtection" placeholder="2"></div>';
+    html += '</div></div>';
+    
+    // Currency
+    html += '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Mynt</h3></div>';
+    html += '<div class="currency-display-v2">';
+    html += '<div class="currency-item-v2"><div class="icon">🥇</div><div class="label">Guld</div><input type="number" value="' + ((char.currency && char.currency.guld) || 0) + '" data-currency="guld"></div>';
+    html += '<div class="currency-item-v2"><div class="icon">🥈</div><div class="label">Silver</div><input type="number" value="' + ((char.currency && char.currency.silver) || 0) + '" data-currency="silver"></div>';
+    html += '<div class="currency-item-v2"><div class="icon">🥉</div><div class="label">Kopp</div><input type="number" value="' + ((char.currency && char.currency.kopp) || 0) + '" data-currency="kopp"></div>';
+    html += '</div></div>';
+    
+    // Hero Ability
+    html += '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Hjälteförmåga</h3></div>';
+    html += '<div class="hero-ability-v2">';
+    html += '<div class="icon">⚡</div>';
+    html += '<div class="name">' + (char.heroicAbility || 'Ingen vald') + '</div>';
+    html += '<div class="description">' + (char.kinAbility || '') + '</div>';
+    html += '</div></div>';
+    
+    html += '</div>'; // Close sheet-sidebar-v2
+    
+    html += '</div>'; // Close sheet-layout-v2
+    
+    html += '</div>'; // Close character-sheet-v2
+    
+    return html;
+}
+
+function renderSkillsPanel(skills, SKILLS) {
+    var html = '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Färdigheter</h3></div>';
+    html += '<div class="sheet-panel-v2-content">';
+    html += '<div class="skills-grid-v2">';
+    
+    Object.keys(SKILLS).forEach(function(skillName) {
+        var skillData = skills[skillName] || { value: 0, isCore: false };
+        var value = typeof skillData === 'object' ? skillData.value : skillData;
+        var isCore = typeof skillData === 'object' ? skillData.isCore : false;
+        var attr = SKILLS[skillName].attr;
+        
+        html += '<div class="skill-row-v2">';
+        html += '<div class="diamond-checkbox small skill-core-checkbox-v2' + (isCore ? ' checked' : '') + '" data-skill="' + skillName + '" onclick="toggleSkillCore(\'' + skillName + '\')"></div>';
+        html += '<input type="number" class="skill-value-v2" value="' + (value || 0) + '" data-skill-value="' + skillName + '">';
+        html += '<span class="skill-name-v2">' + skillName + '</span>';
+        html += '<span class="skill-attr-v2">(' + attr + ')</span>';
+        html += '</div>';
+    });
+    
+    html += '</div></div></div>';
+    return html;
+}
+
+function renderWeaponSkillsPanel(weaponSkills, WEAPON_SKILLS) {
+    var html = '<div class="sheet-panel-v2">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Vapenfärdigheter</h3></div>';
+    html += '<div class="sheet-panel-v2-content">';
+    html += '<div class="skills-grid-v2">';
+    
+    Object.keys(WEAPON_SKILLS).forEach(function(skillName) {
+        var skillData = weaponSkills[skillName] || { value: 0, isCore: false };
+        var value = typeof skillData === 'object' ? skillData.value : skillData;
+        var isCore = typeof skillData === 'object' ? skillData.isCore : false;
+        var attr = WEAPON_SKILLS[skillName].attr;
+        
+        html += '<div class="weapon-skill-row-v2">';
+        html += '<div class="diamond-checkbox small' + (isCore ? ' checked' : '') + '" data-weapon-skill="' + skillName + '" onclick="toggleWeaponSkillCore(\'' + skillName + '\')"></div>';
+        html += '<input type="number" class="skill-value-v2" value="' + (value || 0) + '" data-weapon-skill-value="' + skillName + '">';
+        html += '<span class="skill-name-v2">' + skillName + '</span>';
+        html += '<span class="skill-attr-v2">(' + attr + ')</span>';
+        html += '</div>';
+    });
+    
+    html += '</div></div></div>';
+    return html;
+}
+
+function renderWeaponsTable(weapons) {
+    var html = '<div class="sheet-panel-v2" style="margin-top: 1rem;">';
+    html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Vapen & Sköldar</h3></div>';
+    html += '<div class="sheet-panel-v2-content">';
+    html += '<table class="weapons-table-v2">';
+    html += '<thead><tr><th>Namn</th><th>Skada</th><th>Räckvidd</th><th>Vikt</th><th></th></tr></thead>';
+    html += '<tbody id="weaponsTableBody">';
+    
+    if (weapons.length === 0) {
+        html += '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1rem;">Inga vapen ännu</td></tr>';
+    } else {
+        weapons.forEach(function(weapon, index) {
+            html += '<tr>';
+            html += '<td><input type="text" value="' + (weapon.name || '') + '" data-weapon-field="name" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + (weapon.damage || '') + '" data-weapon-field="damage" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + (weapon.range || '') + '" data-weapon-field="range" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + (weapon.weight || '') + '" data-weapon-field="weight" data-weapon-index="' + index + '"></td>';
+            html += '<td><button class="btn btn-ghost btn-xs" onclick="removeWeapon(' + index + ')">🗑️</button></td>';
+            html += '</tr>';
+        });
+    }
+    
+    html += '</tbody></table>';
+    html += '<button class="btn btn-gold btn-sm" onclick="addWeapon()" style="margin-top: 0.5rem;">+ Lägg till vapen</button>';
+    html += '</div></div>';
+    return html;
+}
+
+// Tab switching function
+function switchSheetTabV2(btn, tabId) {
+    document.querySelectorAll('.sheet-tab-v2').forEach(function(t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.sheet-tab-content-v2').forEach(function(c) { c.style.display = 'none'; });
+    var content = document.getElementById('tab-' + tabId + '-v2');
+    if (content) content.style.display = 'block';
+}
+
+// Interactive functions for toggles
+function toggleCondition(attr) {
+    if (!currentCharacter) return;
+    if (!currentCharacter.conditions) currentCharacter.conditions = {};
+    currentCharacter.conditions[attr] = !currentCharacter.conditions[attr];
+    
+    var checkbox = document.querySelector('.diamond-checkbox[data-condition="' + attr + '"]');
+    var attrBox = checkbox.closest('.attr-box-v2');
+    
+    if (currentCharacter.conditions[attr]) {
+        checkbox.classList.add('checked');
+        attrBox.classList.add('condition-active');
+    } else {
+        checkbox.classList.remove('checked');
+        attrBox.classList.remove('condition-active');
+    }
+}
+
+function toggleKP(index) {
+    if (!currentCharacter) return;
+    currentCharacter.currentKP = index;
+    
+    // Update UI
+    document.querySelectorAll('.pip-v2.kp-pip').forEach(function(pip, i) {
+        if (i < index) {
+            pip.classList.add('filled');
+        } else {
+            pip.classList.remove('filled');
+        }
+    });
+    
+    // Update label
+    var label = document.querySelector('.pip-tracker-v2.kp .current-max');
+    if (label) label.textContent = index + ' / ' + (currentCharacter.attributes.FYS || 0);
+}
+
+function toggleVP(index) {
+    if (!currentCharacter) return;
+    currentCharacter.currentVP = index;
+    
+    // Update UI
+    document.querySelectorAll('.pip-v2.vp-pip').forEach(function(pip, i) {
+        if (i < index) {
+            pip.classList.add('filled');
+        } else {
+            pip.classList.remove('filled');
+        }
+    });
+    
+    // Update label
+    var label = document.querySelector('.pip-tracker-v2.vp .current-max');
+    if (label) label.textContent = index + ' / ' + (currentCharacter.attributes.PSY || 0);
+}
+
+function toggleDeathSave(type, index) {
+    if (!currentCharacter) return;
+    if (!currentCharacter.deathSaves) currentCharacter.deathSaves = { successes: 0, failures: 0 };
+    
+    if (type === 'success') {
+        currentCharacter.deathSaves.successes = index + 1;
+        document.querySelectorAll('.death-save-pip-v2.success').forEach(function(pip, i) {
+            if (i <= index) {
+                pip.classList.add('filled');
+            } else {
+                pip.classList.remove('filled');
+            }
+        });
+    } else {
+        currentCharacter.deathSaves.failures = index + 1;
+        document.querySelectorAll('.death-save-pip-v2.failure').forEach(function(pip, i) {
+            if (i <= index) {
+                pip.classList.add('filled');
+            } else {
+                pip.classList.remove('filled');
+            }
+        });
+    }
+}
+
+function toggleSkillCore(skillName) {
+    if (!currentCharacter || !currentCharacter.skills) return;
+    if (!currentCharacter.skills[skillName]) {
+        currentCharacter.skills[skillName] = { value: 0, isCore: false };
+    }
+    
+    var skillData = currentCharacter.skills[skillName];
+    if (typeof skillData === 'object') {
+        skillData.isCore = !skillData.isCore;
+    } else {
+        currentCharacter.skills[skillName] = { value: skillData, isCore: true };
+    }
+    
+    var checkbox = document.querySelector('.diamond-checkbox[data-skill="' + skillName + '"]');
+    if (checkbox) {
+        if (currentCharacter.skills[skillName].isCore) {
+            checkbox.classList.add('checked');
+        } else {
+            checkbox.classList.remove('checked');
+        }
+    }
+}
+
+function toggleWeaponSkillCore(skillName) {
+    if (!currentCharacter || !currentCharacter.weaponSkills) return;
+    if (!currentCharacter.weaponSkills[skillName]) {
+        currentCharacter.weaponSkills[skillName] = { value: 0, isCore: false };
+    }
+    
+    var skillData = currentCharacter.weaponSkills[skillName];
+    if (typeof skillData === 'object') {
+        skillData.isCore = !skillData.isCore;
+    } else {
+        currentCharacter.weaponSkills[skillName] = { value: skillData, isCore: true };
+    }
+    
+    var checkbox = document.querySelector('.diamond-checkbox[data-weapon-skill="' + skillName + '"]');
+    if (checkbox) {
+        if (currentCharacter.weaponSkills[skillName].isCore) {
+            checkbox.classList.add('checked');
+        } else {
+            checkbox.classList.remove('checked');
+        }
+    }
+}
+
+function addWeapon() {
+    if (!currentCharacter) return;
+    if (!currentCharacter.weapons) currentCharacter.weapons = [];
+    currentCharacter.weapons.push({ name: '', damage: '', range: '', weight: '' });
+    
+    // Re-render the character sheet
+    viewCharacter(currentCharacter.id);
+}
+
+function removeWeapon(index) {
+    if (!currentCharacter || !currentCharacter.weapons) return;
+    currentCharacter.weapons.splice(index, 1);
+    
+    // Re-render the character sheet
+    viewCharacter(currentCharacter.id);
 }
 
 // Update character portrait when kin is changed
@@ -615,6 +885,7 @@ function removeInventoryItem(i) {
 // Save
 function saveCharacter() {
     if (!currentCharacter) return;
+    
     var updates = {
         name: '',
         kin: '',
@@ -623,50 +894,46 @@ function saveCharacter() {
         currentKP: 0,
         currentVP: 0,
         movement: 10,
-        experiencePoints: 0,
-        heroPoints: 0,
+        carry: 0,
+        damageBonusSTY: '',
+        damageBonusSMI: '',
+        conditions: {},
+        deathSaves: { successes: 0, failures: 0 },
         armor: '',
         armorProtection: 0,
-        armorDisadvantages: '',
         helmet: '',
         helmetProtection: 0,
         playerName: '',
-        characterAge: '',
-        gender: '',
-        height: '',
-        weight: '',
-        appearance: '',
-        disadvantages: '',
-        background: '',
-        notes: ''
+        weakness: '',
+        memento: '',
+        notes: '',
+        weapons: []
     };
     
+    // Get basic fields
     var nameEl = document.querySelector('[data-field="name"]');
     if (nameEl) updates.name = nameEl.value || '';
     
-    var kinEl = document.querySelector('[data-field="kin"]');
-    if (kinEl) updates.kin = kinEl.value || '';
+    var playerNameEl = document.querySelector('[data-field="playerName"]');
+    if (playerNameEl) updates.playerName = playerNameEl.value || '';
     
-    var professionEl = document.querySelector('[data-field="profession"]');
-    if (professionEl) updates.profession = professionEl.value || '';
+    var weaknessEl = document.querySelector('[data-field="weakness"]');
+    if (weaknessEl) updates.weakness = weaknessEl.value || '';
     
-    var ageCategoryEl = document.querySelector('[data-field="ageCategory"]');
-    if (ageCategoryEl) updates.age = ageCategoryEl.value || '';
-    
-    var currentKPEl = document.querySelector('[data-field="currentKP"]');
-    if (currentKPEl) updates.currentKP = parseInt(currentKPEl.value) || 0;
-    
-    var currentVPEl = document.querySelector('[data-field="currentVP"]');
-    if (currentVPEl) updates.currentVP = parseInt(currentVPEl.value) || 0;
+    var mementoEl = document.querySelector('[data-field="memento"]');
+    if (mementoEl) updates.memento = mementoEl.value || '';
     
     var movementEl = document.querySelector('[data-field="movement"]');
     if (movementEl) updates.movement = parseInt(movementEl.value) || 10;
     
-    var experiencePointsEl = document.querySelector('[data-field="experiencePoints"]');
-    if (experiencePointsEl) updates.experiencePoints = parseInt(experiencePointsEl.value) || 0;
+    var carryEl = document.querySelector('[data-field="carry"]');
+    if (carryEl) updates.carry = parseInt(carryEl.value) || 0;
     
-    var heroPointsEl = document.querySelector('[data-field="heroPoints"]');
-    if (heroPointsEl) updates.heroPoints = parseInt(heroPointsEl.value) || 0;
+    var damageBonusSTYEl = document.querySelector('[data-field="damageBonusSTY"]');
+    if (damageBonusSTYEl) updates.damageBonusSTY = damageBonusSTYEl.value || 'T4';
+    
+    var damageBonusSMIEl = document.querySelector('[data-field="damageBonusSMI"]');
+    if (damageBonusSMIEl) updates.damageBonusSMI = damageBonusSMIEl.value || 'T6';
     
     var armorEl = document.querySelector('[data-field="armor"]');
     if (armorEl) updates.armor = armorEl.value || '';
@@ -674,81 +941,74 @@ function saveCharacter() {
     var armorProtectionEl = document.querySelector('[data-field="armorProtection"]');
     if (armorProtectionEl) updates.armorProtection = parseInt(armorProtectionEl.value) || 0;
     
-    var armorDisadvantagesEl = document.querySelector('[data-field="armorDisadvantages"]');
-    if (armorDisadvantagesEl) updates.armorDisadvantages = armorDisadvantagesEl.value || '';
-    
     var helmetEl = document.querySelector('[data-field="helmet"]');
     if (helmetEl) updates.helmet = helmetEl.value || '';
     
     var helmetProtectionEl = document.querySelector('[data-field="helmetProtection"]');
     if (helmetProtectionEl) updates.helmetProtection = parseInt(helmetProtectionEl.value) || 0;
     
-    var playerNameEl = document.querySelector('[data-field="playerName"]');
-    if (playerNameEl) updates.playerName = playerNameEl.value || '';
-    
-    var characterAgeEl = document.querySelector('[data-field="characterAge"]');
-    if (characterAgeEl) updates.characterAge = characterAgeEl.value || '';
-    
-    var genderEl = document.querySelector('[data-field="gender"]');
-    if (genderEl) updates.gender = genderEl.value || '';
-    
-    var heightEl = document.querySelector('[data-field="height"]');
-    if (heightEl) updates.height = heightEl.value || '';
-    
-    var weightEl = document.querySelector('[data-field="weight"]');
-    if (weightEl) updates.weight = weightEl.value || '';
-    
-    var appearanceEl = document.querySelector('[data-field="appearance"]');
-    if (appearanceEl) updates.appearance = appearanceEl.value || '';
-    
-    var disadvantagesEl = document.querySelector('[data-field="disadvantages"]');
-    if (disadvantagesEl) updates.disadvantages = disadvantagesEl.value || '';
-    
-    var backgroundEl = document.querySelector('[data-field="background"]');
-    if (backgroundEl) updates.background = backgroundEl.value || '';
-    
     var notesEl = document.querySelector('[data-field="notes"]');
     if (notesEl) updates.notes = notesEl.value || '';
     
+    // Get attributes
     updates.attributes = {};
     document.querySelectorAll('[data-attr]').forEach(function(el) {
         if (el && el.dataset && el.dataset.attr) {
             updates.attributes[el.dataset.attr] = parseInt(el.value) || 10;
         }
     });
+    
+    // Save from currentCharacter's tracked state
+    updates.currentKP = currentCharacter.currentKP || 0;
+    updates.currentVP = currentCharacter.currentVP || 0;
+    updates.conditions = currentCharacter.conditions || {};
+    updates.deathSaves = currentCharacter.deathSaves || { successes: 0, failures: 0 };
+    
+    // Get skills with isCore property
     updates.skills = {};
-    document.querySelectorAll('[data-skill]').forEach(function(el) {
-        if (el && el.dataset && el.dataset.skill) {
-            var v = parseInt(el.value) || 0;
-            if (v > 0) updates.skills[el.dataset.skill] = v;
-        }
-    });
-    updates.weaponSkills = {};
-    document.querySelectorAll('[data-weapon-skill]').forEach(function(el) {
-        if (el && el.dataset && el.dataset.weaponSkill) {
-            var v = parseInt(el.value) || 0;
-            if (v > 0) updates.weaponSkills[el.dataset.weaponSkill] = v;
-        }
-    });
-    updates.inventory = [];
-    document.querySelectorAll('.inventory-item-full').forEach(function(el) {
-        var nameInput = el.querySelector('[data-inv-field="name"]');
-        var typeInput = el.querySelector('[data-inv-field="type"]');
-        var weightInput = el.querySelector('[data-inv-field="weight"]');
-        var notesInput = el.querySelector('[data-inv-field="notes"]');
+    Object.keys(SKILLS).forEach(function(skillName) {
+        var valueEl = document.querySelector('[data-skill-value="' + skillName + '"]');
+        var value = valueEl ? (parseInt(valueEl.value) || 0) : 0;
+        var isCore = currentCharacter.skills && currentCharacter.skills[skillName] && currentCharacter.skills[skillName].isCore;
         
-        var item = {
-            name: nameInput ? nameInput.value || '' : '',
-            type: typeInput ? typeInput.value || '' : '',
-            weight: weightInput ? weightInput.value || '' : '',
-            notes: notesInput ? notesInput.value || '' : ''
+        updates.skills[skillName] = {
+            value: value,
+            isCore: isCore || false,
+            attr: SKILLS[skillName].attr
         };
-        if (item.name.trim()) updates.inventory.push(item);
     });
+    
+    // Get weapon skills with isCore property
+    updates.weaponSkills = {};
+    Object.keys(WEAPON_SKILLS_V2).forEach(function(skillName) {
+        var valueEl = document.querySelector('[data-weapon-skill-value="' + skillName + '"]');
+        var value = valueEl ? (parseInt(valueEl.value) || 0) : 0;
+        var isCore = currentCharacter.weaponSkills && currentCharacter.weaponSkills[skillName] && currentCharacter.weaponSkills[skillName].isCore;
+        
+        updates.weaponSkills[skillName] = {
+            value: value,
+            isCore: isCore || false,
+            attr: WEAPON_SKILLS_V2[skillName].attr
+        };
+    });
+    
+    // Get weapons
+    updates.weapons = [];
+    document.querySelectorAll('[data-weapon-index]').forEach(function(el) {
+        var index = parseInt(el.dataset.weaponIndex);
+        if (!updates.weapons[index]) {
+            updates.weapons[index] = { name: '', damage: '', range: '', weight: '' };
+        }
+        var field = el.dataset.weaponField;
+        updates.weapons[index][field] = el.value || '';
+    });
+    updates.weapons = updates.weapons.filter(function(w) { return w.name.trim(); });
+    
+    // Get currency
     updates.currency = {
         guld: 0,
         silver: 0,
-        brons: 0
+        kopp: 0
     };
     var guldEl = document.querySelector('[data-currency="guld"]');
     if (guldEl) updates.currency.guld = parseInt(guldEl.value) || 0;
@@ -756,11 +1016,12 @@ function saveCharacter() {
     var silverEl = document.querySelector('[data-currency="silver"]');
     if (silverEl) updates.currency.silver = parseInt(silverEl.value) || 0;
     
-    var bronsEl = document.querySelector('[data-currency="brons"]');
-    if (bronsEl) updates.currency.brons = parseInt(bronsEl.value) || 0;
+    var koppEl = document.querySelector('[data-currency="kopp"]');
+    if (koppEl) updates.currency.kopp = parseInt(koppEl.value) || 0;
     
     CharacterService.updateCharacter(currentCharacter.id, updates).then(function() {
         showToast('Sparad!', 'success');
+        Object.assign(currentCharacter, updates);
         loadDashboard();
     }).catch(function(e) {
         showToast('Fel: ' + e.message, 'error');

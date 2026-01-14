@@ -51,8 +51,8 @@ var CharacterService = {
     },
     
     // Get multiple characters by their IDs (for party view)
-    getCharactersByIds:  function(characterIds) {
-        if (! characterIds || characterIds.length === 0) {
+    getCharactersByIds: function(characterIds) {
+        if (!characterIds || characterIds.length === 0) {
             return Promise.resolve([]);
         }
         
@@ -62,12 +62,12 @@ var CharacterService = {
             var batch = characterIds.slice(i, i + 10);
             batches.push(
                 db.collection('characters')
-                    . where(firebase.firestore.FieldPath.documentId(), 'in', batch)
+                    .where(firebase.firestore.FieldPath.documentId(), 'in', batch)
                     .get()
-                    . then(function(snapshot) {
+                    .then(function(snapshot) {
                         var chars = [];
                         snapshot.forEach(function(doc) {
-                            chars.push(Object. assign({ id: doc.id }, doc. data()));
+                            chars.push(Object.assign({ id: doc.id }, doc.data()));
                         });
                         return chars;
                     })
@@ -76,7 +76,7 @@ var CharacterService = {
         
         return Promise.all(batches).then(function(results) {
             // Flatten the array of arrays
-            return results. reduce(function(acc, curr) {
+            return results.reduce(function(acc, curr) {
                 return acc.concat(curr);
             }, []);
         });
