@@ -11,6 +11,44 @@ var creatorData = {
     equipment: []
 };
 
+// Skills with attributes (from JSX specifications)
+var SKILLS = {
+    'Bestiologi': { attr: 'INT' },
+    'Bluffa': { attr: 'KAR' },
+    'Fingerfärdighet': { attr: 'SMI' },
+    'Finna dolda ting': { attr: 'INT' },
+    'Främmande språk': { attr: 'INT' },
+    'Hantverk': { attr: 'STY' },
+    'Hoppa & klättra': { attr: 'SMI' },
+    'Jakt & fiske': { attr: 'SMI' },
+    'Köpslå': { attr: 'KAR' },
+    'Läkekonst': { attr: 'INT' },
+    'Myter & legender': { attr: 'INT' },
+    'Rida': { attr: 'SMI' },
+    'Simma': { attr: 'SMI' },
+    'Sjökunnighet': { attr: 'INT' },
+    'Smyga': { attr: 'SMI' },
+    'Undvika': { attr: 'SMI' },
+    'Uppträda': { attr: 'KAR' },
+    'Upptäcka fara': { attr: 'INT' },
+    'Vildmarksvana': { attr: 'INT' },
+    'Övertala': { attr: 'KAR' }
+};
+
+// Weapon skills with attributes (from JSX specifications)
+var WEAPON_SKILLS_V2 = {
+    'Armborst': { attr: 'SMI' },
+    'Hammare': { attr: 'STY' },
+    'Kniv': { attr: 'SMI' },
+    'Pilbåge': { attr: 'SMI' },
+    'Slagsmål': { attr: 'STY' },
+    'Slunga': { attr: 'SMI' },
+    'Spjut': { attr: 'STY' },
+    'Stav': { attr: 'SMI' },
+    'Svärd': { attr: 'STY' },
+    'Yxa': { attr: 'STY' }
+};
+
 var KIN_DATA = {
     'Människa': { ability: 'Anpassningsbar', description: 'Du får en extra hjälteförmåga vid start.', stats: {} },
     'Alv': { ability: 'Mörkerseende', description: 'Du kan se i mörker som om det vore skymning.', stats: { INT: 2, STY: -2 } },
@@ -210,28 +248,72 @@ function prevStep() {
 }
 
 function createCharacter() {
+    // Initialize skills with isCore property
+    var skills = {};
+    Object.keys(SKILLS).forEach(function(skillName) {
+        skills[skillName] = {
+            value: 0,
+            isCore: false,
+            attr: SKILLS[skillName].attr
+        };
+    });
+    
+    // Initialize weapon skills with isCore property
+    var weaponSkills = {};
+    Object.keys(WEAPON_SKILLS_V2).forEach(function(skillName) {
+        weaponSkills[skillName] = {
+            value: 0,
+            isCore: false,
+            attr: WEAPON_SKILLS_V2[skillName].attr
+        };
+    });
+    
+    // Initialize condition tracking for attributes
+    var conditions = {
+        STY: false,  // Utmattad
+        FYS: false,  // Krasslig
+        SMI: false,  // Omtöcknad
+        INT: false,  // Arg
+        PSY: false,  // Rädd
+        KAR: false   // Uppgiven
+    };
+    
+    // Initialize death saves
+    var deathSaves = {
+        successes: 0,
+        failures: 0
+    };
+    
     var charData = {
         name: creatorData.name,
         kin: creatorData.kin,
         profession: creatorData.profession,
         age: creatorData.age,
         attributes: creatorData.attributes,
+        conditions: conditions,
         kinAbility: creatorData.kinAbility,
         heroicAbility: creatorData.heroicAbility,
-        skills: {},
-        weaponSkills: {},
+        skills: skills,
+        weaponSkills: weaponSkills,
         inventory: [],
+        weapons: [],
         currency: { guld: 0, silver: 0, brons: 0 },
         currentKP: creatorData.attributes.FYS,
         currentVP: creatorData.attributes.PSY,
+        deathSaves: deathSaves,
         movement: 10,
-        notes: ''
+        damageBonusSTY: 'T4',  // Text field for die notation
+        damageBonusSMI: 'T6',  // Text field for die notation
+        armor: '',
+        armorProtection: 0,
+        helmet: '',
+        helmetProtection: 0,
+        carry: 0,  // Bär (carrying capacity)
+        notes: '',
+        playerName: '',
+        weakness: '',
+        memento: ''
     };
-    
-    // Apply profession skills
-    if (creatorData.profession && PROFESSION_DATA[creatorData.profession]) {
-        charData.skills = { ...PROFESSION_DATA[creatorData.profession].skills };
-    }
     
     CharacterService.createCharacter(charData).then(function() {
         closeCharacterCreator();
