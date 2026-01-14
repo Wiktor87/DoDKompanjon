@@ -118,7 +118,10 @@ var HomebrewService = {
 
     // Get user's own homebrew creations
     getUserHomebrew: function(userId) {
-        userId = userId || (getCurrentUser() && getCurrentUser().uid);
+        if (!userId) {
+            var currentUser = getCurrentUser();
+            userId = currentUser ? currentUser.uid : null;
+        }
         if (!userId) return Promise.resolve([]);
         
         return db.collection('homebrew')

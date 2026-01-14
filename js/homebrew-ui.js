@@ -495,6 +495,14 @@ var HomebrewUI = {
     handleFormSubmit: function(type, e) {
         e.preventDefault();
         var self = this;
+        var user = getCurrentUser();
+        
+        if (!user) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Du måste vara inloggad', 'error');
+            }
+            return;
+        }
         
         var formData = new FormData(e.target);
         var data = {};
@@ -514,7 +522,7 @@ var HomebrewUI = {
             self.switchView('collection');
             
             // Update user profile stats
-            UserProfileService.updateStats(getCurrentUser().uid, { homebrewCount: 1 });
+            UserProfileService.updateStats(user.uid, { homebrewCount: 1 });
         }).catch(function(err) {
             console.error('Error creating homebrew:', err);
             if (typeof showToast !== 'undefined') {
@@ -616,6 +624,15 @@ var HomebrewUI = {
         if (!confirm('Är du säker på att du vill ta bort denna homebrew?')) return;
         
         var self = this;
+        var user = getCurrentUser();
+        
+        if (!user) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Du måste vara inloggad', 'error');
+            }
+            return;
+        }
+        
         HomebrewService.deleteHomebrew(homebrewId).then(function() {
             if (typeof showToast !== 'undefined') {
                 showToast('Homebrew borttagen!', 'success');
@@ -623,7 +640,7 @@ var HomebrewUI = {
             self.loadCreatedItems();
             
             // Update user profile stats
-            UserProfileService.updateStats(getCurrentUser().uid, { homebrewCount: -1 });
+            UserProfileService.updateStats(user.uid, { homebrewCount: -1 });
         }).catch(function(err) {
             console.error('Error deleting:', err);
             if (typeof showToast !== 'undefined') {
