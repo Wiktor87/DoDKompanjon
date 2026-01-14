@@ -174,9 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Login attempt:', email);
+            console.log('Login attempt');
             auth.signInWithEmailAndPassword(email, password).then(function(result) {
-                console.log('Login success:', result.user.email);
+                console.log('Login success');
                 currentUser = result.user;
                 onUserLoggedIn(result.user);
             }).catch(function(err) {
@@ -207,10 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Register attempt:', email);
+            console.log('Register attempt');
             auth.createUserWithEmailAndPassword(email, password).then(function(result) {
                 return result.user.updateProfile({ displayName: username }).then(function() {
-                    console.log('Register success:', result.user.email);
+                    console.log('Register success');
                     currentUser = result.user;
                     onUserLoggedIn(result.user);
                 });
@@ -319,7 +319,7 @@ function handleForgotPassword() {
     }
     
     email = email.trim();
-    console.log('Password reset requested for:', email);
+    console.log('Password reset requested');
     
     auth.sendPasswordResetEmail(email)
         .then(function() {
