@@ -137,32 +137,74 @@
         </header>
 
         <main class="app-main">
-            <!-- Home -->
-            <section id="home" class="section active">
-                <div class="home-welcome">
-                    <h1>Välkommen, <span id="welcomeName">Äventyrare</span>!</h1>
-                </div>
-                <div class="quick-actions-grid">
-                    <button class="quick-action-card" onclick="openCharacterCreator()">
-                        <div class="qa-icon">🎭</div>
-                        <div class="qa-content"><h3>Skapa Karaktär</h3><p>Bygg din nästa hjälte</p></div>
-                    </button>
-                    <button class="quick-action-card" onclick="showSection('characters')">
-                        <div class="qa-icon">📋</div>
-                        <div class="qa-content"><h3>Mina Karaktärer</h3><p>Se och hantera dina hjältar</p></div>
-                    </button>
-                    <button class="quick-action-card" onclick="showSection('campaigns')">
-                        <div class="qa-icon">⚔️</div>
-                        <div class="qa-content"><h3>Kampanjer</h3><p>Hantera dina äventyr</p></div>
-                    </button>
-                </div>
-                <div class="home-section">
-                    <h2>🎭 Dina Karaktärer</h2>
-                    <div id="homeCharacters" class="character-cards">
-                        <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
-                    </div>
-                </div>
-            </section>
+<!-- ============================================
+     NEW OVERVIEW HTML
+     Ersätt innehållet i <section id="home"> med detta
+     ============================================ -->
+
+<section id="home" class="section active">
+    
+    <!-- Welcome Frame with Gold Border -->
+    <div class="welcome-frame">
+        <!-- Decorative corners -->
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+        
+        <!-- Corner dots -->
+        <div class="corner-dot top-left"></div>
+        <div class="corner-dot top-right"></div>
+        <div class="corner-dot bottom-left"></div>
+        <div class="corner-dot bottom-right"></div>
+        
+        <h1>Välkommen tillbaka, <span class="gold-text" id="welcomeName">Äventyrare</span></h1>
+        <p>Ditt nästa äventyr väntar</p>
+    </div>
+    
+    <!-- Characters Section -->
+    <div class="overview-section">
+        <div class="section-header">
+            <h2>Dina karaktärer</h2>
+            <button class="section-link" onclick="openCharacterCreator()">Skapa ny karaktär →</button>
+        </div>
+        
+        <div class="characters-grid-new" id="homeCharacters">
+            <!-- Characters will be loaded here by JS -->
+            <div class="loading-placeholder">
+                <div class="spinner"></div>
+                <p>Laddar...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Groups Section -->
+    <div class="overview-section">
+        <div class="section-header">
+            <h2>Din grupp</h2>
+            <button class="section-link section-link-muted" onclick="showSection('parties')">Hantera grupper</button>
+        </div>
+        
+        <div id="homeParties">
+            <!-- Parties will be loaded here by JS -->
+        </div>
+    </div>
+    
+    <!-- Campaigns Section -->
+    <div class="overview-section">
+        <div class="section-header">
+            <h2>Kampanjer</h2>
+        </div>
+        
+        <div class="empty-state-card">
+            <div class="empty-icon">📜</div>
+            <h3>Inga aktiva kampanjer</h3>
+            <p>Skapa en kampanj för att organisera dina äventyr</p>
+            <button class="btn btn-gold-outline" onclick="openCreateCampaign()">Skapa kampanj</button>
+        </div>
+    </div>
+    
+</section>
 
             <!-- Characters -->
             <section id="characters" class="section">
