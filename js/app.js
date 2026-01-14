@@ -1290,18 +1290,31 @@ function createJoinRequest(partyId, charId) {
 }
 
 function acceptJoinRequest(requestId, partyId, characterId) {
-    // Add character to party
-    PartyService.addCharacterToParty(partyId, characterId).then(function() {
+    // First get the join request to find the requester's user ID
+    db.collection('joinRequests').doc(requestId).get().then(function(doc) {
+        if (!doc.exists) throw new Error('Förfrågan hittades inte');
+        
+        var requestData = doc.data();
+        var requesterId = requestData.requesterId;
+        
+        // Add character to party AND add user to memberIds
+        return db.collection('parties').doc(partyId).update({
+            characterIds: firebase.firestore.FieldValue.arrayUnion(characterId),
+            memberIds: firebase. firestore.FieldValue.arrayUnion(requesterId),
+            updatedAt:  firebase.firestore. FieldValue.serverTimestamp()
+        });
+    }).then(function() {
         // Update request status
         return db.collection('joinRequests').doc(requestId).update({
             status: 'accepted',
-            processedAt: firebase.firestore.FieldValue.serverTimestamp()
+            processedAt: firebase. firestore.FieldValue.serverTimestamp()
         });
     }).then(function() {
-        showToast('Karaktär godkänd och tillagd!', 'success');
+        showToast('Karaktär godkänd och tillagd! ', 'success');
         viewParty(partyId); // Refresh view
     }).catch(function(err) {
-        showToast('Fel: ' + err.message, 'error');
+        console.error('Accept join request error:', err);
+        showToast('Fel:  ' + err.message, 'error');
     });
 }
 
