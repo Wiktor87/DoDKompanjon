@@ -250,6 +250,8 @@ body.app-active::before {
 .auth-divider { text-align: center; margin: 1.5rem 0; color: var(--text-muted); font-size: 0.813rem; }
 .auth-error { background: rgba(197,48,48,0.1); border: 1px solid var(--brand-red); color: var(--brand-red); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem; display: none; }
 .auth-error.active { display: block; }
+.auth-success { background: rgba(72,187,120,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem; display: none; }
+.auth-success.active { display: block; }
 
 /* Character Creator */
 .creator-progress { display: flex; justify-content: center; gap: 0.5rem; margin: 1.5rem 0; }

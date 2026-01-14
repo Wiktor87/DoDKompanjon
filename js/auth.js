@@ -266,6 +266,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function showAuthError(message) {
     var el = document.getElementById('authError');
     if (el) {
+        el.classList.remove('auth-success');
+        el.classList.add('auth-error');
         el.textContent = message;
         el.classList.add('active');
     }
@@ -273,7 +275,11 @@ function showAuthError(message) {
 
 function hideAuthError() {
     var el = document.getElementById('authError');
-    if (el) el.classList.remove('active');
+    if (el) {
+        el.classList.remove('active');
+        el.classList.remove('auth-success');
+        el.classList.add('auth-error');
+    }
 }
 
 function getErrorMessage(code) {
@@ -322,9 +328,8 @@ function handleForgotPassword() {
             var authError = document.getElementById('authError');
             if (authError) {
                 authError.textContent = '✓ Ett e-postmeddelande för återställning av lösenord har skickats till ' + email + '. Kontrollera din inkorg.';
-                authError.style.background = 'rgba(72, 187, 120, 0.1)';
-                authError.style.borderColor = 'var(--accent-green)';
-                authError.style.color = 'var(--accent-green)';
+                authError.classList.remove('auth-error');
+                authError.classList.add('auth-success');
                 authError.classList.add('active');
             }
             console.log('Password reset email sent successfully');
