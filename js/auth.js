@@ -17,94 +17,46 @@ function showLandingPage() {
     var app = document.getElementById('app');
     var modal = document.getElementById('authModal');
     
-    // Check if user is logged in
-    if (currentUser) {
-        // User is logged in - show landing with logged-in state
-        if (landing) {
-            landing.classList.remove('hidden');
-            // Hide login/signup buttons, show user menu
-            var loginBtn = document.getElementById('loginBtn');
-            var signupBtn = document.getElementById('signupBtn');
-            var landingNav = landing.querySelector('.nav-actions');
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (signupBtn) signupBtn.style.display = 'none';
-            
-            // Add logged-in user menu to landing page
-            if (landingNav && !landingNav.querySelector('.landing-user-menu')) {
-                var userMenu = document.createElement('div');
-                userMenu.className = 'landing-user-menu';
-                userMenu.style.cssText = 'display: flex; align-items: center; gap: 0.75rem;';
-                var userName = currentUser.displayName || currentUser.email.split('@')[0];
-                userMenu.innerHTML = '<span style="font-size: 0.875rem; color: var(--text-secondary);">' + userName + '</span>' +
-                    '<button id="landingLogoutBtn" class="btn btn-ghost" style="padding: 0.5rem 1rem;">Logga ut</button>';
-                landingNav.innerHTML = '';
-                landingNav.appendChild(userMenu);
-                
-                // Add logout handler
-                var logoutBtn = document.getElementById('landingLogoutBtn');
-                if (logoutBtn) {
-                    logoutBtn.onclick = function() {
-                        auth.signOut();
-                    };
-                }
-            }
-            
-            // Show submenu/nav on landing page
-            var headerSub = app.querySelector('.header-sub');
-            if (headerSub && !landing.querySelector('.landing-submenu')) {
-                var submenuClone = headerSub.cloneNode(true);
-                submenuClone.className = 'landing-submenu';
-                submenuClone.style.cssText = 'background: var(--bg-secondary); border-bottom: 1px solid var(--border-default); padding: 0;';
-                
-                // Update the nav to work on landing page
-                var navTabs = submenuClone.querySelectorAll('.nav-tab');
-                navTabs.forEach(function(tab) {
-                    tab.onclick = function(e) {
-                        e.preventDefault();
-                        // Switch back to app and show section
-                        showApp();
-                        var section = this.getAttribute('data-section');
-                        if (section && typeof showSection === 'function') {
-                            showSection(section);
-                        }
-                    };
-                });
-                
-                var landingHeader = landing.querySelector('.landing-header');
-                if (landingHeader) {
-                    landingHeader.appendChild(submenuClone);
-                }
-            }
-        }
-    } else {
-        // User is not logged in - show normal landing
-        if (landing) {
-            landing.classList.remove('hidden');
-            // Show login/signup buttons
-            var loginBtn = document.getElementById('loginBtn');
-            var signupBtn = document.getElementById('signupBtn');
-            if (loginBtn) loginBtn.style.display = '';
-            if (signupBtn) signupBtn.style.display = '';
-            
-            // Remove logged-in elements
-            var landingNav = landing.querySelector('.nav-actions');
-            if (landingNav) {
-                landingNav.innerHTML = '<button id="loginBtn" class="btn btn-ghost">Logga in</button>' +
-                    '<button id="signupBtn" class="btn btn-primary">Skapa konto</button>';
-                // Re-attach handlers
-                document.getElementById('loginBtn').onclick = function() { showAuthModal('login'); };
-                document.getElementById('signupBtn').onclick = function() { showAuthModal('register'); };
-            }
-            
-            // Remove submenu if present
-            var submenu = landing.querySelector('.landing-submenu');
-            if (submenu) submenu.remove();
-        }
-    }
-    
+    if (landing) landing.classList.remove('hidden');
     if (app) app.classList.add('hidden');
     if (modal) modal.classList.remove('active');
     document.body.classList.remove('app-active');
+    
+    // Update the landing header based on auth state
+    updateLandingHeader();
+}
+
+function updateLandingHeader() {
+    var landing = document.getElementById('landingPage');
+    if (!landing) return;
+    
+    var navActions = landing.querySelector('.nav-actions');
+    if (!navActions) return;
+    
+    if (currentUser) {
+        // User is logged in - show user menu
+        var userName = currentUser.displayName || currentUser.email.split('@')[0];
+        navActions.innerHTML = '<span class="user-name">' + userName + '</span>' +
+            '<button id="landingLogoutBtn" class="btn btn-ghost btn-sm">Logga ut</button>';
+        
+        // Add logout handler
+        var logoutBtn = document.getElementById('landingLogoutBtn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function() {
+                auth.signOut();
+            };
+        }
+    } else {
+        // User is not logged in - show login/signup buttons
+        navActions.innerHTML = '<button id="loginBtn" class="btn btn-ghost">Logga in</button>' +
+            '<button id="signupBtn" class="btn btn-primary">Skapa konto</button>';
+        
+        // Re-attach handlers
+        var loginBtn = document.getElementById('loginBtn');
+        var signupBtn = document.getElementById('signupBtn');
+        if (loginBtn) loginBtn.onclick = function() { showAuthModal('login'); };
+        if (signupBtn) signupBtn.onclick = function() { showAuthModal('register'); };
+    }
 }
 
 function showApp() {
@@ -135,6 +87,12 @@ function onUserLoggedIn(user) {
         console.error('User doc error:', err);
     });
     
+    // Update landing header if on landing page
+    updateLandingHeader();
+    
+    // Re-setup navigation handlers
+    setupNavigationHandlers();
+    
     showApp();
     if (typeof loadDashboard === 'function') {
         loadDashboard();
@@ -157,7 +115,39 @@ document.addEventListener('DOMContentLoaded', function() {
             hideAuthError();
         };
     });
+    
+    // Setup navigation tab handlers for both landing and app
+    setupNavigationHandlers();
 });
+
+function setupNavigationHandlers() {
+    document.querySelectorAll('.nav-tab').forEach(function(tab) {
+        tab.onclick = function(e) {
+            e.preventDefault();
+            var section = this.getAttribute('data-section');
+            var requireAuth = this.getAttribute('data-require-auth') === 'true';
+            
+            if (!section) return;
+            
+            // If auth is required and user is not logged in, show auth modal
+            if (requireAuth && !currentUser) {
+                showAuthModal('login');
+                return;
+            }
+            
+            // If on landing page and logged in, switch to app
+            var landing = document.getElementById('landingPage');
+            if (landing && !landing.classList.contains('hidden')) {
+                showApp();
+            }
+            
+            // Navigate to section
+            if (typeof showSection === 'function') {
+                showSection(section);
+            }
+        };
+    });
+}
 
 // Login form
 document.addEventListener('DOMContentLoaded', function() {
