@@ -345,6 +345,8 @@ function viewCharacter(id) {
     CharacterService.getCharacter(id).then(function(char) {
         currentCharacter = char;
         container.innerHTML = renderFullCharacterSheet(char);
+        // Setup listeners for kin/profession/age changes
+        setupKinChangeListener();
     }).catch(function(err) {
         console.error('Failed to load character:', err);
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
@@ -487,10 +489,40 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-tab-content" id="tab-personal">' +
         '<div class="sheet-body-grid">' +
         '<div class="sheet-column">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Karaktärsuppgifter</h3>' +
+        '<div style="padding: 0.5rem;">' +
+        (function() {
+            var kinOptions = typeof KIN_DATA !== 'undefined' ? Object.keys(KIN_DATA) : ['Människa', 'Alv', 'Dvärg', 'Halvling', 'Anka', 'Vargfolk'];
+            var kinSelect = '<select class="item-name-input" data-field="kin">';
+            kinOptions.forEach(function(k) {
+                kinSelect += '<option value="' + k + '"' + (char.kin === k ? ' selected' : '') + '>' + k + '</option>';
+            });
+            kinSelect += '</select>';
+            return '<div class="skill-row"><span class="skill-name">Släkte</span>' + kinSelect + '</div>';
+        })() +
+        (function() {
+            var profOptions = typeof PROFESSION_DATA !== 'undefined' ? Object.keys(PROFESSION_DATA) : ['Bard', 'Hantverkare', 'Jägare', 'Krigare', 'Lärd', 'Magiker', 'Nasare', 'Riddare', 'Sjöfarare', 'Tjuv'];
+            var profSelect = '<select class="item-name-input" data-field="profession">';
+            profOptions.forEach(function(p) {
+                profSelect += '<option value="' + p + '"' + (char.profession === p ? ' selected' : '') + '>' + p + '</option>';
+            });
+            profSelect += '</select>';
+            return '<div class="skill-row"><span class="skill-name">Yrke</span>' + profSelect + '</div>';
+        })() +
+        (function() {
+            var ageOptions = typeof AGE_DATA !== 'undefined' ? Object.keys(AGE_DATA) : ['Ung', 'Medelålders', 'Gammal'];
+            var ageSelect = '<select class="item-name-input" data-field="ageCategory">';
+            ageOptions.forEach(function(a) {
+                ageSelect += '<option value="' + a + '"' + (char.age === a ? ' selected' : '') + '>' + a + '</option>';
+            });
+            ageSelect += '</select>';
+            return '<div class="skill-row"><span class="skill-name">Ålderskategori</span>' + ageSelect + '</div>';
+        })() +
+        '</div></div>' +
         '<div class="sheet-panel"><h3 class="panel-title">Personliga Uppgifter</h3>' +
         '<div style="padding: 0.5rem;">' +
         '<div class="skill-row"><span class="skill-name">Spelarens namn</span><input type="text" class="item-name-input" value="' + (char.playerName || '') + '" data-field="playerName" placeholder="Ditt namn"></div>' +
-        '<div class="skill-row"><span class="skill-name">Ålder</span><input type="text" class="item-name-input" value="' + (char.characterAge || '') + '" data-field="characterAge" placeholder="t.ex. 25 år"></div>' +
+        '<div class="skill-row"><span class="skill-name">Ålder (fritext)</span><input type="text" class="item-name-input" value="' + (char.characterAge || '') + '" data-field="characterAge" placeholder="t.ex. 25 år"></div>' +
         '<div class="skill-row"><span class="skill-name">Kön</span><input type="text" class="item-name-input" value="' + (char.gender || '') + '" data-field="gender"></div>' +
         '<div class="skill-row"><span class="skill-name">Längd</span><input type="text" class="item-name-input" value="' + (char.height || '') + '" data-field="height" placeholder="t.ex. 180 cm"></div>' +
         '<div class="skill-row"><span class="skill-name">Vikt</span><input type="text" class="item-name-input" value="' + (char.weight || '') + '" data-field="weight" placeholder="t.ex. 75 kg"></div>' +
@@ -508,6 +540,58 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-panel"><h3 class="panel-title">Anteckningar</h3><textarea class="bio-textarea" data-field="notes" placeholder="Allmänna anteckningar...">' + (char.notes || '') + '</textarea></div>' +
         '</div></div></div>' +
         '</div>';
+}
+
+// Update character portrait when kin is changed
+function setupKinChangeListener() {
+    var kinSelect = document.querySelector('[data-field="kin"]');
+    if (kinSelect) {
+        kinSelect.addEventListener('change', function() {
+            var newKin = this.value;
+            var portraitEl = document.querySelector('.sheet-portrait-large');
+            if (portraitEl) {
+                portraitEl.innerHTML = getKinIcon(newKin);
+            }
+            // Also update subtitle
+            var subtitleEl = document.querySelector('.sheet-subtitle-row');
+            if (subtitleEl && currentCharacter) {
+                var professionEl = document.querySelector('[data-field="profession"]');
+                var ageEl = document.querySelector('[data-field="ageCategory"]');
+                var profession = professionEl ? professionEl.value : currentCharacter.profession;
+                var age = ageEl ? ageEl.value : currentCharacter.age;
+                subtitleEl.textContent = [newKin, profession, age].filter(Boolean).join(' • ');
+            }
+        });
+    }
+    
+    // Also listen to profession and age changes for subtitle update
+    var professionSelect = document.querySelector('[data-field="profession"]');
+    if (professionSelect) {
+        professionSelect.addEventListener('change', function() {
+            var subtitleEl = document.querySelector('.sheet-subtitle-row');
+            if (subtitleEl) {
+                var kinEl = document.querySelector('[data-field="kin"]');
+                var ageEl = document.querySelector('[data-field="ageCategory"]');
+                var kin = kinEl ? kinEl.value : currentCharacter.kin;
+                var age = ageEl ? ageEl.value : currentCharacter.age;
+                subtitleEl.textContent = [kin, this.value, age].filter(Boolean).join(' • ');
+            }
+        });
+    }
+    
+    var ageSelect = document.querySelector('[data-field="ageCategory"]');
+    if (ageSelect) {
+        ageSelect.addEventListener('change', function() {
+            var subtitleEl = document.querySelector('.sheet-subtitle-row');
+            if (subtitleEl) {
+                var kinEl = document.querySelector('[data-field="kin"]');
+                var professionEl = document.querySelector('[data-field="profession"]');
+                var kin = kinEl ? kinEl.value : currentCharacter.kin;
+                var profession = professionEl ? professionEl.value : currentCharacter.profession;
+                subtitleEl.textContent = [kin, profession, this.value].filter(Boolean).join(' • ');
+            }
+        });
+    }
 }
 
 // Inventory
@@ -542,6 +626,9 @@ function saveCharacter() {
     if (!currentCharacter) return;
     var updates = {
         name: '',
+        kin: '',
+        profession: '',
+        age: '',
         currentKP: 0,
         currentVP: 0,
         movement: 10,
@@ -565,6 +652,15 @@ function saveCharacter() {
     
     var nameEl = document.querySelector('[data-field="name"]');
     if (nameEl) updates.name = nameEl.value || '';
+    
+    var kinEl = document.querySelector('[data-field="kin"]');
+    if (kinEl) updates.kin = kinEl.value || '';
+    
+    var professionEl = document.querySelector('[data-field="profession"]');
+    if (professionEl) updates.profession = professionEl.value || '';
+    
+    var ageCategoryEl = document.querySelector('[data-field="ageCategory"]');
+    if (ageCategoryEl) updates.age = ageCategoryEl.value || '';
     
     var currentKPEl = document.querySelector('[data-field="currentKP"]');
     if (currentKPEl) updates.currentKP = parseInt(currentKPEl.value) || 0;
