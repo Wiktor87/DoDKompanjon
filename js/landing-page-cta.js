@@ -2,6 +2,8 @@
 (function() {
     'use strict';
     
+    var TRANSITION_DURATION_MS = 1000; // Fade transition duration
+    
     var VideoCarousel = {
         videos: [
             'Website_Animation_For_Drakar_och_Demoner.mp4',
@@ -14,8 +16,7 @@
         init: function() {
             var container = document.querySelector('.bg-video-carousel');
             if (!container) {
-                console.warn('Video carousel container not found');
-                return;
+                return; // Silently fail if container not found
             }
             
             this.videoElements = [];
@@ -94,10 +95,10 @@
                 setTimeout(function() {
                     nextVideo.classList.remove('fade-in');
                     this.isTransitioning = false;
-                }.bind(this), 1000);
+                }.bind(this), TRANSITION_DURATION_MS);
                 
                 this.currentIndex = nextIndex;
-            }.bind(this), 1000);
+            }.bind(this), TRANSITION_DURATION_MS);
         }
     };
     
@@ -110,5 +111,3 @@
         VideoCarousel.init();
     }
 })();
-
-console.log('✅ Landing page CTA carousel loaded');
