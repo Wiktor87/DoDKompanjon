@@ -556,3 +556,546 @@ body.app-active::before {
     .gold-frame-box .corner::before { width: 25px !important; }
     .gold-frame-box .corner::after { height: 25px !important; }
 }
+/* ============================================
+   OVERVIEW PAGE REDESIGN
+   Lägg till denna CSS i slutet av style.css
+   ============================================ */
+
+/* ---- Ambient Background for App Pages ---- */
+#app {
+    position: relative;
+}
+
+#app::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse 100% 80% at 50% -30%, rgba(26, 29, 36, 0.9) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 175, 55, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ---- Welcome Section with Gold Frame ---- */
+.welcome-frame {
+    position: relative;
+    background: linear-gradient(180deg, #12141a 0%, #0d0f14 100%);
+    padding: 2.5rem 3rem;
+    margin-bottom: 2.5rem;
+    border: 2px solid #8b7335;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.welcome-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+/* Corner lines */
+.welcome-frame .corner {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+}
+
+.welcome-frame .corner::before,
+.welcome-frame .corner::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(135deg, #d4af37 0%, #f0d875 50%, #8b7335 100%);
+}
+
+.welcome-frame .corner.top-left { top: -2px; left: -2px; }
+.welcome-frame .corner.top-left::before { top: 0; left: 0; width: 35px; height: 3px; }
+.welcome-frame .corner.top-left::after { top: 0; left: 0; width: 3px; height: 35px; }
+
+.welcome-frame .corner.top-right { top: -2px; right: -2px; }
+.welcome-frame .corner.top-right::before { top: 0; right: 0; width: 35px; height: 3px; }
+.welcome-frame .corner.top-right::after { top: 0; right: 0; width: 3px; height: 35px; }
+
+.welcome-frame .corner.bottom-left { bottom: -2px; left: -2px; }
+.welcome-frame .corner.bottom-left::before { bottom: 0; left: 0; width: 35px; height: 3px; }
+.welcome-frame .corner.bottom-left::after { bottom: 0; left: 0; width: 3px; height: 35px; }
+
+.welcome-frame .corner.bottom-right { bottom: -2px; right: -2px; }
+.welcome-frame .corner.bottom-right::before { bottom: 0; right: 0; width: 35px; height: 3px; }
+.welcome-frame .corner.bottom-right::after { bottom: 0; right: 0; width: 3px; height: 35px; }
+
+/* Corner dots */
+.welcome-frame .corner-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #f0d875 0%, #d4af37 60%, #8b7335 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+}
+
+.welcome-frame .corner-dot.top-left { top: 10px; left: 10px; }
+.welcome-frame .corner-dot.top-right { top: 10px; right: 10px; }
+.welcome-frame .corner-dot.bottom-left { bottom: 10px; left: 10px; }
+.welcome-frame .corner-dot.bottom-right { bottom: 10px; right: 10px; }
+
+.welcome-frame h1 {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+
+.welcome-frame .gold-text {
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.welcome-frame p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* ---- Section Headers ---- */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1.25rem;
+}
+
+.section-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.section-header .section-link {
+    background: none;
+    border: none;
+    color: var(--accent-gold);
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0.25rem 0;
+    transition: opacity 0.2s;
+}
+
+.section-header .section-link:hover {
+    opacity: 0.8;
+}
+
+.section-header .section-link-muted {
+    color: var(--text-muted);
+}
+
+/* ---- Card Frame (for characters, groups, etc) ---- */
+.card-frame {
+    position: relative;
+    background: linear-gradient(180deg, #16181f 0%, #0f1115 100%);
+    padding: 1.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.card-frame:hover {
+    border-color: rgba(212, 175, 55, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212, 175, 55, 0.1);
+}
+
+/* Hover corner accents */
+.card-frame::before,
+.card-frame::after,
+.card-frame .corner-accent::before,
+.card-frame .corner-accent::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(90deg, var(--accent-gold), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.card-frame::before {
+    top: -1px;
+    left: -1px;
+    width: 20px;
+    height: 2px;
+}
+
+.card-frame::after {
+    top: -1px;
+    left: -1px;
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(180deg, var(--accent-gold), transparent);
+}
+
+.card-frame .corner-accent::before {
+    top: -1px;
+    right: -1px;
+    width: 20px;
+    height: 2px;
+    background: linear-gradient(270deg, var(--accent-gold), transparent);
+}
+
+.card-frame .corner-accent::after {
+    top: -1px;
+    right: -1px;
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(180deg, var(--accent-gold), transparent);
+}
+
+.card-frame:hover::before,
+.card-frame:hover::after,
+.card-frame:hover .corner-accent::before,
+.card-frame:hover .corner-accent::after {
+    opacity: 1;
+}
+
+/* ---- Character Card (New Style) ---- */
+.character-card-new {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.character-card-new .char-portrait-new {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.1) 0%, rgba(139, 115, 53, 0.15) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.character-card-new .char-portrait-new svg {
+    width: 32px;
+    height: 32px;
+    color: var(--accent-gold);
+}
+
+.character-card-new .char-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.character-card-new .char-name {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.character-card-new .char-meta {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-bottom: 0.875rem;
+}
+
+/* Stats bars */
+.char-stats-bars {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.stat-bar {
+    flex: 1;
+}
+
+.stat-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.375rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.stat-bar-label {
+    color: var(--text-muted);
+}
+
+.stat-bar-value-kp {
+    color: #ef4444;
+}
+
+.stat-bar-value-vp {
+    color: #a855f7;
+}
+
+.stat-bar-track {
+    height: 3px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 1px;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.3s ease;
+}
+
+.stat-bar-fill-kp {
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+
+.stat-bar-fill-vp {
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+}
+
+/* Card footer */
+.card-frame-footer {
+    margin-top: 1rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-frame-footer .last-played {
+    font-size: 0.6875rem;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.card-frame-footer .continue-link {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.card-frame:hover .continue-link {
+    color: var(--accent-gold);
+}
+
+/* ---- Party Card ---- */
+.party-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+}
+
+.party-card-header h3 {
+    font-size: 1.1875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.party-card-header .party-meta {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.next-session-badge {
+    text-align: right;
+    padding: 0.625rem 0.875rem;
+    background: rgba(212, 175, 55, 0.06);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 2px;
+}
+
+.next-session-badge .badge-label {
+    font-size: 0.625rem;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.1875rem;
+}
+
+.next-session-badge .badge-value {
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Party members */
+.party-members {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.party-member {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 2px;
+}
+
+.party-member-avatar {
+    width: 28px;
+    height: 28px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.12);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+
+.party-member-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.online-indicator {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.online-indicator.online {
+    background: #22c55e;
+}
+
+.online-indicator.offline {
+    background: #4b5563;
+}
+
+/* Party actions */
+.party-actions {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ---- Empty State ---- */
+.empty-state-card {
+    padding: 2.5rem;
+    background: linear-gradient(180deg, rgba(18, 20, 26, 0.5) 0%, rgba(13, 15, 20, 0.7) 100%);
+    border: 1px dashed var(--border-default);
+    border-radius: 2px;
+    text-align: center;
+}
+
+.empty-state-card .empty-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.625rem;
+    opacity: 0.4;
+}
+
+.empty-state-card h3 {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.375rem;
+}
+
+.empty-state-card p {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+}
+
+.empty-state-card .btn {
+    border-radius: 2px;
+}
+
+/* ---- Button Style Updates ---- */
+.btn {
+    border-radius: 2px;
+}
+
+.btn-primary {
+    border-radius: 2px;
+}
+
+.btn-outline {
+    border-radius: 2px;
+}
+
+.btn-gold-outline {
+    padding: 0.625rem 1.25rem;
+    background: transparent;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 2px;
+    color: var(--accent-gold);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-gold-outline:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+/* ---- Grid for new character cards ---- */
+.characters-grid-new {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+/* ---- Section spacing ---- */
+.overview-section {
+    margin-bottom: 2.5rem;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .welcome-frame {
+        padding: 1.75rem 1.5rem;
+    }
+    
+    .welcome-frame h1 {
+        font-size: 1.75rem;
+    }
+    
+    .welcome-frame .corner::before { width: 25px !important; }
+    .welcome-frame .corner::after { height: 25px !important; }
+    
+    .characters-grid-new {
+        grid-template-columns: 1fr;
+    }
+    
+    .char-stats-bars {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .party-card-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .next-session-badge {
+        text-align: left;
+        align-self: flex-start;
+    }
+}
