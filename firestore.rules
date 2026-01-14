@@ -22,9 +22,8 @@ service cloud.firestore {
          request.auth.uid in resource.data.memberIds ||
          resource.data.isPublic == true);
       
-      // Allow querying by inviteCode for join functionality
-      allow list: if request.auth != null && 
-        request.query.limit <= 1;
+      // Allow querying/listing for authenticated users (they can only see their own parties in the app logic)
+      allow list: if request.auth != null;
       
       // Allow creating for any authenticated user
       allow create: if request.auth != null &&

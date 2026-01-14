@@ -73,7 +73,23 @@ body.app-active::before {
 .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary) !important; }
 .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary) !important; }
 .btn-outline:hover { border-color: var(--accent-gold); }
-.btn-google { background: white; color: #333 !important; }
+.btn-google { 
+    background: white; 
+    color: #333 !important; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 0.75rem; 
+    border: 1px solid #dadce0; 
+    font-weight: 500; 
+}
+.btn-google:hover { 
+    background: #f8f9fa; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+.btn-google svg { 
+    flex-shrink: 0; 
+}
 .btn-block { width: 100%; }
 .btn-sm { padding: 0.5rem 1rem; font-size: 0.813rem; }
 .btn-xl { padding: 1rem 2rem; font-size: 1rem; }
@@ -96,11 +112,12 @@ body.app-active::before {
         z-index: 0;
     }
 }
-.landing-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; width: 100%; }
+.landing-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; max-width: 1400px; margin: 0 auto; position: relative; z-index: 10; width: 100%; }
 .nav-brand { text-decoration: none; }
 .brand-logo { height: 80px; width: auto; }
+.header-brand .brand-logo { height: 50px; }
 .nav-actions { display: flex; gap: 0.75rem; }
-.hero { max-width: 100%; margin: 0 auto; padding: 4rem 3rem; text-align: center; position: relative; flex: 1; display: flex; align-items: center; justify-content: center; }
+.hero { max-width: 100%; margin: 0 auto; padding: 4rem 3rem; text-align: center; position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .bg-video {
     position: absolute;
     top: 0;
@@ -108,8 +125,8 @@ body.app-active::before {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: -1;
-    opacity: 0.4;
+    z-index: 0;
+    opacity: 0.5;
 }
 @media (prefers-reduced-motion: reduce) {
     .bg-video {
@@ -117,7 +134,7 @@ body.app-active::before {
     }
 }
 .hero-bg { position: absolute; top: 0; left: 0; right: 0; height: 100%; width: 100%; background-size: 100% auto; background-position: center; opacity: 0.3; mask-image: linear-gradient(to bottom, black 0%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%); }
-.hero-content { position: relative; z-index: 1; }
+.hero-content { position: relative; z-index: 2; }
 .hero-title-main { display: block; font-family: var(--font-display); font-size: 4rem; font-weight: 700; color: var(--text-primary); }
 .hero-title-sub { display: block; font-family: var(--font-display); font-size: 3rem; background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero-description { font-size: 1.25rem; color: var(--text-secondary); margin: 1.5rem 0 2rem; }
@@ -141,7 +158,7 @@ body.app-active::before {
 /* App Header */
 .app-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 1100; }
 .header-top { background: var(--bg-primary); border-bottom: 1px solid var(--border-default); }
-.header-content { max-width: 1600px; margin: 0 auto; padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.header-content { max-width: 1600px; margin: 0 auto; padding: 0 1.5rem; min-height: 70px; display: flex; align-items: center; justify-content: space-between; }
 .header-brand { text-decoration: none; }
 .header-sub { border-bottom: 1px solid var(--border-default); }
 .app-nav { max-width: 1600px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 0; }
@@ -233,6 +250,8 @@ body.app-active::before {
 .auth-divider { text-align: center; margin: 1.5rem 0; color: var(--text-muted); font-size: 0.813rem; }
 .auth-error { background: rgba(197,48,48,0.1); border: 1px solid var(--brand-red); color: var(--brand-red); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem; display: none; }
 .auth-error.active { display: block; }
+.auth-success { background: rgba(72,187,120,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem; display: none; }
+.auth-success.active { display: block; }
 
 /* Character Creator */
 .creator-progress { display: flex; justify-content: center; gap: 0.5rem; margin: 1.5rem 0; }

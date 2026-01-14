@@ -174,9 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Login attempt:', email);
+            console.log('Login attempt');
             auth.signInWithEmailAndPassword(email, password).then(function(result) {
-                console.log('Login success:', result.user.email);
+                console.log('Login success');
                 currentUser = result.user;
                 onUserLoggedIn(result.user);
             }).catch(function(err) {
@@ -207,10 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Register attempt:', email);
+            console.log('Register attempt');
             auth.createUserWithEmailAndPassword(email, password).then(function(result) {
                 return result.user.updateProfile({ displayName: username }).then(function() {
-                    console.log('Register success:', result.user.email);
+                    console.log('Register success');
                     currentUser = result.user;
                     onUserLoggedIn(result.user);
                 });
@@ -252,11 +252,22 @@ document.addEventListener('DOMContentLoaded', function() {
             auth.signOut();
         };
     }
+    
+    // Forgot password link
+    var forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    if (forgotPasswordLink) {
+        forgotPasswordLink.onclick = function(e) {
+            e.preventDefault();
+            handleForgotPassword();
+        };
+    }
 });
 
 function showAuthError(message) {
     var el = document.getElementById('authError');
     if (el) {
+        el.classList.remove('auth-success');
+        el.classList.add('auth-error');
         el.textContent = message;
         el.classList.add('active');
     }
@@ -264,7 +275,12 @@ function showAuthError(message) {
 
 function hideAuthError() {
     var el = document.getElementById('authError');
-    if (el) el.classList.remove('active');
+    if (el) {
+        el.classList.remove('active', 'auth-success');
+        if (!el.classList.contains('auth-error')) {
+            el.classList.add('auth-error');
+        }
+    }
 }
 
 function getErrorMessage(code) {
@@ -290,4 +306,38 @@ function getCurrentUser() {
 
 function isUserLoggedIn() {
     return currentUser !== null;
+}
+
+function handleForgotPassword() {
+    var email = document.getElementById('loginEmail').value;
+    
+    if (!email || !email.trim()) {
+        showAuthError('Vänligen ange din e-postadress först.');
+        // Focus on email field
+        var emailField = document.getElementById('loginEmail');
+        if (emailField) emailField.focus();
+        return;
+    }
+    
+    email = email.trim();
+    console.log('Password reset requested');
+    
+    auth.sendPasswordResetEmail(email)
+        .then(function() {
+            hideAuthError();
+            // Show success message (generic for security)
+            var authError = document.getElementById('authError');
+            if (authError) {
+                authError.textContent = '✓ Ett e-postmeddelande för återställning av lösenord har skickats. Kontrollera din inkorg.';
+                authError.classList.remove('auth-error');
+                authError.classList.add('auth-success');
+                authError.classList.add('active');
+            }
+            console.log('Password reset email sent successfully');
+        })
+        .catch(function(error) {
+            console.error('Password reset error:', error);
+            var errorMessage = getErrorMessage(error.code) || 'Kunde inte skicka återställnings-e-post. Kontrollera e-postadressen.';
+            showAuthError(errorMessage);
+        });
 }
