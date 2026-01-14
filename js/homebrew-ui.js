@@ -183,6 +183,8 @@ var HomebrewUI = {
     getHomebrewCardHTML: function(item) {
         var category = HomebrewService.CATEGORIES[item.type] || { label: item.type, icon: '📜' };
         var rating = item.rating > 0 ? '★ ' + item.rating.toFixed(1) : 'Ej betygsatt';
+        var description = this.escapeHtml(item.description);
+        var truncatedDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
         
         return '<div class="homebrew-card" data-type="' + item.type + '">' +
             '<div class="homebrew-card-header">' +
@@ -190,7 +192,7 @@ var HomebrewUI = {
                 '<span class="homebrew-rating">' + rating + '</span>' +
             '</div>' +
             '<h3 class="homebrew-card-title">' + this.escapeHtml(item.name) + '</h3>' +
-            '<p class="homebrew-card-description">' + this.escapeHtml(item.description).substring(0, 120) + '...</p>' +
+            '<p class="homebrew-card-description">' + truncatedDesc + '</p>' +
             '<div class="homebrew-card-footer">' +
                 '<div class="homebrew-author" data-author-id="' + item.authorId + '">' +
                     '<div class="author-avatar">' + this.getInitials(item.authorName) + '</div>' +

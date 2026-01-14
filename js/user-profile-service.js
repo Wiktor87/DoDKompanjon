@@ -5,37 +5,45 @@ var UserProfileService = {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
-        var profile = {
-            userId: user.uid,
-            displayName: profileData.displayName || user.displayName || user.email,
-            slug: profileData.slug || this.generateSlug(profileData.displayName || user.displayName || user.email),
-            avatarUrl: profileData.avatarUrl || '',
-            bannerUrl: profileData.bannerUrl || '',
-            bio: profileData.bio || '',
-            location: profileData.location || '',
-            website: profileData.website || '',
-            memberSince: firebase.firestore.FieldValue.serverTimestamp(),
-            lastActive: firebase.firestore.FieldValue.serverTimestamp(),
-            stats: {
-                homebrewCount: 0,
-                totalDownloads: 0,
-                totalRatings: 0,
-                averageRating: 0,
-                followersCount: 0,
-                followingCount: 0
-            },
-            preferences: {
-                isPublic: profileData.isPublic !== undefined ? profileData.isPublic : true,
-                showActivity: profileData.showActivity !== undefined ? profileData.showActivity : true,
-                allowMessages: profileData.allowMessages !== undefined ? profileData.allowMessages : true
-            },
-            badges: []
-        };
-        
-        return db.collection('userProfiles').doc(user.uid).set(profile, { merge: true })
-            .then(function() {
-                return profile;
-            });
+        // First check if profile exists to preserve memberSince
+        return db.collection('userProfiles').doc(user.uid).get()
+        .then(function(doc) {
+            var profile = {
+                userId: user.uid,
+                displayName: profileData.displayName || user.displayName || user.email,
+                slug: profileData.slug || UserProfileService.generateSlug(profileData.displayName || user.displayName || user.email),
+                avatarUrl: profileData.avatarUrl || '',
+                bannerUrl: profileData.bannerUrl || '',
+                bio: profileData.bio || '',
+                location: profileData.location || '',
+                website: profileData.website || '',
+                lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+                stats: {
+                    homebrewCount: 0,
+                    totalDownloads: 0,
+                    totalRatings: 0,
+                    averageRating: 0,
+                    followersCount: 0,
+                    followingCount: 0
+                },
+                preferences: {
+                    isPublic: profileData.isPublic !== undefined ? profileData.isPublic : true,
+                    showActivity: profileData.showActivity !== undefined ? profileData.showActivity : true,
+                    allowMessages: profileData.allowMessages !== undefined ? profileData.allowMessages : true
+                },
+                badges: []
+            };
+            
+            // Only set memberSince if this is a new profile
+            if (!doc.exists) {
+                profile.memberSince = firebase.firestore.FieldValue.serverTimestamp();
+            }
+            
+            return db.collection('userProfiles').doc(user.uid).set(profile, { merge: true })
+                .then(function() {
+                    return profile;
+                });
+        });
     },
 
     // Generate URL-friendly slug from display name
