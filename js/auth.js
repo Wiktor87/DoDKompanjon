@@ -276,9 +276,10 @@ function showAuthError(message) {
 function hideAuthError() {
     var el = document.getElementById('authError');
     if (el) {
-        el.classList.remove('active');
-        el.classList.remove('auth-success');
-        el.classList.add('auth-error');
+        el.classList.remove('active', 'auth-success');
+        if (!el.classList.contains('auth-error')) {
+            el.classList.add('auth-error');
+        }
     }
 }
 
@@ -324,10 +325,10 @@ function handleForgotPassword() {
     auth.sendPasswordResetEmail(email)
         .then(function() {
             hideAuthError();
-            // Show success message
+            // Show success message (generic for security)
             var authError = document.getElementById('authError');
             if (authError) {
-                authError.textContent = '✓ Ett e-postmeddelande för återställning av lösenord har skickats till ' + email + '. Kontrollera din inkorg.';
+                authError.textContent = '✓ Ett e-postmeddelande för återställning av lösenord har skickats. Kontrollera din inkorg.';
                 authError.classList.remove('auth-error');
                 authError.classList.add('auth-success');
                 authError.classList.add('active');
