@@ -283,13 +283,13 @@ var GameModeUI = {
             'KAR': 'Uppgiven'
         };
         
-        var charConditions = focusedChar.conditions || {};
+        var charConditions = character.conditions || {};
         
         for (var attr in conditionMap) {
             var label = conditionMap[attr];
             var isActive = charConditions[attr] === true;
             var btnClass = 'condition-toggle-btn' + (isActive ? ' active' : '');
-            html += '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + focusedChar.id + '\', \'' + attr + '\')">' + label + '</button>';
+            html += '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + character.id + '\', \'' + attr + '\')">' + label + '</button>';
         }
         
         html += '</div></div>';
