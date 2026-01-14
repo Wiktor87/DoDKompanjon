@@ -345,6 +345,8 @@ function viewCharacter(id) {
     CharacterService.getCharacter(id).then(function(char) {
         currentCharacter = char;
         container.innerHTML = renderFullCharacterSheet(char);
+        // Setup listeners for kin/profession/age changes
+        setupKinChangeListener();
     }).catch(function(err) {
         console.error('Failed to load character:', err);
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
@@ -487,10 +489,40 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-tab-content" id="tab-personal">' +
         '<div class="sheet-body-grid">' +
         '<div class="sheet-column">' +
+        '<div class="sheet-panel"><h3 class="panel-title">Karaktärsuppgifter</h3>' +
+        '<div style="padding: 0.5rem;">' +
+        (function() {
+            var kinOptions = typeof KIN_DATA !== 'undefined' ? Object.keys(KIN_DATA) : ['Människa', 'Alv', 'Dvärg', 'Halvling', 'Anka', 'Vargfolk'];
+            var kinSelect = '<select class="item-name-input" data-field="kin">';
+            kinOptions.forEach(function(k) {
+                kinSelect += '<option value="' + k + '"' + (char.kin === k ? ' selected' : '') + '>' + k + '</option>';
+            });
+            kinSelect += '</select>';
+            return '<div class="skill-row"><span class="skill-name">Släkte</span>' + kinSelect + '</div>';
+        })() +
+        (function() {
+            var profOptions = typeof PROFESSION_DATA !== 'undefined' ? Object.keys(PROFESSION_DATA) : ['Bard', 'Hantverkare', 'Jägare', 'Krigare', 'Lärd', 'Magiker', 'Nasare', 'Riddare', 'Sjöfarare', 'Tjuv'];
+            var profSelect = '<select class="item-name-input" data-field="profession">';
+            profOptions.forEach(function(p) {
+                profSelect += '<option value="' + p + '"' + (char.profession === p ? ' selected' : '') + '>' + p + '</option>';
+            });
+            profSelect += '</select>';
+            return '<div class="skill-row"><span class="skill-name">Yrke</span>' + profSelect + '</div>';
+        })() +
+        (function() {
+            var ageOptions = typeof AGE_DATA !== 'undefined' ? Object.keys(AGE_DATA) : ['Ung', 'Medelålders', 'Gammal'];
+            var ageSelect = '<select class="item-name-input" data-field="ageCategory">';
+            ageOptions.forEach(function(a) {
+                ageSelect += '<option value="' + a + '"' + (char.age === a ? ' selected' : '') + '>' + a + '</option>';
+            });
+            ageSelect += '</select>';
+            return '<div class="skill-row"><span class="skill-name">Ålderskategori</span>' + ageSelect + '</div>';
+        })() +
+        '</div></div>' +
         '<div class="sheet-panel"><h3 class="panel-title">Personliga Uppgifter</h3>' +
         '<div style="padding: 0.5rem;">' +
         '<div class="skill-row"><span class="skill-name">Spelarens namn</span><input type="text" class="item-name-input" value="' + (char.playerName || '') + '" data-field="playerName" placeholder="Ditt namn"></div>' +
-        '<div class="skill-row"><span class="skill-name">Ålder</span><input type="text" class="item-name-input" value="' + (char.characterAge || '') + '" data-field="characterAge" placeholder="t.ex. 25 år"></div>' +
+        '<div class="skill-row"><span class="skill-name">Ålder (fritext)</span><input type="text" class="item-name-input" value="' + (char.characterAge || '') + '" data-field="characterAge" placeholder="t.ex. 25 år"></div>' +
         '<div class="skill-row"><span class="skill-name">Kön</span><input type="text" class="item-name-input" value="' + (char.gender || '') + '" data-field="gender"></div>' +
         '<div class="skill-row"><span class="skill-name">Längd</span><input type="text" class="item-name-input" value="' + (char.height || '') + '" data-field="height" placeholder="t.ex. 180 cm"></div>' +
         '<div class="skill-row"><span class="skill-name">Vikt</span><input type="text" class="item-name-input" value="' + (char.weight || '') + '" data-field="weight" placeholder="t.ex. 75 kg"></div>' +
@@ -508,6 +540,49 @@ function renderFullCharacterSheet(char) {
         '<div class="sheet-panel"><h3 class="panel-title">Anteckningar</h3><textarea class="bio-textarea" data-field="notes" placeholder="Allmänna anteckningar...">' + (char.notes || '') + '</textarea></div>' +
         '</div></div></div>' +
         '</div>';
+}
+
+// Update character portrait when kin is changed
+function setupKinChangeListener() {
+    var kinSelect = document.querySelector('[data-field="kin"]');
+    if (kinSelect) {
+        kinSelect.addEventListener('change', function() {
+            var newKin = this.value;
+            var portraitEl = document.querySelector('.sheet-portrait-large');
+            if (portraitEl) {
+                // getKinIcon returns safe HTML from ICONS object
+                portraitEl.innerHTML = getKinIcon(newKin);
+            }
+            // Also update subtitle
+            updateCharacterSubtitle();
+        });
+    }
+    
+    // Also listen to profession and age changes for subtitle update
+    var professionSelect = document.querySelector('[data-field="profession"]');
+    if (professionSelect) {
+        professionSelect.addEventListener('change', updateCharacterSubtitle);
+    }
+    
+    var ageSelect = document.querySelector('[data-field="ageCategory"]');
+    if (ageSelect) {
+        ageSelect.addEventListener('change', updateCharacterSubtitle);
+    }
+}
+
+function updateCharacterSubtitle() {
+    var subtitleEl = document.querySelector('.sheet-subtitle-row');
+    if (!subtitleEl || !currentCharacter) return;
+    
+    var kinEl = document.querySelector('[data-field="kin"]');
+    var professionEl = document.querySelector('[data-field="profession"]');
+    var ageEl = document.querySelector('[data-field="ageCategory"]');
+    
+    var kin = kinEl ? kinEl.value : currentCharacter.kin;
+    var profession = professionEl ? professionEl.value : currentCharacter.profession;
+    var age = ageEl ? ageEl.value : currentCharacter.age;
+    
+    subtitleEl.textContent = [kin, profession, age].filter(Boolean).join(' • ');
 }
 
 // Inventory
@@ -542,6 +617,9 @@ function saveCharacter() {
     if (!currentCharacter) return;
     var updates = {
         name: '',
+        kin: '',
+        profession: '',
+        age: '',
         currentKP: 0,
         currentVP: 0,
         movement: 10,
@@ -565,6 +643,15 @@ function saveCharacter() {
     
     var nameEl = document.querySelector('[data-field="name"]');
     if (nameEl) updates.name = nameEl.value || '';
+    
+    var kinEl = document.querySelector('[data-field="kin"]');
+    if (kinEl) updates.kin = kinEl.value || '';
+    
+    var professionEl = document.querySelector('[data-field="profession"]');
+    if (professionEl) updates.profession = professionEl.value || '';
+    
+    var ageCategoryEl = document.querySelector('[data-field="ageCategory"]');
+    if (ageCategoryEl) updates.age = ageCategoryEl.value || '';
     
     var currentKPEl = document.querySelector('[data-field="currentKP"]');
     if (currentKPEl) updates.currentKP = parseInt(currentKPEl.value) || 0;
@@ -917,6 +1004,30 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
         '<button class="btn btn-ghost btn-xs" onclick="copyInviteCode(\'' + (party.inviteCode || '') + '\')">📋 Kopiera</button>' +
         '</div></div>' +
         '</div></div>';
+    
+    // Next Session section
+    if (party.nextSession || isOwner) {
+        html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">' +
+            '<h3 style="margin: 0; font-size: 1rem;">📅 Nästa Session</h3>';
+        
+        if (isOwner) {
+            html += '<button class="btn btn-gold btn-xs" onclick="openSessionScheduler(\'' + party.id + '\')">⚙️ Schemalägg</button>';
+        }
+        
+        html += '</div>';
+        
+        if (party.nextSession) {
+            html += '<div class="next-session-badge" style="margin-top: 0.75rem;">' +
+                '<div class="badge-label">Nästa session</div>' +
+                '<div class="badge-value">' + party.nextSession + '</div>' +
+                '</div>';
+        } else {
+            html += '<p style="color: var(--text-muted); margin-top: 0.5rem;">Ingen session schemalagd ännu</p>';
+        }
+        
+        html += '</div>';
+    }
     
     // Show join requests if owner and there are pending requests
     if (isOwner && joinRequests && joinRequests.length > 0) {
@@ -1415,6 +1526,98 @@ function sendChatMessage(partyId) {
     }).catch(function(err) {
         showToast('Fel: ' + err.message, 'error');
     });
+}
+
+// Session Scheduler Modal
+function openSessionScheduler(partyId) {
+    // Create modal HTML
+    var modal = document.getElementById('sessionSchedulerModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sessionSchedulerModal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    // Get current date/time for default values
+    var now = new Date();
+    var dateStr = now.toISOString().split('T')[0];
+    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    
+    modal.innerHTML = 
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h2>📅 Schemalägg Session</h2>' +
+        '<button class="modal-close" onclick="closeSessionScheduler()">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<form id="sessionSchedulerForm" onsubmit="saveSession(\'' + partyId + '\'); return false;">' +
+        '<div class="form-group">' +
+        '<label for="sessionDate">Datum</label>' +
+        '<input type="date" id="sessionDate" class="creator-input" required value="' + dateStr + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<label for="sessionTime">Tid</label>' +
+        '<input type="time" id="sessionTime" class="creator-input" required value="' + timeStr + '">' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-outline" onclick="closeSessionScheduler()">Avbryt</button>' +
+        '<button type="submit" class="btn btn-gold">Spara</button>' +
+        '</div>' +
+        '</form>' +
+        '</div>' +
+        '</div>';
+    
+    modal.classList.add('active');
+}
+
+function closeSessionScheduler() {
+    var modal = document.getElementById('sessionSchedulerModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function saveSession(partyId) {
+    var dateInput = document.getElementById('sessionDate');
+    var timeInput = document.getElementById('sessionTime');
+    
+    if (!dateInput || !timeInput) return;
+    
+    var dateValue = dateInput.value;
+    var timeValue = timeInput.value;
+    
+    if (!dateValue || !timeValue) {
+        showToast('Fyll i både datum och tid', 'error');
+        return;
+    }
+    
+    // Combine date and time
+    var dateTime = new Date(dateValue + 'T' + timeValue);
+    
+    // Format for display in Swedish
+    var days = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+    var months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+    
+    var dayName = days[dateTime.getDay()];
+    var day = dateTime.getDate();
+    var month = months[dateTime.getMonth()];
+    var hours = dateTime.getHours().toString().padStart(2, '0');
+    var minutes = dateTime.getMinutes().toString().padStart(2, '0');
+    
+    var formattedDate = dayName + ' ' + day + ' ' + month + ', ' + hours + ':' + minutes;
+    
+    // Save to party
+    PartyService.setNextSession(partyId, formattedDate, firebase.firestore.Timestamp.fromDate(dateTime))
+        .then(function() {
+            showToast('Session schemalagd!', 'success');
+            closeSessionScheduler();
+            // Reload party view to show new session
+            viewParty(partyId);
+        })
+        .catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
 }
 
 function savePartyNotes(partyId) {

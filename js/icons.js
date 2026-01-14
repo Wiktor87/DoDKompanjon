@@ -1,12 +1,12 @@
 // Icon System for DoD Companion
 var ICONS = {
-    // Character Kin Icons (SVG)
+    // Character Kin Icons (GIF or SVG fallback)
     kin: {
-        'Människa': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="10" r="5" fill="currentColor"/><path d="M8 25c0-4.418 3.582-8 8-8s8 3.582 8 8v2H8v-2z" fill="currentColor"/></svg>',
-        'Alv': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="10" r="5" fill="currentColor"/><path d="M8 25c0-4.418 3.582-8 8-8s8 3.582 8 8v2H8v-2z" fill="currentColor"/><path d="M11 8l-2-4M21 8l2-4" stroke="currentColor" stroke-width="2"/></svg>',
-        'Dvärg': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="12" r="5" fill="currentColor"/><path d="M8 27c0-4.418 3.582-8 8-8s8 3.582 8 8v2H8v-2z" fill="currentColor"/><path d="M10 18h12v2H10z" fill="currentColor"/></svg>',
+        'Människa': '<img src="icons/Manniska.gif" alt="Människa" width="32" height="32" style="display: block;">',
+        'Alv': '<img src="icons/Alv.gif" alt="Alv" width="32" height="32" style="display: block;">',
+        'Dvärg': '<img src="icons/Dvarg.gif" alt="Dvärg" width="32" height="32" style="display: block;">',
         'Halvling': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="11" r="4" fill="currentColor"/><path d="M9 26c0-3.866 3.134-7 7-7s7 3.134 7 7v2H9v-2z" fill="currentColor"/></svg>',
-        'Anka': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="16" cy="14" rx="7" ry="8" fill="currentColor"/><path d="M12 12c0-1.1.9-2 2-2s2 .9 2 2M18 12c0-1.1.9-2 2-2s2 .9 2 2" stroke="currentColor" stroke-width="1.5"/><path d="M14 17l4 2" stroke="currentColor" stroke-width="2"/></svg>',
+        'Anka': '<img src="icons/Anka.gif" alt="Anka" width="32" height="32" style="display: block;">',
         'Vargfolk': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 6l-3 6h6l-3-6z" fill="currentColor"/><path d="M23 6l-2 6h4l-2-6z" fill="currentColor"/><circle cx="16" cy="13" r="6" fill="currentColor"/><path d="M8 26c0-4.418 3.582-8 8-8s8 3.582 8 8v2H8v-2z" fill="currentColor"/></svg>',
         'default': '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="10" r="5" fill="currentColor"/><path d="M8 25c0-4.418 3.582-8 8-8s8 3.582 8 8v2H8v-2z" fill="currentColor"/></svg>'
     },
