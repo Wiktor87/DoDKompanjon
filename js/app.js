@@ -900,7 +900,7 @@ function viewParty(id) {
     
     // Switch to party view section
     showSection('partyView');
-    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar... </p></div>';
     
     var user = getCurrentUser();
     var isOwner = false;
@@ -910,7 +910,8 @@ function viewParty(id) {
         
         var promises = [
             Promise.resolve(party),
-            CharacterService.getUserCharacters()
+            CharacterService.getUserCharacters(),  // Your characters (for "available to add")
+            CharacterService.getCharactersByIds(party. characterIds || [])  // All party characters
         ];
         
         // Load join requests if owner
@@ -929,7 +930,7 @@ function viewParty(id) {
                     })
             );
         } else {
-            promises.push(Promise.resolve([]));
+            promises.push(Promise. resolve([]));
         }
         
         // Load messages
@@ -938,17 +939,13 @@ function viewParty(id) {
         return Promise.all(promises);
     }).then(function(results) {
         var party = results[0];
-        var allChars = results[1];
-        var joinRequests = results[2] || [];
-        var messages = results[3] || [];
+        var myChars = results[1];          // Your characters
+        var partyChars = results[2] || []; // All characters in the party
+        var joinRequests = results[3] || [];
+        var messages = results[4] || [];
         
-        // Filter characters that are in this party
-        var partyChars = allChars.filter(function(char) {
-            return (party.characterIds || []).indexOf(char.id) !== -1;
-        });
-        
-        // Characters not in party
-        var availableChars = allChars.filter(function(char) {
+        // Your characters not yet in party (available to add)
+        var availableChars = myChars. filter(function(char) {
             return (party.characterIds || []).indexOf(char.id) === -1;
         });
         
