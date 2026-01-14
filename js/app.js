@@ -1352,6 +1352,15 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
             '</div>';
     }
     
+    // Game Mode button (only for owner)
+    if (isOwner && partyChars.length > 0) {
+        html += '<div style="margin-bottom: 2rem; text-align: center;">' +
+            '<button class="btn btn-gold game-mode-btn" onclick="GameModeUI.init(\'' + party.id + '\')" style="font-size: 1.125rem; padding: 1rem 2rem;">' +
+            '🎮 Starta Spelläge' +
+            '</button>' +
+            '</div>';
+    }
+    
     html += '<div style="margin-bottom: 2rem;">' +
         '<h3 style="margin-bottom: 1rem;">Karaktärer i gruppen (' + partyChars.length + ')</h3>' +
         '<div class="character-cards">' +

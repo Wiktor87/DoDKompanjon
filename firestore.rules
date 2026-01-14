@@ -104,5 +104,21 @@ service cloud.firestore {
       allow update, delete: if request.auth != null &&
         resource.data.userId == request.auth.uid;
     }
+    
+    // Game Sessions - DM and party members can access
+    match /gameSessions/{sessionId} {
+      allow read: if request.auth != null &&
+        (resource.data.ownerId == request.auth.uid ||
+         request.auth.uid in get(/databases/$(database)/documents/parties/$(resource.data.partyId)).data.memberIds);
+      
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.ownerId;
+      
+      allow update: if request.auth != null &&
+        resource.data.ownerId == request.auth.uid;
+      
+      allow delete: if request.auth != null &&
+        resource.data.ownerId == request.auth.uid;
+    }
   }
 }
