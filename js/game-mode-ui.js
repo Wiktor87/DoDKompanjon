@@ -224,12 +224,30 @@ var GameModeUI = {
             '<div class="tracker-value">' + vp + '/' + maxVp + '</div>' +
             '</div>';
         
+        // Top 3 Weapon Skills
+        var weaponSkills = character.weaponSkills || {};
+        var topWeapons = Object.keys(weaponSkills)
+            .map(function(name) {
+                return { name: name, value: weaponSkills[name].value || 0 };
+            })
+            .filter(function(skill) { return skill.value > 0; })
+            .sort(function(a, b) { return b.value - a.value; })
+            .slice(0, 3);
+        
+        if (topWeapons.length > 0) {
+            html += '<div class="compact-weapon-skills">' +
+                '<span class="weapon-skills-label">🎯 Vapen:</span> ';
+            topWeapons.forEach(function(weapon, index) {
+                if (index > 0) html += ', ';
+                html += weapon.name + ' ' + weapon.value;
+            });
+            html += '</div>';
+        }
+        
         // Stats
         var armor = character.armorProtection || 0;
-        var damageBonus = character.damageBonusSTY || 'T4';
         html += '<div class="compact-stats">' +
-            '<div class="stat-item">🛡️ ' + armor + '</div>' +
-            '<div class="stat-item">⚔️ ' + damageBonus + '</div>' +
+            '<div class="stat-item">🛡️ Rustning: ' + armor + '</div>' +
             '</div>';
         
         // Conditions
@@ -565,13 +583,32 @@ var GameModeUI = {
         var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
         var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
         
+        // Top 3 Weapon Skills
+        var weaponSkills = character.weaponSkills || {};
+        var topWeapons = Object.keys(weaponSkills)
+            .map(function(name) {
+                return { name: name, value: weaponSkills[name].value || 0 };
+            })
+            .filter(function(skill) { return skill.value > 0; })
+            .sort(function(a, b) { return b.value - a.value; })
+            .slice(0, 3);
+        
         var html = '<div class="sidebar-card" onclick="GameModeUI.focusCharacter(\'' + character.id + '\')">' +
             '<div class="sidebar-card-name">' + character.name + '</div>' +
             '<div class="sidebar-card-stats">' +
             '<div>KP: ' + kp + '/' + maxKp + '</div>' +
-            '<div>VP: ' + vp + '/' + maxVp + '</div>' +
-            '</div>' +
-            '</div>';
+            '<div>VP: ' + vp + '/' + maxVp + '</div>';
+        
+        if (topWeapons.length > 0) {
+            html += '<div class="sidebar-weapons">🎯 ';
+            topWeapons.forEach(function(weapon, index) {
+                if (index > 0) html += ', ';
+                html += weapon.name + ' ' + weapon.value;
+            });
+            html += '</div>';
+        }
+        
+        html += '</div></div>';
         
         return html;
     },
@@ -600,8 +637,12 @@ var GameModeUI = {
                 
                 var rollDisplay = item.roll ? ' 🎲' + item.roll : '';
                 
+                // Add icon based on type
+                var icon = item.type === 'monster' ? '💀' : '🧝';
+                
                 html += '<div class="' + itemClass + '">' +
                     '<span class="initiative-number">' + (index + 1) + '.</span>' +
+                    '<span class="initiative-icon">' + icon + '</span>' +
                     '<span class="initiative-name">' + item.name + '</span>' +
                     '<span class="initiative-total">' + rollDisplay + ' (' + item.total + ')</span>' +
                     '</div>';
@@ -828,12 +869,13 @@ var GameModeUI = {
     rollInitiative: function() {
         var self = this;
         
-        if (self.characters.length === 0) {
-            alert('Inga karaktärer att slå initiativ för');
+        if (self.characters.length === 0 && (!self.currentSession.monsters || self.currentSession.monsters.length === 0)) {
+            alert('Inga karaktärer eller monster att slå initiativ för');
             return;
         }
         
-        var initiative = GameModeService.rollInitiative(self.characters);
+        var monsters = (self.currentSession && self.currentSession.monsters) || [];
+        var initiative = GameModeService.rollInitiative(self.characters, monsters);
         
         GameModeService.setInitiativeOrder(self.currentSession.id, initiative)
             .then(function() {

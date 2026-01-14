@@ -98,21 +98,44 @@ var GameModeService = {
         }
     },
     
-    // Initiative management - roll for all characters based on SMI
-    rollInitiative: function(characters) {
-        return characters.map(function(char) {
+    // Initiative management - roll for all characters and monsters based on SMI
+    rollInitiative: function(characters, monsters) {
+        var initiatives = [];
+        
+        // Roll for characters
+        characters.forEach(function(char) {
             var smi = (char.attributes && char.attributes.SMI) || 10;
             var roll = Math.floor(Math.random() * 10) + 1; // 1d10 (range 1-10)
-            return {
-                oderId: char.id,
+            initiatives.push({
+                ownerId: char.id,
                 type: 'character',
                 name: char.name,
                 smi: smi,
                 roll: roll,
                 total: smi + roll
-            };
-        }).sort(function(a, b) {
-            return b.total - a.total; // Highest first
+            });
+        });
+        
+        // Roll for monsters
+        if (monsters && monsters.length > 0) {
+            monsters.forEach(function(monster) {
+                // Use undvika as SMI equivalent for monsters, or default to 10
+                var smi = monster.undvika || monster.smi || 10;
+                var roll = Math.floor(Math.random() * 10) + 1; // 1d10
+                initiatives.push({
+                    ownerId: monster.id,
+                    type: 'monster',
+                    name: monster.name,
+                    smi: smi,
+                    roll: roll,
+                    total: smi + roll
+                });
+            });
+        }
+        
+        // Sort by total (highest first)
+        return initiatives.sort(function(a, b) {
+            return b.total - a.total;
         });
     },
     
