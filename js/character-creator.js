@@ -260,11 +260,11 @@ function createCharacter() {
     
     // Initialize weapon skills with isCore property
     var weaponSkills = {};
-    Object.keys(WEAPON_SKILLS).forEach(function(skillName) {
+    Object.keys(WEAPON_SKILLS_V2).forEach(function(skillName) {
         weaponSkills[skillName] = {
             value: 0,
             isCore: false,
-            attr: WEAPON_SKILLS[skillName].attr
+            attr: WEAPON_SKILLS_V2[skillName].attr
         };
     });
     
@@ -297,7 +297,7 @@ function createCharacter() {
         weaponSkills: weaponSkills,
         inventory: [],
         weapons: [],
-        currency: { guld: 0, silver: 0, kopp: 0 },
+        currency: { guld: 0, silver: 0, brons: 0 },
         currentKP: creatorData.attributes.FYS,
         currentVP: creatorData.attributes.PSY,
         deathSaves: deathSaves,

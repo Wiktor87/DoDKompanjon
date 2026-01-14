@@ -508,7 +508,7 @@ function renderFullCharacterSheet(char) {
     
     // Tab content: Combat
     html += '<div class="sheet-tab-content-v2" id="tab-combat-v2" style="display: none;">';
-    html += renderWeaponSkillsPanel(weaponSkills, WEAPON_SKILLS);
+    html += renderWeaponSkillsPanel(weaponSkills, WEAPON_SKILLS_V2);
     html += renderWeaponsTable(char.weapons || []);
     html += '</div>';
     
@@ -589,7 +589,7 @@ function renderFullCharacterSheet(char) {
     html += '<div class="currency-display-v2">';
     html += '<div class="currency-item-v2"><div class="icon">🥇</div><div class="label">Guld</div><input type="number" value="' + ((char.currency && char.currency.guld) || 0) + '" data-currency="guld"></div>';
     html += '<div class="currency-item-v2"><div class="icon">🥈</div><div class="label">Silver</div><input type="number" value="' + ((char.currency && char.currency.silver) || 0) + '" data-currency="silver"></div>';
-    html += '<div class="currency-item-v2"><div class="icon">🥉</div><div class="label">Kopp</div><input type="number" value="' + ((char.currency && char.currency.kopp) || 0) + '" data-currency="kopp"></div>';
+    html += '<div class="currency-item-v2"><div class="icon">🥉</div><div class="label">Kopp</div><input type="number" value="' + ((char.currency && char.currency.brons) || 0) + '" data-currency="brons"></div>';
     html += '</div></div>';
     
     // Hero Ability
@@ -634,17 +634,17 @@ function renderSkillsPanel(skills, SKILLS) {
     return html;
 }
 
-function renderWeaponSkillsPanel(weaponSkills, WEAPON_SKILLS) {
+function renderWeaponSkillsPanel(weaponSkills, WEAPON_SKILLS_V2) {
     var html = '<div class="sheet-panel-v2">';
     html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Vapenfärdigheter</h3></div>';
     html += '<div class="sheet-panel-v2-content">';
     html += '<div class="skills-grid-v2">';
     
-    Object.keys(WEAPON_SKILLS).forEach(function(skillName) {
+    Object.keys(WEAPON_SKILLS_V2).forEach(function(skillName) {
         var skillData = weaponSkills[skillName] || { value: 0, isCore: false };
         var value = typeof skillData === 'object' ? skillData.value : skillData;
         var isCore = typeof skillData === 'object' ? skillData.isCore : false;
-        var attr = WEAPON_SKILLS[skillName].attr;
+        var attr = WEAPON_SKILLS_V2[skillName].attr;
         
         html += '<div class="weapon-skill-row-v2">';
         html += '<div class="diamond-checkbox small' + (isCore ? ' checked' : '') + '" data-weapon-skill="' + skillName + '" onclick="toggleWeaponSkillCore(\'' + skillName + '\')"></div>';
@@ -1033,7 +1033,7 @@ function saveCharacter() {
     updates.currency = {
         guld: 0,
         silver: 0,
-        kopp: 0
+        brons: 0
     };
     var guldEl = document.querySelector('[data-currency="guld"]');
     if (guldEl) updates.currency.guld = parseInt(guldEl.value) || 0;
@@ -1041,8 +1041,8 @@ function saveCharacter() {
     var silverEl = document.querySelector('[data-currency="silver"]');
     if (silverEl) updates.currency.silver = parseInt(silverEl.value) || 0;
     
-    var koppEl = document.querySelector('[data-currency="kopp"]');
-    if (koppEl) updates.currency.kopp = parseInt(koppEl.value) || 0;
+    var bronsEl = document.querySelector('[data-currency="brons"]');
+    if (bronsEl) updates.currency.brons = parseInt(bronsEl.value) || 0;
     
     CharacterService.updateCharacter(currentCharacter.id, updates).then(function() {
         showToast('Sparad!', 'success');
