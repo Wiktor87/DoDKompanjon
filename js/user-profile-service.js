@@ -119,17 +119,9 @@ var UserProfileService = {
 
     // Recalculate user stats from scratch
     recalculateStats: function(userId) {
-        var profile = {};
-        
-        return Promise.all([
-            // Count homebrew
-            db.collection('homebrew').where('authorId', '==', userId).get(),
-            // Sum downloads
-            db.collection('homebrew').where('authorId', '==', userId).get(),
-            // Calculate average rating
-            db.collection('homebrew').where('authorId', '==', userId).get()
-        ]).then(function(results) {
-            var homebrewSnapshot = results[0];
+        // Query once and calculate all stats from the same result set
+        return db.collection('homebrew').where('authorId', '==', userId).get()
+        .then(function(homebrewSnapshot) {
             
             var homebrewCount = homebrewSnapshot.size;
             var totalDownloads = 0;

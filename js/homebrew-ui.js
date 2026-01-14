@@ -506,14 +506,18 @@ var HomebrewUI = {
         var visibility = formData.get('visibility');
         
         HomebrewService.createHomebrew(type, data, visibility).then(function(homebrew) {
-            alert('Homebrew skapad!');
+            if (typeof showToast !== 'undefined') {
+                showToast('Homebrew skapad!', 'success');
+            }
             self.switchView('collection');
             
             // Update user profile stats
             UserProfileService.updateStats(getCurrentUser().uid, { homebrewCount: 1 });
         }).catch(function(err) {
             console.error('Error creating homebrew:', err);
-            alert('Ett fel uppstod: ' + err.message);
+            if (typeof showToast !== 'undefined') {
+                showToast('Ett fel uppstod: ' + err.message, 'error');
+            }
         });
     },
     
@@ -594,10 +598,14 @@ var HomebrewUI = {
     // Save to collection
     saveToCollection: function(homebrewId) {
         HomebrewService.saveToCollection(homebrewId).then(function() {
-            alert('Tillagt i din samling!');
+            if (typeof showToast !== 'undefined') {
+                showToast('Tillagt i din samling!', 'success');
+            }
         }).catch(function(err) {
             console.error('Error saving:', err);
-            alert('Ett fel uppstod: ' + err.message);
+            if (typeof showToast !== 'undefined') {
+                showToast('Ett fel uppstod: ' + err.message, 'error');
+            }
         });
     },
     
@@ -607,14 +615,18 @@ var HomebrewUI = {
         
         var self = this;
         HomebrewService.deleteHomebrew(homebrewId).then(function() {
-            alert('Homebrew borttagen!');
+            if (typeof showToast !== 'undefined') {
+                showToast('Homebrew borttagen!', 'success');
+            }
             self.loadCreatedItems();
             
             // Update user profile stats
             UserProfileService.updateStats(getCurrentUser().uid, { homebrewCount: -1 });
         }).catch(function(err) {
             console.error('Error deleting:', err);
-            alert('Ett fel uppstod: ' + err.message);
+            if (typeof showToast !== 'undefined') {
+                showToast('Ett fel uppstod: ' + err.message, 'error');
+            }
         });
     },
     
