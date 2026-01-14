@@ -398,3 +398,161 @@ body.app-active::before {
     .attrs-grid { grid-template-columns: repeat(3, 1fr); }
     .attrs-roll-grid { grid-template-columns: repeat(3, 1fr); }
 }
+/* ============================================
+   GOLD FRAME SECTION
+   ============================================ */
+.gold-frame-section {
+    position: relative;
+    margin-top: -100px; /* Negativ margin för överlappning */
+    padding: 0 2rem 3rem;
+    z-index: 10;
+}
+
+.gold-frame-box {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #12141a 0%, #0d0f14 100%);
+    padding: 2.5rem 3rem;
+    border: 2px solid var(--accent-gold-dark, #8b7335);
+    border-radius: 4px;
+}
+
+/* Inre glöd */
+.gold-frame-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+/* Hörn-linjer */
+.gold-frame-box .corner {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+}
+
+.gold-frame-box .corner::before,
+.gold-frame-box .corner::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(135deg, #d4af37 0%, #f0d875 50%, #8b7335 100%);
+}
+
+/* Övre vänster */
+.gold-frame-box .corner.top-left { top: -2px; left: -2px; }
+.gold-frame-box .corner.top-left::before { top: 0; left: 0; width: 35px; height: 3px; }
+.gold-frame-box .corner.top-left::after { top: 0; left: 0; width: 3px; height: 35px; }
+
+/* Övre höger */
+.gold-frame-box .corner.top-right { top: -2px; right: -2px; }
+.gold-frame-box .corner.top-right::before { top: 0; right: 0; width: 35px; height: 3px; }
+.gold-frame-box .corner.top-right::after { top: 0; right: 0; width: 3px; height: 35px; }
+
+/* Nedre vänster */
+.gold-frame-box .corner.bottom-left { bottom: -2px; left: -2px; }
+.gold-frame-box .corner.bottom-left::before { bottom: 0; left: 0; width: 35px; height: 3px; }
+.gold-frame-box .corner.bottom-left::after { bottom: 0; left: 0; width: 3px; height: 35px; }
+
+/* Nedre höger */
+.gold-frame-box .corner.bottom-right { bottom: -2px; right: -2px; }
+.gold-frame-box .corner.bottom-right::before { bottom: 0; right: 0; width: 35px; height: 3px; }
+.gold-frame-box .corner.bottom-right::after { bottom: 0; right: 0; width: 3px; height: 35px; }
+
+/* Hörnprickar */
+.gold-frame-box .corner-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #f0d875 0%, #d4af37 60%, #8b7335 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+}
+.gold-frame-box .corner-dot.top-left { top: 10px; left: 10px; }
+.gold-frame-box .corner-dot.top-right { top: 10px; right: 10px; }
+.gold-frame-box .corner-dot.bottom-left { bottom: 10px; left: 10px; }
+.gold-frame-box .corner-dot.bottom-right { bottom: 10px; right: 10px; }
+
+/* Innehåll */
+.frame-content {
+    text-align: center;
+}
+
+.frame-title {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.gold-text {
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.frame-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.6;
+}
+
+/* Tabs */
+.frame-tabs {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.frame-tab {
+    padding: 0.625rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.813rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 4px;
+}
+
+.frame-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.05);
+}
+
+.frame-tab.active {
+    background: var(--brand-red);
+    color: white;
+}
+
+/* Responsiv */
+@media (max-width: 768px) {
+    .gold-frame-section {
+        margin-top: -60px;
+        padding: 0 1rem 2rem;
+    }
+    
+    .gold-frame-box {
+        padding: 1.5rem;
+    }
+    
+    .frame-title {
+        font-size: 1.75rem;
+    }
+    
+    .gold-frame-box .corner::before { width: 25px !important; }
+    .gold-frame-box .corner::after { height: 25px !important; }
+}
