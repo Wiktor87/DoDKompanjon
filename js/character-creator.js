@@ -36,7 +36,7 @@ var SKILLS = {
 };
 
 // Weapon skills with attributes (from JSX specifications)
-var WEAPON_SKILLS = {
+var WEAPON_SKILLS_V2 = {
     'Armborst': { attr: 'SMI' },
     'Hammare': { attr: 'STY' },
     'Kniv': { attr: 'SMI' },
