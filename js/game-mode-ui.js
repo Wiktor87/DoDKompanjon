@@ -252,30 +252,38 @@ var GameModeUI = {
     
     // Render expanded character view
     renderExpandedView: function(character) {
-        var html = '<div class="expanded-view">' +
-            '<div class="expanded-header">' +
+        var self = this;
+        var attrs = character.attributes || {};
+        var maxKp = attrs.FYS || 0;
+        var maxVp = attrs.PSY || 0;
+        var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
+        var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
+        
+        var html = '<div class="expanded-view">';
+        
+        // HEADER: Basic Info
+        html += '<div class="expanded-header">' +
             '<h2>' + character.name + '</h2>' +
-            '<p>' + (character.kin || '') + ' • ' + (character.profession || '') + '</p>' +
-            '</div>';
+            '<p class="char-identity">' + 
+            (character.kin || '') + ' • ' + 
+            (character.profession || '') + 
+            (character.age ? ' • ' + character.age : '') +
+            '</p>';
         
-        // Full stats
-        html += '<div class="expanded-stats">';
-        
-        var attributes = ['STY', 'SMI', 'INT', 'KAR', 'FYS', 'PSY', 'STO'];
-        attributes.forEach(function(attr) {
-            var value = (character.attributes && character.attributes[attr]) || 0;
-            html += '<div class="stat-box">' +
-                '<div class="stat-name">' + attr + '</div>' +
-                '<div class="stat-value">' + value + '</div>' +
-                '</div>';
-        });
+        if (character.weakness || character.memento) {
+            html += '<p class="char-details">';
+            if (character.weakness) html += '<span>Svaghet: ' + character.weakness + '</span>';
+            if (character.weakness && character.memento) html += ' • ';
+            if (character.memento) html += '<span>Minnesak: ' + character.memento + '</span>';
+            html += '</p>';
+        }
         
         html += '</div>';
         
-        // Conditions toggles
-        html += '<div class="conditions-section">' +
-            '<h3>Tillstånd</h3>' +
-            '<div class="condition-toggles">';
+        // SECTION: Attributes with Conditions
+        html += '<div class="expanded-section">' +
+            '<h3>🎯 Attribut & Tillstånd</h3>' +
+            '<div class="attributes-grid">';
         
         var conditionMap = {
             'STY': 'Utmattad',
@@ -287,19 +295,267 @@ var GameModeUI = {
         };
         
         var charConditions = character.conditions || {};
+        var attributesList = ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'];
         
-        for (var attr in conditionMap) {
-            var label = conditionMap[attr];
+        attributesList.forEach(function(attr) {
+            var value = attrs[attr] || 0;
+            var condition = conditionMap[attr];
             var isActive = charConditions[attr] === true;
-            var btnClass = 'condition-toggle-btn' + (isActive ? ' active' : '');
-            html += '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + character.id + '\', \'' + attr + '\')">' + label + '</button>';
-        }
+            var btnClass = 'attr-condition-btn' + (isActive ? ' active' : '');
+            
+            html += '<div class="attribute-card">' +
+                '<div class="attr-name">' + attr + '</div>' +
+                '<div class="attr-value">' + value + '</div>' +
+                '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + character.id + '\', \'' + attr + '\')">' +
+                (isActive ? '◆' : '○') + ' ' + condition +
+                '</button>' +
+                '</div>';
+        });
         
+        html += '</div></div>';
+        
+        // SECTION: KP/VP and Death Saves
+        html += '<div class="expanded-section">' +
+            '<h3>💖 Kroppspoäng & Viljepoäng</h3>' +
+            '<div class="kp-vp-container">';
+        
+        // KP Tracker
+        html += '<div class="expanded-tracker">' +
+            '<div class="tracker-header">Kroppspoäng (KP)</div>' +
+            '<div class="pips large">';
+        for (var i = 1; i <= maxKp; i++) {
+            var pipClass = 'pip';
+            if (i <= kp) pipClass += ' filled';
+            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentKP\', ' + i + ')">●</span>';
+        }
+        html += '</div>' +
+            '<div class="tracker-value-large">' + kp + '/' + maxKp + '</div>' +
+            '<div class="tracker-buttons">' +
+            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentKP\', -1)">− Skada</button>' +
+            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentKP\', 1)">+ Läk</button>' +
+            '</div>' +
+            '</div>';
+        
+        // VP Tracker
+        html += '<div class="expanded-tracker">' +
+            '<div class="tracker-header">Viljepoäng (VP)</div>' +
+            '<div class="pips large">';
+        for (var i = 1; i <= maxVp; i++) {
+            var pipClass = 'pip';
+            if (i <= vp) pipClass += ' filled vp';
+            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentVP\', ' + i + ')">●</span>';
+        }
+        html += '</div>' +
+            '<div class="tracker-value-large">' + vp + '/' + maxVp + '</div>' +
+            '<div class="tracker-buttons">' +
+            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentVP\', -1)">− Använd</button>' +
+            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentVP\', 1)">+ Återställ</button>' +
+            '</div>' +
+            '</div>';
+        
+        html += '</div>';
+        
+        // Death Saves
+        var deathSaves = character.deathSaves || { successes: 0, failures: 0 };
+        html += '<div class="death-saves">' +
+            '<div class="death-saves-label">Dödsslag:</div>' +
+            '<div class="death-saves-pips">';
+        for (var i = 0; i < 3; i++) {
+            html += '<span class="death-pip ' + (i < deathSaves.successes ? 'success' : '') + '">○</span>';
+        }
+        html += '<span class="death-label">Lyck</span>';
+        for (var i = 0; i < 3; i++) {
+            html += '<span class="death-pip ' + (i < deathSaves.failures ? 'fail' : '') + '">○</span>';
+        }
+        html += '<span class="death-label">Miss</span>';
         html += '</div></div>';
         
         html += '</div>';
         
+        // SECTION: Combat Stats
+        html += '<div class="expanded-section">' +
+            '<h3>⚔️ Strid</h3>' +
+            '<div class="combat-stats">' +
+            '<div class="combat-stat"><label>Förflyttning:</label><span>' + (character.movement || 10) + '</span></div>' +
+            '<div class="combat-stat"><label>Skadebonus (STY):</label><span>' + (character.damageBonusSTY || 'T4') + '</span></div>' +
+            '<div class="combat-stat"><label>Skadebonus (SMI):</label><span>' + (character.damageBonusSMI || 'T6') + '</span></div>' +
+            '</div>';
+        
+        // Armor
+        var totalArmor = (character.armorProtection || 0) + (character.helmetProtection || 0);
+        html += '<div class="armor-display">' +
+            '<div class="armor-item">' +
+            '<label>Rustning:</label>' +
+            '<span>' + (character.armor || 'Ingen') + ' (🛡️ ' + (character.armorProtection || 0) + ')</span>' +
+            '</div>' +
+            '<div class="armor-item">' +
+            '<label>Hjälm:</label>' +
+            '<span>' + (character.helmet || 'Ingen') + ' (🛡️ ' + (character.helmetProtection || 0) + ')</span>' +
+            '</div>' +
+            '<div class="armor-total">Total rustning: 🛡️ ' + totalArmor + '</div>' +
+            '</div>';
+        
+        html += '</div>';
+        
+        // SECTION: Weapons
+        if (character.weapons && character.weapons.length > 0) {
+            html += '<div class="expanded-section">' +
+                '<h3>🗡️ Vapen</h3>' +
+                '<div class="weapons-table-expanded">' +
+                '<table>' +
+                '<thead>' +
+                '<tr>' +
+                '<th>Namn</th>' +
+                '<th>Grepp</th>' +
+                '<th>Skada</th>' +
+                '<th>Räckvidd</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>';
+            
+            character.weapons.forEach(function(weapon) {
+                if (weapon.name) {
+                    html += '<tr>' +
+                        '<td>' + weapon.name + '</td>' +
+                        '<td>' + (weapon.grip || '-') + '</td>' +
+                        '<td>' + (weapon.damage || '-') + '</td>' +
+                        '<td>' + (weapon.range || '-') + '</td>' +
+                        '</tr>';
+                }
+            });
+            
+            html += '</tbody></table></div></div>';
+        }
+        
+        // SECTION: Skills
+        html += '<div class="expanded-section">' +
+            '<h3>🎭 Färdigheter</h3>' +
+            '<div class="skills-weapons-grid">';
+        
+        // Regular Skills
+        html += '<div class="skills-column">' +
+            '<h4>Färdigheter</h4>' +
+            '<div class="skills-list">';
+        
+        if (character.skills) {
+            for (var skillName in character.skills) {
+                var skill = character.skills[skillName];
+                if (skill.value > 0 || skill.isCore) {
+                    var skillClass = 'skill-item' + (skill.isCore ? ' core' : '');
+                    html += '<div class="' + skillClass + '">' +
+                        '<span class="skill-name">' + skillName + ' (' + skill.attr + ')</span>' +
+                        '<span class="skill-value">' + skill.value + '</span>' +
+                        '</div>';
+                }
+            }
+        }
+        
+        html += '</div></div>';
+        
+        // Weapon Skills
+        html += '<div class="skills-column">' +
+            '<h4>Vapenfärdigheter</h4>' +
+            '<div class="skills-list">';
+        
+        if (character.weaponSkills) {
+            for (var skillName in character.weaponSkills) {
+                var skill = character.weaponSkills[skillName];
+                if (skill.value > 0 || skill.isCore) {
+                    var skillClass = 'skill-item' + (skill.isCore ? ' core' : '');
+                    html += '<div class="' + skillClass + '">' +
+                        '<span class="skill-name">' + skillName + ' (' + skill.attr + ')</span>' +
+                        '<span class="skill-value">' + skill.value + '</span>' +
+                        '</div>';
+                }
+            }
+        }
+        
+        html += '</div></div>';
+        
+        html += '</div></div>';
+        
+        // SECTION: Heroic Abilities
+        if (character.heroicAbility || character.kinAbility) {
+            html += '<div class="expanded-section">' +
+                '<h3>✨ Heroiska Förmågor</h3>' +
+                '<div class="abilities-list">';
+            
+            if (character.heroicAbility) {
+                html += '<div class="ability-card">' +
+                    '<div class="ability-name">⚔️ ' + character.heroicAbility + '</div>' +
+                    '</div>';
+            }
+            
+            if (character.kinAbility) {
+                html += '<div class="ability-card">' +
+                    '<div class="ability-name">🌟 ' + character.kinAbility + ' (Släktförmåga)</div>' +
+                    '</div>';
+            }
+            
+            html += '</div></div>';
+        }
+        
+        // SECTION: Equipment & Money
+        html += '<div class="expanded-section">' +
+            '<h3>🎒 Utrustning & Mynt</h3>';
+        
+        if (character.inventory && character.inventory.length > 0) {
+            html += '<div class="inventory-list">' +
+                character.inventory.join(', ') +
+                '</div>';
+        } else {
+            html += '<p class="empty-text">Ingen utrustning listad</p>';
+        }
+        
+        // Money
+        var currency = character.currency || { guld: 0, silver: 0, brons: 0 };
+        html += '<div class="money-display">' +
+            '<span class="money-item">💰 Guld: ' + currency.guld + '</span>' +
+            '<span class="money-item">⚪ Silver: ' + currency.silver + '</span>' +
+            '<span class="money-item">🟤 Brons: ' + currency.brons + '</span>' +
+            '</div>';
+        
+        html += '</div>';
+        
+        // SECTION: Notes
+        if (character.notes) {
+            html += '<div class="expanded-section">' +
+                '<h3>📝 Anteckningar</h3>' +
+                '<div class="notes-display">' + character.notes + '</div>' +
+                '</div>';
+        }
+        
+        html += '</div>';
+        
         return html;
+    },
+    
+    // Helper: Adjust stat by delta
+    adjustStat: function(characterId, field, delta) {
+        var char = this.characters.find(function(c) { return c.id === characterId; });
+        if (!char) return;
+        
+        var attrs = char.attributes || {};
+        var currentValue = char[field];
+        var maxValue;
+        
+        if (field === 'currentKP') {
+            maxValue = attrs.FYS || 0;
+            currentValue = currentValue !== undefined ? currentValue : maxValue;
+        } else if (field === 'currentVP') {
+            maxValue = attrs.PSY || 0;
+            currentValue = currentValue !== undefined ? currentValue : maxValue;
+        } else {
+            return;
+        }
+        
+        var newValue = Math.max(0, Math.min(maxValue, currentValue + delta));
+        
+        GameModeService.updateCharacterStat(characterId, field, newValue)
+            .catch(function(error) {
+                console.error('Error updating stat:', error);
+                alert('Kunde inte uppdatera: ' + error.message);
+            });
     },
     
     // Render sidebar card
