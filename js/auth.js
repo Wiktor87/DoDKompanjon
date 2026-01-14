@@ -51,7 +51,11 @@ function updateLandingHeader() {
         var logoutBtn = document.getElementById('landingLogoutBtn');
         if (logoutBtn) {
             logoutBtn.onclick = function() {
-                auth.signOut();
+                if (typeof auth !== 'undefined' && auth && auth.signOut) {
+                    auth.signOut();
+                } else {
+                    console.error('Firebase Auth not available');
+                }
             };
         }
     } else {
@@ -126,16 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup navigation handlers after DOM is ready
     // Use requestAnimationFrame to ensure all elements are rendered
-    if (typeof requestAnimationFrame !== 'undefined') {
-        requestAnimationFrame(function() {
-            setupNavigationHandlers();
-        });
-    } else {
-        // Fallback for older browsers
-        setTimeout(function() {
-            setupNavigationHandlers();
-        }, 0);
-    }
+    requestAnimationFrame(function() {
+        setupNavigationHandlers();
+    });
 });
 
 function setupNavigationHandlers() {
@@ -281,7 +278,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.onclick = function() {
-            auth.signOut();
+            if (typeof auth !== 'undefined' && auth && auth.signOut) {
+                auth.signOut();
+            } else {
+                console.error('Firebase Auth not available');
+            }
         };
     }
     
