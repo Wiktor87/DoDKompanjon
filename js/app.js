@@ -372,6 +372,31 @@ function renderCharacterCardFull(char) {
 
 // View Character
 function viewCharacter(id) {
+    console.log('👁️ viewCharacter:', id);
+    var container = document.getElementById('characterSheetContainer');
+    if (!container) return;
+    
+    // Switch to character sheet section
+    showSection('characterSheet');
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    CharacterService.getCharacter(id).then(function(char) {
+        currentCharacter = char;
+        container.innerHTML = renderFullCharacterSheet(char);
+        // Setup listeners for kin/profession/age changes
+        setupKinChangeListener();
+    }).catch(function(err) {
+        console.error('Failed to load character:', err);
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
+    });
+}
+
+function closeCharacterSheet() {
+    showSection('characters');
+    currentCharacter = null;
+}
+
+function renderFullCharacterSheet(char) {
     var icon = getKinIcon(char.kin);
     var attrs = char.attributes || {};
     var skills = char.skills || {};
