@@ -169,10 +169,11 @@ var GameModeUI = {
     // Render compact character card
     renderCompactCard: function(character) {
         var self = this;
-        var kp = character.kp || 0;
-        var maxKp = character.maxKp || 0;
-        var vp = character.vp || 0;
-        var maxVp = character.maxVp || 0;
+        var attrs = character.attributes || {};
+        var maxKp = attrs.FYS || 0;
+        var maxVp = attrs.PSY || 0;
+        var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
+        var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
         
         var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 0;
         var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 0;
@@ -200,7 +201,7 @@ var GameModeUI = {
             var pipClass = 'pip';
             if (i <= kp) pipClass += ' filled';
             if (i <= kp && kpPercent <= 25) pipClass += ' critical';
-            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'kp\', ' + i + ')">●</span>';
+            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentKP\', ' + i + ')">●</span>';
         }
         html += '</div>' +
             '<div class="tracker-value">' + kp + '/' + maxKp + '</div>' +
@@ -214,7 +215,7 @@ var GameModeUI = {
             var pipClass = 'pip';
             if (i <= vp) pipClass += ' filled';
             if (i <= vp && vpPercent <= 25) pipClass += ' low';
-            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'vp\', ' + i + ')">●</span>';
+            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentVP\', ' + i + ')">●</span>';
         }
         html += '</div>' +
             '<div class="tracker-value">' + vp + '/' + maxVp + '</div>' +
@@ -290,10 +291,11 @@ var GameModeUI = {
     
     // Render sidebar card
     renderSidebarCard: function(character) {
-        var kp = character.kp || 0;
-        var maxKp = character.maxKp || 0;
-        var vp = character.vp || 0;
-        var maxVp = character.maxVp || 0;
+        var attrs = character.attributes || {};
+        var maxKp = attrs.FYS || 0;
+        var maxVp = attrs.PSY || 0;
+        var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
+        var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
         
         var html = '<div class="sidebar-card" onclick="GameModeUI.focusCharacter(\'' + character.id + '\')">' +
             '<div class="sidebar-card-name">' + character.name + '</div>' +

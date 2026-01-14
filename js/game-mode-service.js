@@ -154,10 +154,12 @@ var GameModeService = {
             return db.collection('characters').doc(charId).get().then(function(doc) {
                 if (!doc.exists) return;
                 var char = doc.data();
-                var currentKP = char.kp || 0;
+                var attrs = char.attributes || {};
+                var maxKP = attrs.FYS || 0;
+                var currentKP = char.currentKP !== undefined ? char.currentKP : maxKP;
                 var newKP = Math.max(0, currentKP - amount);
                 return db.collection('characters').doc(charId).update({
-                    kp: newKP,
+                    currentKP: newKP,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             });
@@ -171,8 +173,11 @@ var GameModeService = {
             return db.collection('characters').doc(charId).get().then(function(doc) {
                 if (!doc.exists) return;
                 var char = doc.data();
-                var maxKP = char.maxKp || 0;
-                var maxVP = char.maxVp || 0;
+                var attrs = char.attributes || {};
+                var maxKP = attrs.FYS || 0;
+                var maxVP = attrs.PSY || 0;
+                var currentKP = char.currentKP !== undefined ? char.currentKP : maxKP;
+                var currentVP = char.currentVP !== undefined ? char.currentVP : maxVP;
                 
                 var update = {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -180,11 +185,11 @@ var GameModeService = {
                 
                 if (restType === 'short') {
                     // Short rest: restore half KP
-                    update.kp = Math.min(maxKP, (char.kp || 0) + Math.floor(maxKP / 2));
+                    update.currentKP = Math.min(maxKP, currentKP + Math.floor(maxKP / 2));
                 } else if (restType === 'long') {
                     // Long rest: restore all KP and VP
-                    update.kp = maxKP;
-                    update.vp = maxVP;
+                    update.currentKP = maxKP;
+                    update.currentVP = maxVP;
                 }
                 
                 return db.collection('characters').doc(charId).update(update);
