@@ -252,7 +252,6 @@ var GameModeUI = {
     
     // Render expanded character view
     renderExpandedView: function(character) {
-        var self = this;
         var attrs = character.attributes || {};
         var maxKp = attrs.FYS || 0;
         var maxVp = attrs.PSY || 0;
@@ -599,7 +598,6 @@ var GameModeUI = {
                 var itemClass = 'initiative-item';
                 if (index === currentIndex) itemClass += ' current';
                 
-                var diceIcon = '🎲';
                 var rollDisplay = item.roll ? ' 🎲' + item.roll : '';
                 
                 html += '<div class="' + itemClass + '">' +
