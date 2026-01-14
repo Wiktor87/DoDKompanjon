@@ -36,10 +36,15 @@ var HomebrewUI = {
                 self.sortBy(sort);
             }
             
-            // Author click
-            if (e.target.matches('[data-author-id]')) {
-                var authorId = e.target.getAttribute('data-author-id');
-                self.showAuthorProfile(authorId);
+            // Author click - use closest to handle clicks on child elements
+            if (e.target.closest('.homebrew-author[data-author-id]')) {
+                // Only handle if NOT in detail modal (detail modal has its own onclick)
+                if (!e.target.closest('.homebrew-detail-modal')) {
+                    e.stopPropagation(); // Prevent card click
+                    var authorEl = e.target.closest('.homebrew-author[data-author-id]');
+                    var authorId = authorEl.getAttribute('data-author-id');
+                    self.showAuthorProfile(authorId);
+                }
             }
             
             // Save to collection
@@ -186,7 +191,7 @@ var HomebrewUI = {
         var description = this.escapeHtml(item.description);
         var truncatedDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
         
-        return '<div class="homebrew-card" data-type="' + item.type + '">' +
+        return '<div class="homebrew-card" data-homebrew-id="' + item.id + '" data-type="' + item.type + '" onclick="HomebrewUI.showHomebrewDetail(\'' + item.id + '\')">' +
             '<div class="homebrew-card-header">' +
                 '<span class="homebrew-type-badge">' + category.icon + ' ' + category.label + '</span>' +
                 '<span class="homebrew-rating">' + rating + '</span>' +
@@ -202,7 +207,7 @@ var HomebrewUI = {
                     '<span class="stat-item">⬇️ ' + item.downloads + '</span>' +
                 '</div>' +
             '</div>' +
-            '<button class="homebrew-add-btn" data-save-homebrew="' + item.id + '">+ Lägg till</button>' +
+            '<button class="homebrew-add-btn" data-save-homebrew="' + item.id + '" onclick="event.stopPropagation()">+ Lägg till</button>' +
         '</div>';
     },
     
@@ -545,6 +550,230 @@ var HomebrewUI = {
             self.renderAuthorModal(profile, homebrews);
         }).catch(function(err) {
             console.error('Error loading author profile:', err);
+        });
+    },
+    
+    // Show homebrew detail modal
+    showHomebrewDetail: function(homebrewId) {
+        var self = this;
+        
+        HomebrewService.getHomebrew(homebrewId).then(function(homebrew) {
+            // Also get ratings for this homebrew
+            return HomebrewService.getHomebrewRatings(homebrewId).then(function(ratings) {
+                return { homebrew: homebrew, ratings: ratings };
+            });
+        }).then(function(result) {
+            self.renderDetailModal(result.homebrew, result.ratings);
+        }).catch(function(err) {
+            console.error('Error loading homebrew:', err);
+            if (typeof showToast !== 'undefined') {
+                showToast('Kunde inte ladda homebrew', 'error');
+            }
+        });
+    },
+    
+    // Render detail modal
+    renderDetailModal: function(homebrew, ratings) {
+        var self = this;
+        var user = getCurrentUser();
+        var category = HomebrewService.CATEGORIES[homebrew.type] || { label: homebrew.type, icon: '📜' };
+        var userRating = ratings.find(function(r) { return r.oderId === (user ? user.uid : null); });
+        
+        // Calculate average rating
+        var avgRating = 0;
+        if (ratings.length > 0) {
+            var sum = ratings.reduce(function(acc, r) { return acc + r.rating; }, 0);
+            avgRating = sum / ratings.length;
+        }
+        
+        var modal = document.createElement('div');
+        modal.className = 'homebrew-modal homebrew-detail-modal';
+        modal.innerHTML = '<div class="modal-overlay" onclick="this.parentElement.remove()"></div>' +
+            '<div class="modal-content detail-modal-content">' +
+                '<button class="modal-close" onclick="this.closest(\'.homebrew-modal\').remove()">✕</button>' +
+                
+                // Header
+                '<div class="detail-header">' +
+                    '<div class="detail-type-badge">' + category.icon + ' ' + category.label + '</div>' +
+                    '<h2 class="detail-title">' + self.escapeHtml(homebrew.name) + '</h2>' +
+                    '<div class="detail-meta">' +
+                        '<span class="detail-downloads">📥 ' + (homebrew.downloads || 0) + ' nedladdningar</span>' +
+                        '<span class="detail-rating">★ ' + avgRating.toFixed(1) + ' (' + ratings.length + ' omdömen)</span>' +
+                    '</div>' +
+                '</div>' +
+                
+                // Type-specific fields
+                '<div class="detail-fields">' +
+                    self.getDetailFieldsHTML(homebrew) +
+                '</div>' +
+                
+                // Description
+                '<div class="detail-description">' +
+                    '<h3>Beskrivning</h3>' +
+                    '<p>' + self.escapeHtml(homebrew.description) + '</p>' +
+                '</div>' +
+                
+                // Author
+                '<div class="detail-author" data-author-id="' + homebrew.authorId + '" onclick="HomebrewUI.showAuthorProfile(\'' + homebrew.authorId + '\'); this.closest(\'.homebrew-modal\').remove();">' +
+                    '<div class="author-avatar">' + self.getInitials(homebrew.authorName) + '</div>' +
+                    '<div class="author-info">' +
+                        '<span class="author-name">' + self.escapeHtml(homebrew.authorName) + '</span>' +
+                        '<span class="author-label">Skapare</span>' +
+                    '</div>' +
+                '</div>' +
+                
+                // Rating section
+                '<div class="detail-rating-section">' +
+                    '<h3>Betygsätt</h3>' +
+                    '<div class="star-rating" id="starRating">' +
+                        self.getStarRatingHTML(userRating ? userRating.rating : 0, homebrew.id) +
+                    '</div>' +
+                    (userRating ? '<p class="your-rating">Ditt betyg: ' + userRating.rating + '/5</p>' : '') +
+                '</div>' +
+                
+                // Comments section
+                '<div class="detail-comments-section">' +
+                    '<h3>Kommentarer (' + ratings.filter(function(r) { return r.review; }).length + ')</h3>' +
+                    '<div class="comments-list" id="commentsList">' +
+                        self.getCommentsHTML(ratings.filter(function(r) { return r.review; })) +
+                    '</div>' +
+                    (user ? '<div class="add-comment">' +
+                        '<textarea id="commentText" placeholder="Skriv en kommentar..." class="form-textarea"></textarea>' +
+                        '<button class="btn btn-gold" onclick="HomebrewUI.submitComment(\'' + homebrew.id + '\')">Skicka</button>' +
+                    '</div>' : '<p class="login-prompt">Logga in för att kommentera</p>') +
+                '</div>' +
+                
+                // Actions
+                '<div class="detail-actions">' +
+                    '<button class="btn btn-gold" onclick="HomebrewUI.saveToCollection(\'' + homebrew.id + '\'); this.closest(\'.homebrew-modal\').remove();">+ Lägg till i samling</button>' +
+                '</div>' +
+            '</div>';
+        
+        document.body.appendChild(modal);
+    },
+    
+    // Get detail fields HTML based on type
+    getDetailFieldsHTML: function(homebrew) {
+        var html = '<div class="detail-fields-grid">';
+        var data = homebrew.data || homebrew;
+        
+        if (homebrew.type === 'abilities') {
+            if (data.requirement) html += '<div class="field"><span class="field-label">Krav:</span> ' + this.escapeHtml(data.requirement) + '</div>';
+            if (data.wp) html += '<div class="field"><span class="field-label">VP:</span> ' + data.wp + '</div>';
+            if (data.abilityType) html += '<div class="field"><span class="field-label">Typ:</span> ' + this.escapeHtml(data.abilityType) + '</div>';
+        } else if (homebrew.type === 'monsters') {
+            if (data.hp) html += '<div class="field"><span class="field-label">KP:</span> ' + data.hp + '</div>';
+            if (data.armor) html += '<div class="field"><span class="field-label">Rustning:</span> ' + data.armor + '</div>';
+            if (data.movement) html += '<div class="field"><span class="field-label">Förflyttning:</span> ' + data.movement + '</div>';
+        } else if (homebrew.type === 'spells') {
+            if (data.school) html += '<div class="field"><span class="field-label">Skola:</span> ' + this.escapeHtml(data.school) + '</div>';
+            if (data.wp) html += '<div class="field"><span class="field-label">VP:</span> ' + data.wp + '</div>';
+            if (data.range) html += '<div class="field"><span class="field-label">Räckvidd:</span> ' + this.escapeHtml(data.range) + '</div>';
+            if (data.duration) html += '<div class="field"><span class="field-label">Varaktighet:</span> ' + this.escapeHtml(data.duration) + '</div>';
+        } else if (homebrew.type === 'items') {
+            if (data.itemType) html += '<div class="field"><span class="field-label">Typ:</span> ' + this.escapeHtml(data.itemType) + '</div>';
+            if (data.rarity) html += '<div class="field"><span class="field-label">Sällsynthet:</span> ' + this.escapeHtml(data.rarity) + '</div>';
+            if (data.value) html += '<div class="field"><span class="field-label">Värde:</span> ' + this.escapeHtml(data.value) + '</div>';
+        }
+        
+        html += '</div>';
+        return html;
+    },
+    
+    // Get star rating HTML
+    getStarRatingHTML: function(currentRating, homebrewId) {
+        var html = '';
+        for (var i = 1; i <= 5; i++) {
+            var filled = i <= currentRating ? ' filled' : '';
+            html += '<span class="star' + filled + '" data-rating="' + i + '" onclick="HomebrewUI.rateHomebrew(\'' + homebrewId + '\', ' + i + ')">★</span>';
+        }
+        return html;
+    },
+    
+    // Get comments HTML
+    getCommentsHTML: function(comments) {
+        if (!comments || comments.length === 0) {
+            return '<p class="no-comments">Inga kommentarer ännu.</p>';
+        }
+        
+        var self = this;
+        var html = '';
+        comments.forEach(function(comment) {
+            html += '<div class="comment">' +
+                '<div class="comment-header">' +
+                    '<span class="comment-author">' + self.escapeHtml(comment.authorName || 'Anonym') + '</span>' +
+                    '<span class="comment-rating">★ ' + comment.rating + '</span>' +
+                    '<span class="comment-date">' + self.formatDate(comment.createdAt) + '</span>' +
+                '</div>' +
+                '<p class="comment-text">' + self.escapeHtml(comment.review) + '</p>' +
+            '</div>';
+        });
+        return html;
+    },
+    
+    // Rate homebrew
+    rateHomebrew: function(homebrewId, rating) {
+        var user = getCurrentUser();
+        if (!user) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Du måste vara inloggad för att betygsätta', 'error');
+            }
+            return;
+        }
+        
+        HomebrewService.rateHomebrew(homebrewId, rating).then(function() {
+            // Update stars visually
+            document.querySelectorAll('#starRating .star').forEach(function(star, i) {
+                if (i < rating) {
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                }
+            });
+            
+            if (typeof showToast !== 'undefined') {
+                showToast('Betyg sparat!', 'success');
+            }
+        }).catch(function(err) {
+            console.error('Error rating:', err);
+            if (typeof showToast !== 'undefined') {
+                showToast('Kunde inte spara betyg', 'error');
+            }
+        });
+    },
+    
+    // Submit comment
+    submitComment: function(homebrewId) {
+        var user = getCurrentUser();
+        if (!user) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Du måste vara inloggad', 'error');
+            }
+            return;
+        }
+        
+        var textarea = document.getElementById('commentText');
+        var comment = textarea ? textarea.value.trim() : '';
+        
+        if (!comment) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Skriv en kommentar först', 'error');
+            }
+            return;
+        }
+        
+        HomebrewService.addComment(homebrewId, comment).then(function() {
+            if (textarea) textarea.value = '';
+            if (typeof showToast !== 'undefined') {
+                showToast('Kommentar tillagd!', 'success');
+            }
+            // Refresh the detail modal
+            HomebrewUI.showHomebrewDetail(homebrewId);
+        }).catch(function(err) {
+            console.error('Error commenting:', err);
+            if (typeof showToast !== 'undefined') {
+                showToast('Kunde inte lägga till kommentar', 'error');
+            }
         });
     },
     
