@@ -222,11 +222,11 @@ var GameModeUI = {
             '</div>';
         
         // Stats
-        var armor = character.armor || 0;
-        var damageBonus = character.damageBonus || 0;
+        var armor = character.armorProtection || 0;
+        var damageBonus = character.damageBonusSTY || 'T4';
         html += '<div class="compact-stats">' +
             '<div class="stat-item">🛡️ ' + armor + '</div>' +
-            '<div class="stat-item">⚔️ ' + (damageBonus >= 0 ? '+' : '') + damageBonus + '</div>' +
+            '<div class="stat-item">⚔️ ' + damageBonus + '</div>' +
             '</div>';
         
         // Conditions
@@ -274,13 +274,23 @@ var GameModeUI = {
             '<h3>Tillstånd</h3>' +
             '<div class="condition-toggles">';
         
-        var allConditions = ['Utmattad', 'Krasslig', 'Omtöcknad', 'Arg', 'Rädd', 'Uppgiven'];
-        var self = this;
-        allConditions.forEach(function(cond) {
-            var isActive = character[cond.toLowerCase()] === true;
+        var conditionMap = {
+            'STY': 'Utmattad',
+            'FYS': 'Krasslig',
+            'SMI': 'Omtöcknad',
+            'INT': 'Arg',
+            'PSY': 'Rädd',
+            'KAR': 'Uppgiven'
+        };
+        
+        var charConditions = focusedChar.conditions || {};
+        
+        for (var attr in conditionMap) {
+            var label = conditionMap[attr];
+            var isActive = charConditions[attr] === true;
             var btnClass = 'condition-toggle-btn' + (isActive ? ' active' : '');
-            html += '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + character.id + '\', \'' + cond.toLowerCase() + '\')">' + cond + '</button>';
-        });
+            html += '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + focusedChar.id + '\', \'' + attr + '\')">' + label + '</button>';
+        }
         
         html += '</div></div>';
         
@@ -386,12 +396,18 @@ var GameModeUI = {
     },
     
     // Handle condition toggle
-    handleConditionToggle: function(characterId, condition) {
+    handleConditionToggle: function(characterId, conditionAttr) {
         var char = this.characters.find(function(c) { return c.id === characterId; });
         if (!char) return;
         
-        var newValue = !char[condition];
-        GameModeService.updateCharacterStat(characterId, condition, newValue)
+        var charConditions = char.conditions || {};
+        var newValue = !charConditions[conditionAttr];
+        
+        // Update the conditions object
+        var updatedConditions = Object.assign({}, charConditions);
+        updatedConditions[conditionAttr] = newValue;
+        
+        GameModeService.updateCharacterStat(characterId, 'conditions', updatedConditions)
             .catch(function(error) {
                 console.error('Error toggling condition:', error);
                 alert('Kunde inte uppdatera tillstånd: ' + error.message);
@@ -401,13 +417,21 @@ var GameModeUI = {
     // Get active conditions for a character
     getActiveConditions: function(character) {
         var conditions = [];
-        var allConds = ['utmattad', 'krasslig', 'omtöcknad', 'arg', 'rädd', 'uppgiven'];
+        var conditionLabels = {
+            STY: 'Utmattad',
+            FYS: 'Krasslig',
+            SMI: 'Omtöcknad',
+            INT: 'Arg',
+            PSY: 'Rädd',
+            KAR: 'Uppgiven'
+        };
         
-        allConds.forEach(function(cond) {
-            if (character[cond] === true) {
-                conditions.push(cond.charAt(0).toUpperCase() + cond.slice(1));
+        var charConditions = character.conditions || {};
+        for (var attr in conditionLabels) {
+            if (charConditions[attr] === true) {
+                conditions.push(conditionLabels[attr]);
             }
-        });
+        }
         
         return conditions;
     },
