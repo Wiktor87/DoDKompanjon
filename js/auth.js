@@ -1,16 +1,24 @@
 // Authentication Module
 var currentUser = null;
 
-auth.onAuthStateChanged(function(user) {
-    console.log('Auth state:', user ? user.email : 'No user');
-    if (user) {
-        currentUser = user;
-        onUserLoggedIn(user);
-    } else {
-        currentUser = null;
+if (typeof auth !== 'undefined' && auth) {
+    auth.onAuthStateChanged(function(user) {
+        console.log('Auth state:', user ? user.email : 'No user');
+        if (user) {
+            currentUser = user;
+            onUserLoggedIn(user);
+        } else {
+            currentUser = null;
+            showLandingPage();
+        }
+    });
+} else {
+    console.warn('Firebase Auth not available - showing landing page');
+    // Still show landing page even if Firebase is not available
+    document.addEventListener('DOMContentLoaded', function() {
         showLandingPage();
-    }
-});
+    });
+}
 
 function showLandingPage() {
     var landing = document.getElementById('landingPage');
@@ -117,7 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Setup navigation tab handlers for both landing and app
-    setupNavigationHandlers();
+    // This needs to run after DOM is ready
+    setTimeout(function() {
+        setupNavigationHandlers();
+    }, 100);
 });
 
 function setupNavigationHandlers() {
@@ -131,14 +142,18 @@ function setupNavigationHandlers() {
             
             // If auth is required and user is not logged in, show auth modal
             if (requireAuth && !currentUser) {
-                showAuthModal('login');
+                if (typeof showAuthModal === 'function') {
+                    showAuthModal('login');
+                }
                 return;
             }
             
             // If on landing page and logged in, switch to app
             var landing = document.getElementById('landingPage');
             if (landing && !landing.classList.contains('hidden')) {
-                showApp();
+                if (typeof showApp === 'function') {
+                    showApp();
+                }
             }
             
             // Navigate to section
