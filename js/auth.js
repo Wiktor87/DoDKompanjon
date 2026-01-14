@@ -305,19 +305,28 @@ function handleForgotPassword() {
     var email = document.getElementById('loginEmail').value;
     
     if (!email || !email.trim()) {
-        // Prompt user to enter email
-        var userEmail = prompt('Ange din e-postadress för att återställa lösenordet:');
-        if (!userEmail || !userEmail.trim()) {
-            return;
-        }
-        email = userEmail.trim();
+        showAuthError('Vänligen ange din e-postadress först.');
+        // Focus on email field
+        var emailField = document.getElementById('loginEmail');
+        if (emailField) emailField.focus();
+        return;
     }
     
+    email = email.trim();
     console.log('Password reset requested for:', email);
     
     auth.sendPasswordResetEmail(email)
         .then(function() {
-            alert('Ett e-postmeddelande för återställning av lösenord har skickats till ' + email + '. Kontrollera din inkorg.');
+            hideAuthError();
+            // Show success message
+            var authError = document.getElementById('authError');
+            if (authError) {
+                authError.textContent = '✓ Ett e-postmeddelande för återställning av lösenord har skickats till ' + email + '. Kontrollera din inkorg.';
+                authError.style.background = 'rgba(72, 187, 120, 0.1)';
+                authError.style.borderColor = 'var(--accent-green)';
+                authError.style.color = 'var(--accent-green)';
+                authError.classList.add('active');
+            }
             console.log('Password reset email sent successfully');
         })
         .catch(function(error) {
