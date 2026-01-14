@@ -13,6 +13,9 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+// Constants
+const REMINDER_WINDOW_HOURS = 23; // Don't send duplicate reminders within this window
+
 /**
  * Trigger when a party's nextSessionTimestamp is updated
  * Sends email notification to all party members
@@ -139,8 +142,8 @@ exports.sendSessionReminders = functions.pubsub
             
             // Check if we already sent a reminder
             const lastNotification = party.lastReminderSent;
-            if (lastNotification && 
-                lastNotification.toMillis() > (now.toMillis() - (23 * 60 * 60 * 1000))) {
+            const reminderThresholdMillis = now.toMillis() - (REMINDER_WINDOW_HOURS * 60 * 60 * 1000);
+            if (lastNotification && lastNotification.toMillis() > reminderThresholdMillis) {
                 console.log(`Already sent reminder for party ${partyId}`);
                 continue;
             }

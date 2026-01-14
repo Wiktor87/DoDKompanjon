@@ -550,48 +550,39 @@ function setupKinChangeListener() {
             var newKin = this.value;
             var portraitEl = document.querySelector('.sheet-portrait-large');
             if (portraitEl) {
+                // getKinIcon returns safe HTML from ICONS object
                 portraitEl.innerHTML = getKinIcon(newKin);
             }
             // Also update subtitle
-            var subtitleEl = document.querySelector('.sheet-subtitle-row');
-            if (subtitleEl && currentCharacter) {
-                var professionEl = document.querySelector('[data-field="profession"]');
-                var ageEl = document.querySelector('[data-field="ageCategory"]');
-                var profession = professionEl ? professionEl.value : currentCharacter.profession;
-                var age = ageEl ? ageEl.value : currentCharacter.age;
-                subtitleEl.textContent = [newKin, profession, age].filter(Boolean).join(' • ');
-            }
+            updateCharacterSubtitle();
         });
     }
     
     // Also listen to profession and age changes for subtitle update
     var professionSelect = document.querySelector('[data-field="profession"]');
     if (professionSelect) {
-        professionSelect.addEventListener('change', function() {
-            var subtitleEl = document.querySelector('.sheet-subtitle-row');
-            if (subtitleEl) {
-                var kinEl = document.querySelector('[data-field="kin"]');
-                var ageEl = document.querySelector('[data-field="ageCategory"]');
-                var kin = kinEl ? kinEl.value : currentCharacter.kin;
-                var age = ageEl ? ageEl.value : currentCharacter.age;
-                subtitleEl.textContent = [kin, this.value, age].filter(Boolean).join(' • ');
-            }
-        });
+        professionSelect.addEventListener('change', updateCharacterSubtitle);
     }
     
     var ageSelect = document.querySelector('[data-field="ageCategory"]');
     if (ageSelect) {
-        ageSelect.addEventListener('change', function() {
-            var subtitleEl = document.querySelector('.sheet-subtitle-row');
-            if (subtitleEl) {
-                var kinEl = document.querySelector('[data-field="kin"]');
-                var professionEl = document.querySelector('[data-field="profession"]');
-                var kin = kinEl ? kinEl.value : currentCharacter.kin;
-                var profession = professionEl ? professionEl.value : currentCharacter.profession;
-                subtitleEl.textContent = [kin, profession, this.value].filter(Boolean).join(' • ');
-            }
-        });
+        ageSelect.addEventListener('change', updateCharacterSubtitle);
     }
+}
+
+function updateCharacterSubtitle() {
+    var subtitleEl = document.querySelector('.sheet-subtitle-row');
+    if (!subtitleEl || !currentCharacter) return;
+    
+    var kinEl = document.querySelector('[data-field="kin"]');
+    var professionEl = document.querySelector('[data-field="profession"]');
+    var ageEl = document.querySelector('[data-field="ageCategory"]');
+    
+    var kin = kinEl ? kinEl.value : currentCharacter.kin;
+    var profession = professionEl ? professionEl.value : currentCharacter.profession;
+    var age = ageEl ? ageEl.value : currentCharacter.age;
+    
+    subtitleEl.textContent = [kin, profession, age].filter(Boolean).join(' • ');
 }
 
 // Inventory
