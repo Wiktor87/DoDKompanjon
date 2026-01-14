@@ -89,6 +89,11 @@ function closeModal(modalId) {
     currentCharacter = null;
 }
 
+function openModal(modalId) {
+    var modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('active');
+}
+
 function openCreateCampaign() {
     showToast('Kampanjfunktionen kommer snart!', 'info');
 }
@@ -96,6 +101,8 @@ function openCreateCampaign() {
 // Dashboard
 function loadDashboard() {
     console.log('📊 loadDashboard');
+    
+    // Uppdatera välkomstnamn
     if (typeof getCurrentUser === 'function') {
         var user = getCurrentUser();
         if (user) {
@@ -104,42 +111,180 @@ function loadDashboard() {
             if (el) el.textContent = name;
         }
     }
-    var container = document.getElementById('homeCharacters');
+    
+    // Ladda karaktärer
+    var charContainer = document.getElementById('homeCharacters');
+    if (charContainer) {
+        if (typeof CharacterService === 'undefined') {
+            charContainer.innerHTML = '<div class="empty-state-card" style="grid-column: 1/-1;">' +
+                '<div class="empty-icon">🎭</div>' +
+                '<h3>Inga karaktärer ännu</h3>' +
+                '<p>Skapa din första karaktär för att börja äventyret</p>' +
+                '<button class="btn btn-gold-outline" onclick="openCharacterCreator()">Skapa karaktär</button>' +
+            '</div>';
+        } else {
+            CharacterService.getUserCharacters().then(function(characters) {
+                console.log('Got characters:', characters.length);
+                if (characters.length === 0) {
+                    charContainer.innerHTML = '<div class="empty-state-card" style="grid-column: 1/-1;">' +
+                        '<div class="empty-icon">🎭</div>' +
+                        '<h3>Inga karaktärer ännu</h3>' +
+                        '<p>Skapa din första karaktär för att börja äventyret</p>' +
+                        '<button class="btn btn-gold-outline" onclick="openCharacterCreator()">Skapa karaktär</button>' +
+                    '</div>';
+                } else {
+                    charContainer.innerHTML = characters.slice(0, 4).map(renderCharacterCardCompact).join('');
+                }
+            }).catch(function(err) {
+                console.error('Error:', err);
+                charContainer.innerHTML = '<div class="empty-state-card" style="grid-column: 1/-1;">' +
+                    '<div class="empty-icon">⚠️</div>' +
+                    '<h3>Fel vid laddning</h3>' +
+                    '<p>' + err.message + '</p>' +
+                '</div>';
+            });
+        }
+    }
+    
+    // Ladda grupper
+    loadDashboardParties();
+}
+
+// Ladda grupper på dashboard
+function loadDashboardParties() {
+    var container = document.getElementById('homeParties');
     if (!container) return;
     
-    if (typeof CharacterService === 'undefined') {
-        container.innerHTML = '<div class="activity-empty"><p>Laddar...</p></div>';
+    if (typeof PartyService === 'undefined') {
+        container.innerHTML = '<div class="empty-state-card">' +
+            '<div class="empty-icon">👥</div>' +
+            '<h3>Inga grupper ännu</h3>' +
+            '<p>Skapa eller gå med i en grupp för att spela tillsammans</p>' +
+            '<button class="btn btn-gold-outline" onclick="openModal(\'partyModal\')">Skapa grupp</button>' +
+        '</div>';
         return;
     }
     
-    CharacterService.getUserCharacters().then(function(characters) {
-        console.log('Got characters:', characters.length);
-        if (characters.length === 0) {
-            container.innerHTML = '<div class="activity-empty"><p>Inga karaktärer ännu.</p><button class="btn btn-gold btn-sm" onclick="openCharacterCreator()">Skapa din första</button></div>';
+    PartyService.getUserParties().then(function(parties) {
+        if (parties.length === 0) {
+            container.innerHTML = '<div class="empty-state-card">' +
+                '<div class="empty-icon">👥</div>' +
+                '<h3>Inga grupper ännu</h3>' +
+                '<p>Skapa eller gå med i en grupp för att spela tillsammans</p>' +
+                '<button class="btn btn-gold-outline" onclick="openModal(\'partyModal\')">Skapa grupp</button>' +
+            '</div>';
         } else {
-            container.innerHTML = characters.slice(0, 4).map(renderCharacterCardCompact).join('');
+            // Visa första gruppen (eller den senast aktiva)
+            container.innerHTML = renderPartyCardHome(parties[0]);
         }
     }).catch(function(err) {
-        console.error('Error:', err);
-        container.innerHTML = '<div class="activity-empty"><p>Fel: ' + err.message + '</p></div>';
+        console.error('Error loading parties:', err);
+        container.innerHTML = '<div class="empty-state-card">' +
+            '<div class="empty-icon">⚠️</div>' +
+            '<h3>Kunde inte ladda grupper</h3>' +
+            '<p>' + err.message + '</p>' +
+        '</div>';
     });
 }
 
 function renderCharacterCardCompact(char) {
     var icon = getKinIcon(char.kin);
-    var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
-    var kp = char.currentKP || (char.attributes && char.attributes.FYS) || '?';
-    var vp = char.currentVP || (char.attributes && char.attributes.PSY) || '?';
-    return '<div class="character-card">' +
-        '<div class="char-portrait" onclick="viewCharacter(\'' + char.id + '\')">' + icon + '</div>' +
-        '<div class="char-info" onclick="viewCharacter(\'' + char.id + '\')" style="flex: 1; cursor: pointer;"><div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
-        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
-        '<div class="char-stats">' +
-        '<div class="char-stat"><span>❤️</span><span>' + kp + '</span><span>KP</span></div>' +
-        '<div class="char-stat"><span>💜</span><span>' + vp + '</span><span>VP</span></div>' +
-        '</div></div>' +
-        '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥</button>' +
-        '</div>';
+    var kp = char.currentKP || (char.attributes && char.attributes.FYS) || 0;
+    var maxKp = (char.attributes && char.attributes.FYS) || kp || 1;
+    var vp = char.currentVP || (char.attributes && char.attributes.PSY) || 0;
+    var maxVp = (char.attributes && char.attributes.PSY) || vp || 1;
+    var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 100;
+    var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 100;
+    var lastPlayed = char.lastPlayed || 'Aldrig';
+    
+    return '<div class="card-frame" onclick="viewCharacter(\'' + char.id + '\')">' +
+        '<div class="corner-accent"></div>' +
+        '<div class="character-card-new">' +
+            '<div class="char-portrait-new">' + icon + '</div>' +
+            '<div class="char-details">' +
+                '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+                '<div class="char-meta">' + (char.kin || 'Okänd') + ' · ' + (char.profession || 'Okänt yrke') + '</div>' +
+                '<div class="char-stats-bars">' +
+                    '<div class="stat-bar">' +
+                        '<div class="stat-bar-header">' +
+                            '<span class="stat-bar-label">KP</span>' +
+                            '<span class="stat-bar-value-kp">' + kp + '/' + maxKp + '</span>' +
+                        '</div>' +
+                        '<div class="stat-bar-track">' +
+                            '<div class="stat-bar-fill stat-bar-fill-kp" style="width: ' + kpPercent + '%"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="stat-bar">' +
+                        '<div class="stat-bar-header">' +
+                            '<span class="stat-bar-label">VP</span>' +
+                            '<span class="stat-bar-value-vp">' + vp + '/' + maxVp + '</span>' +
+                        '</div>' +
+                        '<div class="stat-bar-track">' +
+                            '<div class="stat-bar-fill stat-bar-fill-vp" style="width: ' + vpPercent + '%"></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="card-frame-footer">' +
+            '<span class="last-played">Senast: ' + lastPlayed + '</span>' +
+            '<span class="continue-link">Fortsätt →</span>' +
+        '</div>' +
+    '</div>';
+}
+
+// Render party card for home/overview page
+function renderPartyCardHome(party) {
+    var membersHtml = '';
+    var members = party.members || [];
+    
+    // Om vi har memberIds men inte members-data, skapa placeholders
+    if (members.length === 0 && party.memberIds && party.memberIds.length > 0) {
+        party.memberIds.forEach(function(id, index) {
+            members.push({ name: 'Medlem ' + (index + 1), kin: 'Människa', isOnline: false });
+        });
+    }
+    
+    members.forEach(function(member) {
+        var icon = getKinIcon(member.kin || 'Människa');
+        var onlineClass = member.isOnline ? 'online' : 'offline';
+        var displayName = member.name || member.displayName || member.characterName || 'Okänd';
+        membersHtml += 
+            '<div class="party-member">' +
+                '<div class="party-member-avatar">' + icon + '</div>' +
+                '<span class="party-member-name">' + 
+                    displayName +
+                    '<span class="online-indicator ' + onlineClass + '"></span>' +
+                '</span>' +
+            '</div>';
+    });
+    
+    var nextSessionHtml = '';
+    if (party.nextSession) {
+        nextSessionHtml = 
+            '<div class="next-session-badge">' +
+                '<div class="badge-label">Nästa session</div>' +
+                '<div class="badge-value">' + party.nextSession + '</div>' +
+            '</div>';
+    }
+    
+    var memberCount = party.memberIds ? party.memberIds.length : members.length;
+    
+    return '<div class="card-frame" style="cursor: default;">' +
+        '<div class="corner-accent"></div>' +
+        '<div class="party-card-header">' +
+            '<div>' +
+                '<h3>' + (party.name || 'Namnlös grupp') + '</h3>' +
+                '<p class="party-meta">' + memberCount + ' äventyrare</p>' +
+            '</div>' +
+            nextSessionHtml +
+        '</div>' +
+        '<div class="party-members">' + membersHtml + '</div>' +
+        '<div class="party-actions">' +
+            '<button class="btn btn-primary" onclick="viewParty(\'' + party.id + '\')">Öppna gruppsida</button>' +
+            '<button class="btn btn-outline" onclick="copyInviteCode(\'' + (party.inviteCode || '') + '\')">Bjud in spelare</button>' +
+        '</div>' +
+    '</div>';
 }
 
 // Characters List
