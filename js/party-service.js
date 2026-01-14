@@ -150,6 +150,12 @@ var PartyService = {
         return db.collection('parties').doc(id).get().then(function(doc) {
             if (!doc.exists) throw new Error('Grupp inte hittad');
             return Object.assign({ id: doc.id }, doc.data());
+        }).catch(function(err) {
+            console.error('Error fetching party:', err);
+            if (err.code === 'permission-denied') {
+                throw new Error('Du har inte behörighet att visa denna grupp');
+            }
+            throw err;
         });
     },
     

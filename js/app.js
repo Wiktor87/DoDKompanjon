@@ -653,7 +653,9 @@ function viewParty(id) {
             }
         });
     }).catch(function(err) {
-        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
+        console.error('Error loading party:', err);
+        var errorMsg = (err && err.message) || 'Kunde inte ladda gruppen';
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + errorMsg + '</p><button class="btn btn-outline" onclick="closePartyView()">Tillbaka</button></div>';
     });
 }
 
@@ -989,60 +991,143 @@ function openJoinGroupModal() {
 }
 
 function searchGroupByCode() {
-    var code = document.getElementById('groupInviteCode').value;
+    var searchInput = document.getElementById('groupInviteCode').value;
     var container = document.getElementById('foundGroupContainer');
     
-    if (!code || !code.trim()) {
-        showToast('Ange en inbjudningskod', 'error');
+    if (!searchInput || !searchInput.trim()) {
+        showToast('Ange en inbjudningskod eller gruppnamn', 'error');
         return;
     }
     
     container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Söker...</p></div>';
     
-    PartyService.searchPartyByCode(code).then(function(party) {
-        var user = getCurrentUser();
-        var isMember = (party.memberIds || []).indexOf(user.uid) !== -1;
-        
-        if (isMember) {
-            container.innerHTML = '<div style="background: var(--bg-elevated); border: 1px solid var(--accent-gold); border-radius: var(--radius-lg); padding: 1rem; text-align: center;">' +
-                '<h3 style="color: var(--accent-gold);">✓ Du är redan medlem</h3>' +
-                '<p style="color: var(--text-secondary); margin: 0.5rem 0;">Du är redan medlem i denna grupp.</p>' +
-                '<button class="btn btn-gold btn-sm" onclick="closeModal(\'joinGroupModal\');viewParty(\'' + party.id + '\')">Visa grupp</button>' +
-                '</div>';
-        } else {
-            container.innerHTML = '<div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
-                '<h3 style="margin-bottom: 0.5rem;">👥 ' + party.name + '</h3>' +
-                '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
-                '<p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Ägare: ' + party.ownerName + '</p>' +
-                '<div id="joinCharactersList"></div>' +
-                '</div>';
-            
-            // Load user's characters
-            CharacterService.getUserCharacters().then(function(characters) {
-                var charList = document.getElementById('joinCharactersList');
-                if (!charList) return;
-                
-                if (characters.length === 0) {
-                    charList.innerHTML = '<p style="color: var(--text-muted); margin-bottom: 1rem;">Du har inga karaktärer att lägga till. Skapa en karaktär först.</p>';
-                } else {
-                    charList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">Välj en karaktär att skicka förfrågan med:</p>' +
-                        '<div class="character-cards" style="grid-template-columns: 1fr;">' +
-                        characters.map(function(char) {
-                            var icon = getKinIcon(char.kin);
-                            var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
-                            return '<div class="character-card" onclick="requestJoinWithCharacter(\'' + party.id + '\', \'' + char.id + '\')" style="cursor: pointer;">' +
-                                '<div class="char-portrait">' + icon + '</div>' +
-                                '<div class="char-info">' +
-                                '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
-                                '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
-                                '</div>' +
-                                '<button class="btn btn-gold btn-xs">Skicka förfrågan →</button>' +
-                                '</div>';
-                        }).join('') +
-                        '</div>';
+    var searchTerm = searchInput.trim().toUpperCase();
+    
+    // Try to search by invite code first
+    PartyService.searchPartyByCode(searchTerm).then(function(party) {
+        displayFoundGroup(party, container);
+    }).catch(function(err) {
+        // If not found by code, try searching by name
+        console.log('Not found by code, searching by name...');
+        return searchGroupByName(searchTerm, container);
+    });
+}
+
+function searchGroupByName(searchTerm, container) {
+    // Search for groups where the name contains the search term (case-insensitive)
+    // Note: This performs client-side filtering. For large datasets, consider
+    // implementing server-side search with Firestore queries or Algolia
+    var user = getCurrentUser();
+    if (!user) {
+        container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--brand-red);"><p>❌ Du måste vara inloggad</p></div>';
+        return;
+    }
+    
+    return db.collection('parties')
+        .get()
+        .then(function(snapshot) {
+            var matches = [];
+            snapshot.forEach(function(doc) {
+                var data = doc.data();
+                var name = (data.name || '').toUpperCase();
+                // Match if name contains search term
+                if (name.includes(searchTerm)) {
+                    matches.push(Object.assign({ id: doc.id }, data));
                 }
             });
-        }
+            
+            if (matches.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--brand-red);">' +
+                    '<p>❌ Ingen grupp hittades med koden eller namnet "' + searchTerm + '"</p>' +
+                    '</div>';
+            } else if (matches.length === 1) {
+                displayFoundGroup(matches[0], container);
+            } else {
+                // Multiple matches - show list
+                displayMultipleGroups(matches, container, user);
+            }
+        })
+        .catch(function(err) {
+            container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--brand-red);">' +
+                '<p>❌ ' + err.message + '</p>' +
+                '</div>';
+        });
+}
+
+function displayFoundGroup(party, container) {
+    var user = getCurrentUser();
+    var isMember = (party.memberIds || []).indexOf(user.uid) !== -1;
+    
+    if (isMember) {
+        container.innerHTML = '<div style="background: var(--bg-elevated); border: 1px solid var(--accent-gold); border-radius: var(--radius-lg); padding: 1rem; text-align: center;">' +
+            '<h3 style="color: var(--accent-gold);">✓ Du är redan medlem</h3>' +
+            '<p style="color: var(--text-secondary); margin: 0.5rem 0;">Du är redan medlem i denna grupp.</p>' +
+            '<button class="btn btn-gold btn-sm" onclick="closeModal(\'joinGroupModal\');viewParty(\'' + party.id + '\')">Visa grupp</button>' +
+            '</div>';
+    } else {
+        container.innerHTML = '<div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+            '<h3 style="margin-bottom: 0.5rem;">👥 ' + party.name + '</h3>' +
+            '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
+            '<p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Ägare: ' + party.ownerName + '</p>' +
+            '<div id="joinCharactersList"></div>' +
+            '</div>';
+        
+        // Load user's characters
+        CharacterService.getUserCharacters().then(function(characters) {
+            var charList = document.getElementById('joinCharactersList');
+            if (!charList) return;
+            
+            if (characters.length === 0) {
+                charList.innerHTML = '<p style="color: var(--text-muted); margin-bottom: 1rem;">Du har inga karaktärer att lägga till. Skapa en karaktär först.</p>';
+            } else {
+                charList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">Välj en karaktär att skicka förfrågan med:</p>' +
+                    '<div class="character-cards" style="grid-template-columns: 1fr;">' +
+                    characters.map(function(char) {
+                        var icon = getKinIcon(char.kin);
+                        var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
+                        return '<div class="character-card" onclick="requestJoinWithCharacter(\'' + party.id + '\', \'' + char.id + '\')" style="cursor: pointer;">' +
+                            '<div class="char-portrait">' + icon + '</div>' +
+                            '<div class="char-info">' +
+                            '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
+                            '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+                            '</div>' +
+                            '<button class="btn btn-gold btn-xs">Skicka förfrågan →</button>' +
+                            '</div>';
+                    }).join('') +
+                    '</div>';
+            }
+        });
+    }
+}
+
+function displayMultipleGroups(groups, container, user) {
+    container.innerHTML = '<div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
+        '<h3 style="margin-bottom: 1rem;">Hittade ' + groups.length + ' grupper</h3>' +
+        '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">Välj en grupp att gå med i:</p>' +
+        '<div style="max-height: 400px; overflow-y: auto;">' +
+        groups.map(function(party) {
+            var isMember = (party.memberIds || []).indexOf(user.uid) !== -1;
+            var memberCount = (party.memberIds || []).length;
+            
+            return '<div class="group-select-item' + (isMember ? ' disabled' : '') + '" ' +
+                (isMember ? '' : 'onclick="selectGroupFromSearch(\'' + party.id + '\')"') + '>' +
+                '<div>' +
+                '<div class="group-name">👥 ' + party.name + '</div>' +
+                '<div class="group-owner">Ägare: ' + party.ownerName + ' • ' + memberCount + ' medlem' + (memberCount !== 1 ? 'mar' : '') + '</div>' +
+                (party.description ? '<div style="font-size: 0.813rem; color: var(--text-muted); margin-top: 0.25rem;">' + party.description + '</div>' : '') +
+                '</div>' +
+                '<button class="btn btn-ghost btn-xs">' + (isMember ? '✓ Medlem' : 'Välj →') + '</button>' +
+                '</div>';
+        }).join('') +
+        '</div></div>';
+}
+
+function selectGroupFromSearch(partyId) {
+    var container = document.getElementById('foundGroupContainer');
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getParty(partyId).then(function(party) {
+        displayFoundGroup(party, container);
     }).catch(function(err) {
         container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--brand-red);">' +
             '<p>❌ ' + err.message + '</p>' +
@@ -1131,7 +1216,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.nav-tab').forEach(function(tab) {
         tab.onclick = function(e) {
             e.preventDefault();
-            showSection(this.getAttribute('data-section'));
+            var section = this.getAttribute('data-section');
+            if (section) {
+                showSection(section);
+            }
         };
     });
     document.querySelectorAll('.modal').forEach(function(modal) {
