@@ -64,7 +64,7 @@ function showLandingPage() {
                         // Switch back to app and show section
                         showApp();
                         var section = this.getAttribute('data-section');
-                        if (typeof showSection === 'function') {
+                        if (section && typeof showSection === 'function') {
                             showSection(section);
                         }
                     };
@@ -272,9 +272,10 @@ function getErrorMessage(code) {
         'auth/email-already-in-use': 'E-postadressen används redan.',
         'auth/invalid-email': 'Ogiltig e-postadress.',
         'auth/weak-password': 'Lösenordet är för svagt. Använd minst 6 tecken.',
-        'auth/user-not-found': 'Ogiltiga inloggningsuppgifter.',
-        'auth/wrong-password': 'Ogiltiga inloggningsuppgifter.',
+        'auth/user-not-found': 'Ogiltiga inloggningsuppgifter. Kontrollera e-post och lösenord.',
+        'auth/wrong-password': 'Ogiltiga inloggningsuppgifter. Kontrollera e-post och lösenord.',
         'auth/invalid-credential': 'Ogiltiga inloggningsuppgifter. Kontrollera e-post och lösenord.',
+        'auth/invalid-login-credentials': 'Ogiltiga inloggningsuppgifter. Kontrollera e-post och lösenord.',
         'auth/too-many-requests': 'För många försök. Vänta en stund.',
         'auth/popup-closed-by-user': 'Fönstret stängdes.',
         'auth/network-request-failed': 'Nätverksfel. Kontrollera din internetanslutning.',
