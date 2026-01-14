@@ -248,64 +248,91 @@ var HomebrewService = {
             return Promise.reject(new Error('Betyg måste vara mellan 1 och 5'));
         }
         
-        var ratingData = {
-            userId: user.uid,
-            homebrewId: homebrewId,
-            rating: rating,
-            review: review || '',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
         // Check if user already rated this
         return db.collection('homebrewRatings')
-            .where('userId', '==', user.uid)
             .where('homebrewId', '==', homebrewId)
+            .where('oderId', '==', user.uid)
             .get()
             .then(function(snapshot) {
                 if (!snapshot.empty) {
                     // Update existing rating
-                    var doc = snapshot.docs[0];
-                    return doc.ref.update({
+                    return snapshot.docs[0].ref.update({
+                        rating: rating,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Create new rating
+                    return db.collection('homebrewRatings').add({
+                        homebrewId: homebrewId,
+                        oderId: user.uid,
+                        authorName: user.displayName || user.email,
                         rating: rating,
                         review: review || '',
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                } else {
-                    // Create new rating
-                    return db.collection('homebrewRatings').add(ratingData);
                 }
-            })
-            .then(function() {
-                // Recalculate average rating
-                return HomebrewService.updateAverageRating(homebrewId);
+            }).then(function() {
+                // Update homebrew average rating
+                return HomebrewService.updateHomebrewRating(homebrewId);
             });
     },
-
-    // Update average rating for a homebrew item
-    updateAverageRating: function(homebrewId) {
+    
+    // Add comment (as part of rating)
+    addComment: function(homebrewId, comment) {
+        var user = getCurrentUser();
+        if (!user) return Promise.reject(new Error('Inte inloggad'));
+        
+        // Check if user already has a rating
         return db.collection('homebrewRatings')
             .where('homebrewId', '==', homebrewId)
+            .where('oderId', '==', user.uid)
             .get()
             .then(function(snapshot) {
-                var totalRating = 0;
-                var count = 0;
-                
+                if (!snapshot.empty) {
+                    // Update existing with comment
+                    return snapshot.docs[0].ref.update({
+                        review: comment,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Create new with comment (default rating 0)
+                    return db.collection('homebrewRatings').add({
+                        homebrewId: homebrewId,
+                        oderId: user.uid,
+                        authorName: user.displayName || user.email,
+                        rating: 0,
+                        review: comment,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+    },
+    
+    // Update homebrew average rating
+    updateHomebrewRating: function(homebrewId) {
+        return db.collection('homebrewRatings')
+            .where('homebrewId', '==', homebrewId)
+            .where('rating', '>', 0)
+            .get()
+            .then(function(snapshot) {
+                var ratings = [];
                 snapshot.forEach(function(doc) {
-                    totalRating += doc.data().rating;
-                    count++;
+                    ratings.push(doc.data().rating);
                 });
                 
-                var avgRating = count > 0 ? totalRating / count : 0;
+                var avg = ratings.length > 0 
+                    ? ratings.reduce(function(a, b) { return a + b; }, 0) / ratings.length 
+                    : 0;
                 
                 return db.collection('homebrew').doc(homebrewId).update({
-                    rating: avgRating,
-                    ratingCount: count
+                    rating: avg,
+                    ratingCount: ratings.length
                 });
             });
     },
-
-    // Get ratings for a homebrew item
-    getRatings: function(homebrewId) {
+    
+    // Get ratings for a homebrew (alias for consistency)
+    getHomebrewRatings: function(homebrewId) {
         return db.collection('homebrewRatings')
             .where('homebrewId', '==', homebrewId)
             .orderBy('createdAt', 'desc')
@@ -319,6 +346,7 @@ var HomebrewService = {
             });
     },
 
+    
     // Get homebrew count
     getHomebrewCount: function(filters) {
         filters = filters || {};

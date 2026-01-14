@@ -2589,6 +2589,281 @@ body.app-active::before {
     color: var(--homebrew-red-monster);
 }
 
+/* Homebrew Detail Modal */
+.homebrew-detail-modal .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999;
+}
+
+.detail-modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(145deg, #1e2128 0%, #22262f 100%);
+    border: 1px solid #2d3341;
+    border-radius: 20px;
+    padding: 2rem;
+    z-index: 1000;
+}
+
+.detail-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #2d3341;
+}
+
+.detail-type-badge {
+    display: inline-block;
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.detail-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.75rem;
+    color: #f5f5f5;
+    margin-bottom: 0.5rem;
+}
+
+.detail-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    color: #a0a8b8;
+    font-size: 0.875rem;
+}
+
+.detail-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.detail-fields-grid .field {
+    text-align: center;
+}
+
+.detail-fields-grid .field-label {
+    display: block;
+    color: #6b7280;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.detail-description {
+    margin-bottom: 1.5rem;
+}
+
+.detail-description h3 {
+    color: #d4af37;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.detail-description p {
+    color: #a0a8b8;
+    line-height: 1.6;
+}
+
+.detail-author {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.detail-author:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.detail-author .author-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-author .author-label {
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+/* Star Rating */
+.detail-rating-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.detail-rating-section h3 {
+    color: #d4af37;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+.star-rating {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.star-rating .star {
+    font-size: 2rem;
+    color: #3d4451;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.star-rating .star:hover,
+.star-rating .star.filled {
+    color: #f0d875;
+}
+
+.star-rating .star:hover {
+    transform: scale(1.2);
+}
+
+.your-rating {
+    text-align: center;
+    color: #a0a8b8;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* Comments */
+.detail-comments-section {
+    margin-bottom: 1.5rem;
+}
+
+.detail-comments-section h3 {
+    color: #d4af37;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+.comments-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.comment {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.comment-header {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #f5f5f5;
+}
+
+.comment-rating {
+    color: #f0d875;
+    font-size: 0.8rem;
+}
+
+.comment-date {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-left: auto;
+}
+
+.comment-text {
+    color: #a0a8b8;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.no-comments {
+    color: #6b7280;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.add-comment {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.add-comment textarea {
+    min-height: 80px;
+}
+
+.login-prompt {
+    color: #6b7280;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Detail Actions */
+.detail-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #2d3341;
+}
+
+/* Make homebrew cards have pointer cursor */
+.homebrew-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.homebrew-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Author clickable styling */
+.homebrew-author {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.homebrew-author:hover .author-name {
+    color: #d4af37;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .homebrew-wrapper {
