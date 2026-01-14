@@ -112,10 +112,8 @@ body.app-active::before {
         z-index: 0;
     }
 }
-.landing-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; max-width: 1400px; margin: 0 auto; position: relative; z-index: 10; width: 100%; }
 .nav-brand { text-decoration: none; }
-.brand-logo { height: 80px; width: auto; }
-.header-brand .brand-logo { height: 50px; }
+.brand-logo { height: 60px; width: auto; }
 .nav-actions { display: flex; gap: 0.75rem; }
 .hero { max-width: 100%; margin: 0 auto; padding: 4rem 3rem; text-align: center; position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .bg-video {
@@ -150,13 +148,11 @@ body.app-active::before {
 .landing-footer { padding: 2rem; text-align: center; color: var(--text-muted); }
 .landing-footer p { margin-bottom: 0.5rem; }
 .footer-disclaimer { font-size: 0.75rem; color: var(--text-muted); max-width: 800px; margin: 0.75rem auto 0; line-height: 1.5; }
-.landing-submenu { position: sticky; top: 0; z-index: 10; }
-.landing-submenu .app-nav { margin: 0 auto; }
 .app-footer { padding: 2rem; text-align: center; color: var(--text-muted); border-top: 1px solid var(--border-default); margin-top: 2rem; }
 .app-footer p { margin-bottom: 0.5rem; }
 
-/* App Header */
-.app-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 1100; }
+/* Unified App Header (used on both landing and app pages) */
+.unified-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 1100; }
 .header-top { background: var(--bg-primary); border-bottom: 1px solid var(--border-default); }
 .header-content { max-width: 1600px; margin: 0 auto; padding: 0 1.5rem; min-height: 70px; display: flex; align-items: center; justify-content: space-between; }
 .header-brand { text-decoration: none; }

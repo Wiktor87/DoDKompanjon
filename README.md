@@ -36,7 +36,14 @@ const firebaseConfig = {
 
 ### Steg 2: Firestore Security Rules
 
-I Firebase Console, gå till Firestore Database > Rules och ersätt med:
+**Important:** After updating `firestore.rules`, deploy them to Firebase:
+
+```bash
+# Deploy only firestore rules
+firebase deploy --only firestore:rules
+```
+
+Alternatively, in Firebase Console, go to Firestore Database > Rules and replace with the content from `firestore.rules`.
 
 ```
 rules_version = '2';

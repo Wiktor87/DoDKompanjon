@@ -396,56 +396,137 @@ function removeInventoryItem(i) {
 function saveCharacter() {
     if (!currentCharacter) return;
     var updates = {
-        name: (document.querySelector('[data-field="name"]') || {}).value || '',
-        currentKP: parseInt((document.querySelector('[data-field="currentKP"]') || {}).value) || 0,
-        currentVP: parseInt((document.querySelector('[data-field="currentVP"]') || {}).value) || 0,
-        movement: parseInt((document.querySelector('[data-field="movement"]') || {}).value) || 10,
-        experiencePoints: parseInt((document.querySelector('[data-field="experiencePoints"]') || {}).value) || 0,
-        heroPoints: parseInt((document.querySelector('[data-field="heroPoints"]') || {}).value) || 0,
-        armor: (document.querySelector('[data-field="armor"]') || {}).value || '',
-        armorProtection: parseInt((document.querySelector('[data-field="armorProtection"]') || {}).value) || 0,
-        armorDisadvantages: (document.querySelector('[data-field="armorDisadvantages"]') || {}).value || '',
-        helmet: (document.querySelector('[data-field="helmet"]') || {}).value || '',
-        helmetProtection: parseInt((document.querySelector('[data-field="helmetProtection"]') || {}).value) || 0,
-        playerName: (document.querySelector('[data-field="playerName"]') || {}).value || '',
-        characterAge: (document.querySelector('[data-field="characterAge"]') || {}).value || '',
-        gender: (document.querySelector('[data-field="gender"]') || {}).value || '',
-        height: (document.querySelector('[data-field="height"]') || {}).value || '',
-        weight: (document.querySelector('[data-field="weight"]') || {}).value || '',
-        appearance: (document.querySelector('[data-field="appearance"]') || {}).value || '',
-        disadvantages: (document.querySelector('[data-field="disadvantages"]') || {}).value || '',
-        background: (document.querySelector('[data-field="background"]') || {}).value || '',
-        notes: (document.querySelector('[data-field="notes"]') || {}).value || ''
+        name: '',
+        currentKP: 0,
+        currentVP: 0,
+        movement: 10,
+        experiencePoints: 0,
+        heroPoints: 0,
+        armor: '',
+        armorProtection: 0,
+        armorDisadvantages: '',
+        helmet: '',
+        helmetProtection: 0,
+        playerName: '',
+        characterAge: '',
+        gender: '',
+        height: '',
+        weight: '',
+        appearance: '',
+        disadvantages: '',
+        background: '',
+        notes: ''
     };
+    
+    var nameEl = document.querySelector('[data-field="name"]');
+    if (nameEl) updates.name = nameEl.value || '';
+    
+    var currentKPEl = document.querySelector('[data-field="currentKP"]');
+    if (currentKPEl) updates.currentKP = parseInt(currentKPEl.value) || 0;
+    
+    var currentVPEl = document.querySelector('[data-field="currentVP"]');
+    if (currentVPEl) updates.currentVP = parseInt(currentVPEl.value) || 0;
+    
+    var movementEl = document.querySelector('[data-field="movement"]');
+    if (movementEl) updates.movement = parseInt(movementEl.value) || 10;
+    
+    var experiencePointsEl = document.querySelector('[data-field="experiencePoints"]');
+    if (experiencePointsEl) updates.experiencePoints = parseInt(experiencePointsEl.value) || 0;
+    
+    var heroPointsEl = document.querySelector('[data-field="heroPoints"]');
+    if (heroPointsEl) updates.heroPoints = parseInt(heroPointsEl.value) || 0;
+    
+    var armorEl = document.querySelector('[data-field="armor"]');
+    if (armorEl) updates.armor = armorEl.value || '';
+    
+    var armorProtectionEl = document.querySelector('[data-field="armorProtection"]');
+    if (armorProtectionEl) updates.armorProtection = parseInt(armorProtectionEl.value) || 0;
+    
+    var armorDisadvantagesEl = document.querySelector('[data-field="armorDisadvantages"]');
+    if (armorDisadvantagesEl) updates.armorDisadvantages = armorDisadvantagesEl.value || '';
+    
+    var helmetEl = document.querySelector('[data-field="helmet"]');
+    if (helmetEl) updates.helmet = helmetEl.value || '';
+    
+    var helmetProtectionEl = document.querySelector('[data-field="helmetProtection"]');
+    if (helmetProtectionEl) updates.helmetProtection = parseInt(helmetProtectionEl.value) || 0;
+    
+    var playerNameEl = document.querySelector('[data-field="playerName"]');
+    if (playerNameEl) updates.playerName = playerNameEl.value || '';
+    
+    var characterAgeEl = document.querySelector('[data-field="characterAge"]');
+    if (characterAgeEl) updates.characterAge = characterAgeEl.value || '';
+    
+    var genderEl = document.querySelector('[data-field="gender"]');
+    if (genderEl) updates.gender = genderEl.value || '';
+    
+    var heightEl = document.querySelector('[data-field="height"]');
+    if (heightEl) updates.height = heightEl.value || '';
+    
+    var weightEl = document.querySelector('[data-field="weight"]');
+    if (weightEl) updates.weight = weightEl.value || '';
+    
+    var appearanceEl = document.querySelector('[data-field="appearance"]');
+    if (appearanceEl) updates.appearance = appearanceEl.value || '';
+    
+    var disadvantagesEl = document.querySelector('[data-field="disadvantages"]');
+    if (disadvantagesEl) updates.disadvantages = disadvantagesEl.value || '';
+    
+    var backgroundEl = document.querySelector('[data-field="background"]');
+    if (backgroundEl) updates.background = backgroundEl.value || '';
+    
+    var notesEl = document.querySelector('[data-field="notes"]');
+    if (notesEl) updates.notes = notesEl.value || '';
+    
     updates.attributes = {};
     document.querySelectorAll('[data-attr]').forEach(function(el) {
-        updates.attributes[el.dataset.attr] = parseInt(el.value) || 10;
+        if (el && el.dataset && el.dataset.attr) {
+            updates.attributes[el.dataset.attr] = parseInt(el.value) || 10;
+        }
     });
     updates.skills = {};
     document.querySelectorAll('[data-skill]').forEach(function(el) {
-        var v = parseInt(el.value) || 0;
-        if (v > 0) updates.skills[el.dataset.skill] = v;
+        if (el && el.dataset && el.dataset.skill) {
+            var v = parseInt(el.value) || 0;
+            if (v > 0) updates.skills[el.dataset.skill] = v;
+        }
     });
     updates.weaponSkills = {};
     document.querySelectorAll('[data-weapon-skill]').forEach(function(el) {
-        var v = parseInt(el.value) || 0;
-        if (v > 0) updates.weaponSkills[el.dataset.weaponSkill] = v;
+        if (el && el.dataset && el.dataset.weaponSkill) {
+            var v = parseInt(el.value) || 0;
+            if (v > 0) updates.weaponSkills[el.dataset.weaponSkill] = v;
+        }
     });
     updates.inventory = [];
     document.querySelectorAll('.inventory-item-full').forEach(function(el) {
+        var nameInput = el.querySelector('[data-inv-field="name"]');
+        var typeInput = el.querySelector('[data-inv-field="type"]');
+        var weightInput = el.querySelector('[data-inv-field="weight"]');
+        var notesInput = el.querySelector('[data-inv-field="notes"]');
+        
         var item = {
-            name: (el.querySelector('[data-inv-field="name"]') || {}).value || '',
-            type: (el.querySelector('[data-inv-field="type"]') || {}).value || '',
-            weight: (el.querySelector('[data-inv-field="weight"]') || {}).value || '',
-            notes: (el.querySelector('[data-inv-field="notes"]') || {}).value || ''
+            name: nameInput ? nameInput.value || '' : '',
+            type: typeInput ? typeInput.value || '' : '',
+            weight: weightInput ? weightInput.value || '' : '',
+            notes: notesInput ? notesInput.value || '' : ''
         };
         if (item.name.trim()) updates.inventory.push(item);
     });
     updates.currency = {
-        guld: parseInt((document.querySelector('[data-currency="guld"]') || {}).value) || 0,
-        silver: parseInt((document.querySelector('[data-currency="silver"]') || {}).value) || 0,
-        brons: parseInt((document.querySelector('[data-currency="brons"]') || {}).value) || 0
+        guld: 0,
+        silver: 0,
+        brons: 0
     };
+    var guldEl = document.querySelector('[data-currency="guld"]');
+    if (guldEl) updates.currency.guld = parseInt(guldEl.value) || 0;
+    
+    var silverEl = document.querySelector('[data-currency="silver"]');
+    if (silverEl) updates.currency.silver = parseInt(silverEl.value) || 0;
+    
+    var bronsEl = document.querySelector('[data-currency="brons"]');
+    if (bronsEl) updates.currency.brons = parseInt(bronsEl.value) || 0;
+    
     CharacterService.updateCharacter(currentCharacter.id, updates).then(function() {
         showToast('Sparad!', 'success');
         loadDashboard();
@@ -1221,15 +1302,9 @@ function savePartyNotes(partyId) {
 // Init
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready');
-    document.querySelectorAll('.nav-tab').forEach(function(tab) {
-        tab.onclick = function(e) {
-            e.preventDefault();
-            var section = this.getAttribute('data-section');
-            if (section) {
-                showSection(section);
-            }
-        };
-    });
+    // Note: Navigation tab handlers are set up in auth.js via setupNavigationHandlers()
+    // to ensure proper auth-aware behavior
+    
     document.querySelectorAll('.modal').forEach(function(modal) {
         modal.onclick = function(e) {
             if (e.target === this) this.classList.remove('active');

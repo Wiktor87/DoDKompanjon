@@ -14,15 +14,15 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.ownerId;
     }
     
-    // Groups/Parties: users can read groups they're members of or search by invite code
+    // Groups/Parties: users can read groups they're members of or own
     match /parties/{partyId} {
-      // Allow reading if user is owner, member, or searching by invite code
+      // Allow reading if user is owner or member
       allow read: if request.auth != null && 
         (resource.data.ownerId == request.auth.uid || 
-         request.auth.uid in resource.data.memberIds ||
-         resource.data.isPublic == true);
+         request.auth.uid in resource.data.memberIds);
       
-      // Allow querying/listing for authenticated users (they can only see their own parties in the app logic)
+      // Allow listing all parties for authenticated users (for search functionality)
+      // Note: Individual read permissions still apply
       allow list: if request.auth != null;
       
       // Allow creating for any authenticated user

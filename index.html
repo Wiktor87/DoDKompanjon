@@ -15,13 +15,28 @@
     <!-- LANDING PAGE -->
     <div id="landingPage">
         <div class="landing-header">
-            <nav class="landing-nav">
-                <a href="#" class="nav-brand"><img src="DoDC_Logo_2.png" alt="D&D Kompanjon" class="brand-logo"></a>
-                <div class="nav-actions">
-                    <button id="loginBtn" class="btn btn-ghost">Logga in</button>
-                    <button id="signupBtn" class="btn btn-primary">Skapa konto</button>
+            <header class="unified-header">
+                <div class="header-top">
+                    <div class="header-content">
+                        <a href="#" class="header-brand">
+                            <img src="DoDC_Logo_2.png" alt="D&D Kompanjon" class="brand-logo">
+                        </a>
+                        <div class="nav-actions">
+                            <button id="loginBtn" class="btn btn-ghost">Logga in</button>
+                            <button id="signupBtn" class="btn btn-primary">Skapa konto</button>
+                        </div>
+                    </div>
                 </div>
-            </nav>
+                <div class="header-sub">
+                    <nav class="app-nav">
+                        <button type="button" class="nav-tab" data-section="home" data-require-auth="true">Översikt</button>
+                        <button type="button" class="nav-tab" data-section="characters" data-require-auth="true">Karaktärer</button>
+                        <button type="button" class="nav-tab" data-section="parties" data-require-auth="true">Grupp</button>
+                        <button type="button" class="nav-tab" data-section="campaigns" data-require-auth="true">Kampanjer</button>
+                        <button type="button" class="nav-tab" data-section="adventures" data-require-auth="true">Äventyr</button>
+                    </nav>
+                </div>
+            </header>
             <section class="hero">
                 <video autoplay muted loop playsinline class="bg-video">
                     <source src="Website_Animation_For_Drakar_och_Demoner.mp4" type="video/mp4">
@@ -70,7 +85,7 @@
 
     <!-- MAIN APP -->
     <div id="app" class="hidden">
-        <header class="app-header">
+        <header class="unified-header">
             <div class="header-top">
                 <div class="header-content">
                     <a href="javascript:void(0)" class="header-brand" onclick="goToLanding()">
