@@ -3267,6 +3267,142 @@ body.app-active::before {
     border-color: var(--accent-gold);
 }
 
+/* Monsters Panel */
+.monsters-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.monsters-header {
+    margin-bottom: 1rem;
+}
+
+.monsters-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    color: var(--text-primary);
+}
+
+.monsters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.monster-card {
+    background: linear-gradient(145deg, var(--bg-elevated) 0%, var(--bg-dark) 100%);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    transition: all 0.2s;
+}
+
+.monster-card:hover {
+    border-color: var(--brand-red);
+    transform: translateY(-2px);
+}
+
+.monster-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.monster-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.btn-remove-monster {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.btn-remove-monster:hover {
+    background: var(--bg-hover);
+    color: var(--brand-red);
+}
+
+.monster-hp {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: var(--bg-dark);
+    border-radius: var(--radius-sm);
+}
+
+.monster-hp label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.monster-hp-value {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--red-hp);
+}
+
+.monster-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.monster-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--bg-dark);
+    border-radius: var(--radius-sm);
+}
+
+.monster-stat .stat-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.monster-stat .stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.monster-stat .stat-label {
+    font-size: 0.625rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.monster-notes {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    background: var(--bg-dark);
+    border-radius: var(--radius-sm);
+    font-style: italic;
+}
+
 /* Focus Mode */
 .focus-container {
     display: grid;
@@ -3333,9 +3469,387 @@ body.app-active::before {
     margin-bottom: 0.5rem;
 }
 
-.expanded-header p {
+.expanded-header .char-identity {
     color: var(--text-secondary);
     font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.expanded-header .char-details {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+.expanded-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+}
+
+.expanded-section h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.expanded-section h4 {
+    font-size: 0.875rem;
+    color: var(--accent-gold);
+    margin-bottom: 0.75rem;
+}
+
+/* Attributes Grid with Conditions */
+.attributes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.attribute-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.attr-name {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.attr-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+}
+
+.attr-condition-btn {
+    width: 100%;
+    padding: 0.4rem;
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.attr-condition-btn:hover {
+    border-color: var(--accent-gold);
+}
+
+.attr-condition-btn.active {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: var(--bg-dark);
+    font-weight: 600;
+}
+
+/* KP/VP Container */
+.kp-vp-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.expanded-tracker {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.tracker-header {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+.pips.large {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.pips.large .pip {
+    font-size: 1.25rem;
+}
+
+.pip.vp {
+    color: var(--green-vp);
+}
+
+.tracker-value-large {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.tracker-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* Death Saves */
+.death-saves {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+}
+
+.death-saves-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.death-saves-pips {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.death-pip {
+    font-size: 1.25rem;
+    color: var(--border-default);
+}
+
+.death-pip.success {
+    color: var(--accent-green);
+}
+
+.death-pip.fail {
+    color: var(--brand-red);
+}
+
+.death-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0 0.5rem;
+}
+
+/* Combat Stats */
+.combat-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.combat-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+}
+
+.combat-stat label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.combat-stat span {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+/* Armor Display */
+.armor-display {
+    padding: 0.75rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+}
+
+.armor-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.armor-item label {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.armor-item span {
+    color: var(--text-primary);
+}
+
+.armor-total {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-default);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+    text-align: center;
+}
+
+/* Weapons Table in Expanded View */
+.weapons-table-expanded {
+    overflow-x: auto;
+}
+
+.weapons-table-expanded table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.weapons-table-expanded th {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.weapons-table-expanded td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-default);
+}
+
+.weapons-table-expanded tr:last-child td {
+    border-bottom: none;
+}
+
+/* Skills and Weapon Skills Grid */
+.skills-weapons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.skills-column {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+}
+
+.skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.skill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+}
+
+.skill-item.core {
+    border-color: var(--accent-gold);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.skill-name {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.skill-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+}
+
+/* Abilities */
+.abilities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ability-card {
+    padding: 0.75rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-gold);
+    border-radius: var(--radius-md);
+}
+
+.ability-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+    margin-bottom: 0.25rem;
+}
+
+/* Inventory and Money */
+.inventory-list {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.money-display {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    justify-content: center;
+}
+
+.money-item {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.empty-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Notes Display */
+.notes-display {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 0.75rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    white-space: pre-wrap;
 }
 
 .expanded-stats {
@@ -3420,6 +3934,14 @@ body.app-active::before {
     .sidebar-card {
         min-width: 200px;
     }
+    
+    .skills-weapons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .kp-vp-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -3433,5 +3955,17 @@ body.app-active::before {
     
     .dm-tool-btn {
         width: 100%;
+    }
+    
+    .monsters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .attributes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .combat-stats {
+        grid-template-columns: 1fr;
     }
 }
