@@ -7,6 +7,18 @@ var GameModeUI = {
     party: null,
     unsubscribe: null,
     
+    // Helper: Get top 3 weapon skills for a character
+    getTop3WeaponSkills: function(character) {
+        var weaponSkills = character.weaponSkills || {};
+        return Object.keys(weaponSkills)
+            .map(function(name) {
+                return { name: name, value: weaponSkills[name].value || 0 };
+            })
+            .filter(function(skill) { return skill.value > 0; })
+            .sort(function(a, b) { return b.value - a.value; })
+            .slice(0, 3);
+    },
+    
     // Initialize game mode
     init: function(partyId) {
         var self = this;
@@ -225,14 +237,7 @@ var GameModeUI = {
             '</div>';
         
         // Top 3 Weapon Skills
-        var weaponSkills = character.weaponSkills || {};
-        var topWeapons = Object.keys(weaponSkills)
-            .map(function(name) {
-                return { name: name, value: weaponSkills[name].value || 0 };
-            })
-            .filter(function(skill) { return skill.value > 0; })
-            .sort(function(a, b) { return b.value - a.value; })
-            .slice(0, 3);
+        var topWeapons = this.getTop3WeaponSkills(character);
         
         if (topWeapons.length > 0) {
             html += '<div class="compact-weapon-skills">' +
@@ -584,14 +589,7 @@ var GameModeUI = {
         var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
         
         // Top 3 Weapon Skills
-        var weaponSkills = character.weaponSkills || {};
-        var topWeapons = Object.keys(weaponSkills)
-            .map(function(name) {
-                return { name: name, value: weaponSkills[name].value || 0 };
-            })
-            .filter(function(skill) { return skill.value > 0; })
-            .sort(function(a, b) { return b.value - a.value; })
-            .slice(0, 3);
+        var topWeapons = this.getTop3WeaponSkills(character);
         
         var html = '<div class="sidebar-card" onclick="GameModeUI.focusCharacter(\'' + character.id + '\')">' +
             '<div class="sidebar-card-name">' + character.name + '</div>' +
