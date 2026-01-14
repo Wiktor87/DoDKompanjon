@@ -124,26 +124,47 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
     
-    // Setup navigation tab handlers for both landing and app
-    // This needs to run after DOM is ready
-    setTimeout(function() {
-        setupNavigationHandlers();
-    }, 100);
+    // Setup navigation handlers after DOM is ready
+    // Use requestAnimationFrame to ensure all elements are rendered
+    if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(function() {
+            setupNavigationHandlers();
+        });
+    } else {
+        // Fallback for older browsers
+        setTimeout(function() {
+            setupNavigationHandlers();
+        }, 0);
+    }
 });
 
 function setupNavigationHandlers() {
-    document.querySelectorAll('.nav-tab').forEach(function(tab) {
+    var navTabs = document.querySelectorAll('.nav-tab');
+    if (navTabs.length === 0) {
+        console.warn('No navigation tabs found - handlers not set up');
+        return;
+    }
+    
+    navTabs.forEach(function(tab) {
+        // Remove any existing onclick to avoid duplicates
+        tab.onclick = null;
+        
         tab.onclick = function(e) {
             e.preventDefault();
             var section = this.getAttribute('data-section');
             var requireAuth = this.getAttribute('data-require-auth') === 'true';
             
-            if (!section) return;
+            if (!section) {
+                console.warn('Navigation tab missing data-section attribute');
+                return;
+            }
             
             // If auth is required and user is not logged in, show auth modal
             if (requireAuth && !currentUser) {
                 if (typeof showAuthModal === 'function') {
                     showAuthModal('login');
+                } else {
+                    console.error('showAuthModal function not available');
                 }
                 return;
             }
@@ -153,15 +174,21 @@ function setupNavigationHandlers() {
             if (landing && !landing.classList.contains('hidden')) {
                 if (typeof showApp === 'function') {
                     showApp();
+                } else {
+                    console.error('showApp function not available');
                 }
             }
             
             // Navigate to section
             if (typeof showSection === 'function') {
                 showSection(section);
+            } else {
+                console.error('showSection function not available');
             }
         };
     });
+    
+    console.log('Navigation handlers set up for ' + navTabs.length + ' tabs');
 }
 
 // Login form
