@@ -625,12 +625,12 @@ var GameModeUI = {
             .then(function() {
                 // Log the change
                 if (delta < 0) {
-                    self.addLogEntry(char.name + ' tog ' + Math.abs(delta) + ' skada (' + statLabel + ': ' + oldValue + ' → ' + newValue + ')', 'damage');
+                    self.addLogEntry(char.name + ' tog ' + Math.abs(delta) + ' skada (' + statLabel + ': ' + oldValue + ' → ' + newValue + ')', 'hero');
                     if (newValue === 0) {
                         self.addLogEntry('💀 ' + char.name + ' föll medvetslös!', 'death');
                     }
                 } else if (delta > 0 && field === 'currentKP') {
-                    self.addLogEntry(char.name + ' helade ' + delta + ' ' + statLabel + ' (' + oldValue + ' → ' + newValue + ')', 'heal');
+                    self.addLogEntry(char.name + ' helade ' + delta + ' ' + statLabel + ' (' + oldValue + ' → ' + newValue + ')', 'hero');
                 }
             })
             .catch(function(error) {
@@ -666,12 +666,12 @@ var GameModeUI = {
             .then(function() {
                 // Log the change
                 if (delta < 0) {
-                    self.addLogEntry(char.name + ' tog ' + Math.abs(delta) + ' skada (' + statLabel + ': ' + oldValue + ' → ' + newValue + ')', 'damage');
+                    self.addLogEntry(char.name + ' tog ' + Math.abs(delta) + ' skada (' + statLabel + ': ' + oldValue + ' → ' + newValue + ')', 'hero');
                     if (newValue === 0) {
                         self.addLogEntry('💀 ' + char.name + ' föll medvetslös!', 'death');
                     }
                 } else if (delta > 0 && field === 'currentKP') {
-                    self.addLogEntry(char.name + ' helade ' + delta + ' ' + statLabel + ' (' + oldValue + ' → ' + newValue + ')', 'heal');
+                    self.addLogEntry(char.name + ' helade ' + delta + ' ' + statLabel + ' (' + oldValue + ' → ' + newValue + ')', 'hero');
                 }
             })
             .catch(function(error) {
@@ -700,12 +700,12 @@ var GameModeUI = {
                     
                     // Log the change
                     if (delta < 0) {
-                        self.addLogEntry(monster.name + ' tog ' + Math.abs(delta) + ' skada (KP: ' + oldHP + ' → ' + newHP + ')', 'damage');
+                        self.addLogEntry(monster.name + ' tog ' + Math.abs(delta) + ' skada (KP: ' + oldHP + ' → ' + newHP + ')', 'monster');
                         if (newHP === 0) {
                             self.addLogEntry('💀 ' + monster.name + ' föll i strid!', 'death');
                         }
                     } else if (delta > 0) {
-                        self.addLogEntry(monster.name + ' helade ' + delta + ' KP (' + oldHP + ' → ' + newHP + ')', 'heal');
+                        self.addLogEntry(monster.name + ' helade ' + delta + ' KP (' + oldHP + ' → ' + newHP + ')', 'monster');
                     }
                     
                     self.render();
@@ -736,12 +736,12 @@ var GameModeUI = {
                     
                     // Log the change
                     if (delta < 0) {
-                        self.addLogEntry(monster.name + ' tog ' + Math.abs(delta) + ' skada (KP: ' + oldHP + ' → ' + newHP + ')', 'damage');
+                        self.addLogEntry(monster.name + ' tog ' + Math.abs(delta) + ' skada (KP: ' + oldHP + ' → ' + newHP + ')', 'monster');
                         if (newHP === 0) {
                             self.addLogEntry('💀 ' + monster.name + ' föll i strid!', 'death');
                         }
                     } else if (delta > 0) {
-                        self.addLogEntry(monster.name + ' helade ' + delta + ' KP (' + oldHP + ' → ' + newHP + ')', 'heal');
+                        self.addLogEntry(monster.name + ' helade ' + delta + ' KP (' + oldHP + ' → ' + newHP + ')', 'monster');
                     }
                     
                     self.render();

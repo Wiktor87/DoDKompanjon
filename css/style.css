@@ -4415,8 +4415,8 @@ body.app-active::before {
 /* Main Grid Layout */
 .gm-main-grid {
     display: grid;
-    grid-template-columns: 1.5fr 0.8fr 180px;
-    gap: 1rem;
+    grid-template-columns: 1.5fr 0.8fr 200px;
+    gap: 12px;
     padding: 1rem 1.5rem;
     overflow: hidden;
     flex: 1;
@@ -5041,14 +5041,15 @@ body.app-active::before {
     line-height: 1.4;
 }
 
-.gm-log-entry.damage {
+.gm-log-entry.damage,
+.gm-log-entry.monster {
     border-left-color: var(--gm-red);
-    color: var(--gm-red);
+    color: #f87171;
 }
 
 .gm-log-entry.heal {
     border-left-color: var(--gm-green);
-    color: var(--gm-green);
+    color: #86efac;
 }
 
 .gm-log-entry.death {
@@ -5057,9 +5058,10 @@ body.app-active::before {
     font-weight: 700;
 }
 
-.gm-log-entry.turn {
+.gm-log-entry.turn,
+.gm-log-entry.hero {
     border-left-color: var(--gm-gold);
-    color: var(--gm-gold);
+    color: #fbbf24;
 }
 
 .gm-log-entry.round {
