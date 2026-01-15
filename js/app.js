@@ -13,8 +13,8 @@ function getKinIcon(kin) {
         return getIconSVG('kin', kin) || getIconSVG('kin', 'default');
     }
     var fallback = {
-        'Människa': '👤', 'Alv': '🧝', 'Dvärg': '🧔',
-        'Halvling': '🧒', 'Anka': '🦆', 'Vargfolk': '🐺', 'default': '⚔️'
+        'Människa': '<img src="icons/Manniska.gif" class="race-icon">', 'Alv': '<img src="icons/Alv.gif" class="race-icon">', 'Dvärg': '<img src="icons/Dvarg.gif" class="race-icon">',
+        'Halvling': '<img src="icons/NewCharacter.gif" class="race-icon">', 'Anka': '<img src="icons/Anka.gif" class="race-icon">', 'Vargfolk': '<img src="icons/Varg.gif" class="race-icon">', 'default': '<img src="icons/NewCharacter.gif" class="race-icon">'
     };
     return fallback[kin] || fallback.default;
 }
