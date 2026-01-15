@@ -99,11 +99,19 @@ var GameModeService = {
     },
     
     // Initiative management - roll for all characters and monsters based on SMI
+    // SKIP DEAD ENTITIES (hp <= 0)
     rollInitiative: function(characters, monsters) {
         var initiatives = [];
         
-        // Roll for characters
+        // Roll for characters (skip dead)
         characters.forEach(function(char) {
+            var attrs = char.attributes || {};
+            var maxKp = attrs.FYS || 0;
+            var currentKP = char.currentKP !== undefined ? char.currentKP : maxKp;
+            
+            // Skip dead characters
+            if (currentKP <= 0) return;
+            
             var smi = (char.attributes && char.attributes.SMI) || 10;
             var roll = Math.floor(Math.random() * 10) + 1; // 1d10 (range 1-10)
             initiatives.push({
@@ -116,9 +124,12 @@ var GameModeService = {
             });
         });
         
-        // Roll for monsters
+        // Roll for monsters (skip dead)
         if (monsters && monsters.length > 0) {
             monsters.forEach(function(monster) {
+                // Skip dead monsters
+                if (monster.hp <= 0) return;
+                
                 // Use undvika as SMI equivalent for monsters, or default to 10
                 var smi = monster.undvika || monster.smi || 10;
                 var roll = Math.floor(Math.random() * 10) + 1; // 1d10
@@ -305,6 +316,43 @@ var GameModeService = {
             return db.collection('gameSessions').doc(sessionId).update({
                 monsters: updated
             });
+        });
+    },
+    
+    // Combat Log Management
+    addLogEntry: function(sessionId, type, data) {
+        return db.collection('gameSessions').doc(sessionId).get().then(function(doc) {
+            if (!doc.exists) throw new Error('Session not found');
+            
+            var session = doc.data();
+            var combatLog = session.combatLog || [];
+            
+            var entry = {
+                id: Date.now() + '_' + Math.floor(Math.random() * 1000),
+                type: type, // 'damage', 'death', 'heal', 'turn', 'round', 'system'
+                timestamp: new Date().toISOString(),
+                data: data
+            };
+            
+            // Add to beginning (newest first)
+            combatLog.unshift(entry);
+            
+            // Keep only last 50 entries
+            if (combatLog.length > 50) {
+                combatLog = combatLog.slice(0, 50);
+            }
+            
+            return db.collection('gameSessions').doc(sessionId).update({
+                combatLog: combatLog
+            });
+        });
+    },
+    
+    getCombatLog: function(sessionId) {
+        return db.collection('gameSessions').doc(sessionId).get().then(function(doc) {
+            if (!doc.exists) throw new Error('Session not found');
+            var session = doc.data();
+            return session.combatLog || [];
         });
     }
 };
