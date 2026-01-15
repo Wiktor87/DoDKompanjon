@@ -8,6 +8,29 @@ var GameModeUI = {
     unsubscribe: null,
     combatLog: [],
     
+    // Helper: Safely get combat log from session data
+    safeCombatLog: function(sessionData) {
+        return Array.isArray(sessionData.combatLog) ? sessionData.combatLog : [];
+    },
+    
+    // Helper: Check if entity is dead
+    isEntityDead: function(entityType, entityId) {
+        if (entityType === 'character') {
+            var char = this.characters.find(function(c) { return c.id === entityId; });
+            if (char) {
+                var maxKp = (char.attributes && char.attributes.FYS) || 0;
+                var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
+                return kp <= 0;
+            }
+        } else if (entityType === 'monster') {
+            var monster = this.monsters.find(function(m) { return m.id === entityId; });
+            if (monster) {
+                return monster.hp <= 0;
+            }
+        }
+        return false;
+    },
+    
     // Helper: Get top 2-3 weapon skills for a character
     getTopWeaponSkills: function(character) {
         var weaponSkills = character.weaponSkills || {};
@@ -37,7 +60,8 @@ var GameModeUI = {
             GameModeService.getActiveSession(partyId).then(function(session) {
                 if (session) {
                     self.currentSession = session;
-                    self.combatLog = session.combatLog || [];
+                    // Validate combatLog is an array
+                    self.combatLog = Array.isArray(session.combatLog) ? session.combatLog : [];
                     self.startGameMode();
                 } else {
                     // Create new session
@@ -157,20 +181,7 @@ var GameModeUI = {
             
             initiative.forEach(function(item, index) {
                 // Skip dead entities (hp <= 0)
-                var isDead = false;
-                if (item.type === 'character') {
-                    var char = self.characters.find(function(c) { return c.id === item.ownerId; });
-                    if (char) {
-                        var maxKp = (char.attributes && char.attributes.FYS) || 0;
-                        var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
-                        isDead = kp <= 0;
-                    }
-                } else if (item.type === 'monster') {
-                    var monster = self.monsters.find(function(m) { return m.id === item.ownerId; });
-                    if (monster) {
-                        isDead = monster.hp <= 0;
-                    }
-                }
+                var isDead = self.isEntityDead(item.type, item.ownerId);
                 
                 if (isDead) return; // Skip dead entities
                 
@@ -504,7 +515,7 @@ var GameModeUI = {
         html += '<div class="gm-sidebar-panel gm-notes">' +
             '<div class="gm-sidebar-title">📝 Anteckningar</div>' +
             '<textarea id="gmNotesTextarea" class="gm-notes-textarea" placeholder="Anteckningar för denna session...">' + notes + '</textarea>' +
-            '<button class="btn btn-gold btn-sm" style="margin-top: 0.5rem; width: 100%;" onclick="GameModeUI.saveNotes()">💾 Spara</button>' +
+            '<button class="btn btn-gold btn-sm" style="margin-top: 0.5rem; width: 100%;" onclick="GameModeUI.saveNotes(event)">💾 Spara</button>' +
             '</div>';
         
         html += '</div>'; // end gm-sidebar
@@ -642,7 +653,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     
                     // Log the change
                     if (delta < 0) {
@@ -678,7 +689,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     
                     // Log the change
                     if (delta < 0) {
@@ -728,7 +739,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     self.addLogEntry('🎲 Initiativ slaget! Strid börjar.', 'system');
                     self.addLogEntry('--- Runda 1 ---', 'round');
                     if (initiative.length > 0) {
@@ -758,7 +769,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     
                     var newIndex = self.currentSession.currentTurnIndex || 0;
                     var newRound = self.currentSession.round || 1;
@@ -912,7 +923,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     self.addLogEntry('Monster tillagt: ' + name, 'system');
                     self.render();
                     self.closeModal('addMonsterModalOverlay');
@@ -968,7 +979,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     self.addLogEntry('Monster tillagt: ' + name, 'system');
                     self.render();
                     self.closeModal('addMonsterModalOverlay');
@@ -995,7 +1006,7 @@ var GameModeUI = {
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.combatLog = self.safeCombatLog(doc.data());
                     self.addLogEntry('Monster borttaget: ' + monster.name, 'system');
                     self.render();
                 }
@@ -1181,19 +1192,21 @@ var GameModeUI = {
     },
     
     // Save notes
-    saveNotes: function() {
+    saveNotes: function(event) {
         var textarea = document.getElementById('gmNotesTextarea');
         if (!textarea) return;
         
         GameModeService.updateNotes(this.currentSession.id, textarea.value)
             .then(function() {
                 // Show brief success indicator
-                var btn = event.target;
-                var originalText = btn.textContent;
-                btn.textContent = '✓ Sparat!';
-                setTimeout(function() {
-                    btn.textContent = originalText;
-                }, 1500);
+                var btn = event ? event.target : null;
+                if (btn) {
+                    var originalText = btn.textContent;
+                    btn.textContent = '✓ Sparat!';
+                    setTimeout(function() {
+                        btn.textContent = originalText;
+                    }, 1500);
+                }
             })
             .catch(function(error) {
                 console.error('Error saving notes:', error);
