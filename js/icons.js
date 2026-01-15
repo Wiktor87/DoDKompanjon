@@ -39,4 +39,109 @@ function getIconSVG(category, name) {
     return (ICONS[category] && ICONS[category][name]) || (ICONS[category] && ICONS[category]['default']) || '';
 }
 
+// Migration function to update existing characters with GIF icons
+function migrateCharacterIcons() {
+    console.log('🔄 Starting character icon migration...');
+    
+    // Check if Firebase is available
+    if (typeof db === 'undefined' || typeof firebase === 'undefined') {
+        console.log('⚠️ Firebase not available, skipping migration');
+        return Promise.resolve();
+    }
+    
+    // Check if user is logged in
+    var user = firebase.auth().currentUser;
+    if (!user) {
+        console.log('⚠️ No user logged in, skipping migration');
+        return Promise.resolve();
+    }
+    
+    // Get all user's characters
+    return db.collection('characters')
+        .where('userId', '==', user.uid)
+        .get()
+        .then(function(snapshot) {
+            if (snapshot.empty) {
+                console.log('✅ No characters to migrate');
+                return Promise.resolve();
+            }
+            
+            var batch = db.batch();
+            var updateCount = 0;
+            
+            snapshot.forEach(function(doc) {
+                var char = doc.data();
+                var needsUpdate = false;
+                var updates = {};
+                
+                // Check if character has a kin but no icon set or has old icon
+                if (char.kin && (!char.icon || !char.icon.includes('.gif'))) {
+                    // Map kin to GIF icon path
+                    var iconPath = null;
+                    switch(char.kin) {
+                        case 'Människa':
+                            iconPath = '/icons/manniska.gif';
+                            break;
+                        case 'Alv':
+                            iconPath = '/icons/alv.gif';
+                            break;
+                        case 'Dvärg':
+                            iconPath = '/icons/dvarg.gif';
+                            break;
+                        case 'Halvling':
+                            iconPath = '/icons/halvling.gif'; // Will use SVG fallback if not exists
+                            break;
+                        case 'Anka':
+                            iconPath = '/icons/anka.gif';
+                            break;
+                        case 'Vargfolk':
+                            iconPath = '/icons/vargfolk.gif'; // Will use SVG fallback if not exists
+                            break;
+                    }
+                    
+                    if (iconPath) {
+                        updates.icon = iconPath;
+                        needsUpdate = true;
+                    }
+                }
+                
+                // If updates are needed, add to batch
+                if (needsUpdate) {
+                    batch.update(doc.ref, updates);
+                    updateCount++;
+                    console.log('📝 Queuing update for character: ' + (char.name || 'Unnamed') + ' (' + char.kin + ')');
+                }
+            });
+            
+            // Commit the batch if there are updates
+            if (updateCount > 0) {
+                console.log('💾 Updating ' + updateCount + ' character(s)...');
+                return batch.commit().then(function() {
+                    console.log('✅ Successfully migrated ' + updateCount + ' character icon(s)');
+                });
+            } else {
+                console.log('✅ All characters already have correct icons');
+                return Promise.resolve();
+            }
+        })
+        .catch(function(error) {
+            console.error('❌ Error during icon migration:', error);
+            // Don't throw - just log the error and continue
+            return Promise.resolve();
+        });
+}
+
+// Auto-run migration on auth state change (when user logs in)
+if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            // Small delay to ensure everything is loaded
+            setTimeout(function() {
+                migrateCharacterIcons();
+            }, 1000);
+        }
+    });
+}
+
 console.log('✅ Icons loaded');
+

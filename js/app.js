@@ -487,8 +487,8 @@ function renderFullCharacterSheet(char) {
     
     // Tab navigation
     html += '<div class="sheet-tabs-v2">';
-    html += '<button class="sheet-tab-v2 active" onclick="switchSheetTabV2(this, \'overview\')">Översikt</button>';
-    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'skills\')">Färdigheter</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'overview\')">Översikt</button>';
+    html += '<button class="sheet-tab-v2 active" onclick="switchSheetTabV2(this, \'skills\')">Färdigheter</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'combat\')">Strid</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'equipment\')">Utrustning</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'notes\')">Anteckningar</button>';
@@ -501,13 +501,13 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-main-v2">';
     
     // Tab content: Overview
-    html += '<div class="sheet-tab-content-v2 active" id="tab-overview-v2">';
+    html += '<div class="sheet-tab-content-v2" id="tab-overview-v2" style="display: none;">';
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Översikt</h3></div>';
     html += '<div class="sheet-panel-v2-content"><p style="color: var(--text-secondary);">Grundläggande karaktärsinformation visas här.</p></div></div>';
     html += '</div>';
     
     // Tab content: Skills
-    html += '<div class="sheet-tab-content-v2" id="tab-skills-v2" style="display: none;">';
+    html += '<div class="sheet-tab-content-v2 active" id="tab-skills-v2">';
     html += renderSkillsPanel(skills, SKILLS);
     html += '</div>';
     
