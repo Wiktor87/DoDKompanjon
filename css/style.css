@@ -4608,20 +4608,20 @@ body.app-active::before {
     padding: 4px 8px;
 }
 
-.gm-stat-btn:first-child {
-    background: #dc2626;
+.gm-btn-decrease {
+    background: #dc2626 !important;
 }
 
-.gm-stat-btn:first-child:hover {
-    background: #b91c1c;
+.gm-btn-decrease:hover {
+    background: #b91c1c !important;
 }
 
-.gm-stat-btn:last-child {
-    background: #22c55e;
+.gm-btn-increase {
+    background: #22c55e !important;
 }
 
-.gm-stat-btn:last-child:hover {
-    background: #16a34a;
+.gm-btn-increase:hover {
+    background: #16a34a !important;
 }
 
 /* Combat Stats Row */

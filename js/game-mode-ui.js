@@ -201,7 +201,7 @@ var GameModeUI = {
                 }
                 
                 var icon = item.type === 'monster' ? '💀' : '🧝';
-                var cardNumber = item.initiativeCard || (index + 1);
+                var cardNumber = item.initiativeCard || 0;
                 
                 html += '<div class="' + tokenClass + '" data-index="' + index + '">';
                 
@@ -210,8 +210,10 @@ var GameModeUI = {
                     html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
                 }
                 
-                // Initiative card number badge
-                html += '<div class="gm-init-card-number">' + cardNumber + '</div>';
+                // Initiative card number badge (only if card was drawn)
+                if (cardNumber > 0) {
+                    html += '<div class="gm-init-card-number">' + cardNumber + '</div>';
+                }
                 
                 html += '<div>' + icon + '</div>' +
                     '<div class="gm-token-name">' + item.name + '</div>' +
@@ -843,11 +845,16 @@ var GameModeUI = {
         var usedCards = [];
         var initiative = allEntities.map(function(entity) {
             var card;
-            // Try to get a unique card, but allow duplicates if needed
-            do {
+            // If we have more entities than cards (>10), allow duplicates
+            if (usedCards.length >= 10) {
                 card = Math.floor(Math.random() * 10) + 1;
-            } while (usedCards.includes(card) && usedCards.length < 10);
-            usedCards.push(card);
+            } else {
+                // Try to get a unique card
+                do {
+                    card = Math.floor(Math.random() * 10) + 1;
+                } while (usedCards.includes(card));
+                usedCards.push(card);
+            }
             
             return {
                 ownerId: entity.ownerId,
