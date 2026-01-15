@@ -3074,16 +3074,38 @@ body.app-active::before {
    ============================================ */
 
 /* Game Mode Container */
+/* ============================================
+   GAME MODE (SPELLÄGE) UI REDESIGN
+   Complete redesign for DM interface
+   ============================================ */
+
+/* Game Mode Color Variables */
+:root {
+    --gm-bg: linear-gradient(180deg, #0d0d0d 0%, #1a1d24 100%);
+    --gm-card-hero: linear-gradient(145deg, #1e2128 0%, #252a33 100%);
+    --gm-card-monster: linear-gradient(145deg, #2a1a1a 0%, #1e1515 100%);
+    --gm-gold: #d4af37;
+    --gm-gold-light: #f0d875;
+    --gm-red: #dc2626;
+    --gm-green: #22c55e;
+    --gm-text: #f5f5f5;
+    --gm-text-muted: #a0a8b8;
+    --gm-text-dim: #6b7280;
+    --gm-border: #2d3341;
+    --gm-border-monster: #3d2020;
+}
+
 .game-mode-container {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--bg-dark);
+    background: var(--gm-bg);
     z-index: 9999;
-    overflow-y: auto;
-    padding: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .game-mode-header {
@@ -4115,8 +4137,898 @@ body.app-active::before {
     color: var(--bg-dark);
 }
 
+/* ============================================
+   NEW GAME MODE LAYOUT - REDESIGNED
+   ============================================ */
+
+/* Header Bar - Compact top header */
+.gm-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: rgba(13, 13, 13, 0.95);
+    border-bottom: 2px solid var(--gm-border);
+    backdrop-filter: blur(10px);
+}
+
+.gm-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.gm-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--gm-gold);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.gm-round-display {
+    font-size: 0.875rem;
+    color: var(--gm-text-muted);
+    padding: 0.25rem 0.75rem;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.gm-header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Initiative Tracker - Horizontal tokens */
+.gm-initiative-bar {
+    background: rgba(26, 29, 36, 0.8);
+    border-bottom: 1px solid var(--gm-border);
+    padding: 0.75rem 1.5rem;
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.gm-initiative-tokens {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.gm-initiative-token {
+    position: relative;
+    min-width: 60px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(30, 33, 40, 0.8);
+    border: 2px solid var(--gm-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0.5rem;
+}
+
+.gm-initiative-token:hover {
+    transform: translateY(-2px);
+    border-color: var(--gm-gold);
+}
+
+.gm-initiative-token.current {
+    border-color: var(--gm-gold);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.gm-initiative-token.hero {
+    border-color: rgba(212, 175, 55, 0.5);
+}
+
+.gm-initiative-token.monster {
+    border-color: rgba(220, 38, 38, 0.5);
+}
+
+.gm-initiative-token.dead {
+    opacity: 0.5;
+    text-decoration: line-through;
+    border-color: var(--gm-text-dim);
+}
+
+.gm-token-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gm-gold);
+    margin-bottom: 0.25rem;
+}
+
+.gm-token-name {
+    font-size: 0.65rem;
+    color: var(--gm-text-muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Golden corner frame for active turn */
+.golden-frame {
+    position: relative;
+}
+
+.golden-frame::before,
+.golden-frame::after,
+.golden-frame .corner-tl,
+.golden-frame .corner-tr,
+.golden-frame .corner-bl,
+.golden-frame .corner-br {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+}
+
+/* Top-left corner */
+.golden-frame::before {
+    top: -2px;
+    left: -2px;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid var(--gm-gold);
+    border-left: 3px solid var(--gm-gold);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+/* Top-right corner */
+.golden-frame::after {
+    top: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid var(--gm-gold);
+    border-right: 3px solid var(--gm-gold);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+/* Bottom corners via pseudo classes on child elements */
+.golden-frame .gm-frame-bl {
+    position: absolute;
+    bottom: -2px;
+    left: -2px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 3px solid var(--gm-gold);
+    border-left: 3px solid var(--gm-gold);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+.golden-frame .gm-frame-br {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 3px solid var(--gm-gold);
+    border-right: 3px solid var(--gm-gold);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+/* Main Grid Layout */
+.gm-main-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 0.8fr 180px;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Heroes Column */
+.gm-heroes-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.gm-heroes-column::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gm-heroes-column::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.gm-heroes-column::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 3px;
+}
+
+.gm-heroes-column::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.5);
+}
+
+/* Hero Card */
+.gm-hero-card {
+    position: relative;
+    background: var(--gm-card-hero);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.2s;
+}
+
+.gm-hero-card:hover {
+    border-color: var(--gm-gold);
+    transform: translateX(4px);
+}
+
+.gm-hero-card.current-turn {
+    border-color: var(--gm-gold);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.gm-hero-card.dead {
+    opacity: 0.6;
+    position: relative;
+}
+
+.gm-hero-card.dead::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: var(--gm-red);
+    transform: translateY(-50%) rotate(-5deg);
+    pointer-events: none;
+}
+
+.gm-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.gm-card-title {
+    flex: 1;
+}
+
+.gm-card-name {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    color: var(--gm-gold);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.gm-card-meta {
+    font-size: 0.75rem;
+    color: var(--gm-text-muted);
+}
+
+.gm-death-badge {
+    background: var(--gm-red);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* KP/VP Compact Display */
+.gm-hp-vp-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.gm-stat-box {
+    background: rgba(13, 13, 13, 0.5);
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+
+.gm-stat-label {
+    font-size: 0.7rem;
+    color: var(--gm-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.gm-stat-pips {
+    display: flex;
+    gap: 0.2rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+}
+
+.gm-pip {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.gm-pip:hover {
+    transform: scale(1.2);
+}
+
+.gm-pip.filled-kp {
+    background: var(--gm-red);
+    border-color: var(--gm-red);
+    box-shadow: 0 0 4px rgba(220, 38, 38, 0.5);
+}
+
+.gm-pip.filled-vp {
+    background: var(--gm-green);
+    border-color: var(--gm-green);
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+.gm-stat-value {
+    font-size: 0.875rem;
+    color: var(--gm-text);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gm-stat-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.gm-stat-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    color: var(--gm-text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.gm-stat-btn:hover {
+    background: var(--gm-gold);
+    border-color: var(--gm-gold);
+    color: #000;
+}
+
+/* Combat Stats Row */
+.gm-combat-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.gm-combat-stat {
+    background: rgba(13, 13, 13, 0.5);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.gm-combat-stat-label {
+    color: var(--gm-text-dim);
+    margin-right: 0.25rem;
+}
+
+.gm-combat-stat-value {
+    color: var(--gm-text);
+    font-weight: 600;
+}
+
+/* Weapons Compact */
+.gm-weapons-list {
+    margin-bottom: 0.75rem;
+}
+
+.gm-weapons-title {
+    font-size: 0.7rem;
+    color: var(--gm-text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+.gm-weapon-item {
+    background: rgba(13, 13, 13, 0.5);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.gm-weapon-name {
+    color: var(--gm-text);
+    font-weight: 600;
+}
+
+.gm-weapon-dmg {
+    color: var(--gm-red);
+    font-weight: 700;
+}
+
+/* Conditions */
+.gm-conditions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.gm-condition-badge {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--gm-gold);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* Card Actions */
+.gm-card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.gm-btn-info {
+    flex: 1;
+    padding: 0.5rem;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 4px;
+    color: var(--gm-gold);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.gm-btn-info:hover {
+    background: var(--gm-gold);
+    color: #000;
+}
+
+/* Monsters Column */
+.gm-monsters-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.gm-monsters-column::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gm-monsters-column::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.gm-monsters-column::-webkit-scrollbar-thumb {
+    background: rgba(220, 38, 38, 0.3);
+    border-radius: 3px;
+}
+
+.gm-monsters-column::-webkit-scrollbar-thumb:hover {
+    background: rgba(220, 38, 38, 0.5);
+}
+
+.gm-monsters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.gm-monsters-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--gm-red);
+    text-transform: uppercase;
+}
+
+.gm-btn-add-monster {
+    padding: 0.4rem 0.75rem;
+    background: rgba(220, 38, 38, 0.2);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    border-radius: 4px;
+    color: var(--gm-red);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gm-btn-add-monster:hover {
+    background: var(--gm-red);
+    color: white;
+}
+
+/* Monster Card */
+.gm-monster-card {
+    position: relative;
+    background: var(--gm-card-monster);
+    border: 2px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    padding: 0.875rem;
+    transition: all 0.2s;
+}
+
+.gm-monster-card:hover {
+    border-color: var(--gm-red);
+}
+
+.gm-monster-card.current-turn {
+    border-color: var(--gm-gold);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.gm-monster-card.dead {
+    opacity: 0.6;
+}
+
+.gm-monster-card.dead::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: var(--gm-red);
+    transform: translateY(-50%) rotate(-5deg);
+    pointer-events: none;
+}
+
+.gm-monster-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.gm-monster-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--gm-red);
+    text-transform: uppercase;
+}
+
+.gm-btn-remove {
+    background: transparent;
+    border: none;
+    color: var(--gm-text-dim);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: all 0.2s;
+}
+
+.gm-btn-remove:hover {
+    color: var(--gm-red);
+    transform: scale(1.2);
+}
+
+.gm-monster-hp {
+    background: rgba(13, 13, 13, 0.5);
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.gm-monster-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.gm-monster-stat {
+    background: rgba(13, 13, 13, 0.5);
+    border-radius: 4px;
+    padding: 0.4rem;
+    text-align: center;
+}
+
+.gm-monster-stat-icon {
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.gm-monster-stat-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gm-text);
+    margin-bottom: 0.1rem;
+}
+
+.gm-monster-stat-label {
+    font-size: 0.625rem;
+    color: var(--gm-text-dim);
+    text-transform: uppercase;
+}
+
+.gm-monster-attacks {
+    background: rgba(13, 13, 13, 0.5);
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.gm-monster-attack-title {
+    font-size: 0.7rem;
+    color: var(--gm-text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+.gm-monster-attack {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.3rem;
+    font-size: 0.75rem;
+}
+
+.gm-monster-attack:last-child {
+    margin-bottom: 0;
+}
+
+.gm-monster-attack-name {
+    color: var(--gm-text);
+    font-weight: 600;
+}
+
+.gm-monster-attack-dmg {
+    color: var(--gm-red);
+    font-weight: 700;
+}
+
+/* Sidebar Column */
+.gm-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+}
+
+.gm-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.gm-sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.gm-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 2px;
+}
+
+/* Sidebar Panel */
+.gm-sidebar-panel {
+    background: rgba(30, 33, 40, 0.8);
+    border: 1px solid var(--gm-border);
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+.gm-sidebar-title {
+    font-size: 0.75rem;
+    color: var(--gm-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Combat Log */
+.gm-combat-log {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+.gm-log-entries {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.gm-log-entries::-webkit-scrollbar {
+    width: 4px;
+}
+
+.gm-log-entries::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.gm-log-entries::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 2px;
+}
+
+.gm-log-entry {
+    padding: 0.4rem 0.5rem;
+    background: rgba(13, 13, 13, 0.5);
+    border-left: 2px solid var(--gm-border);
+    border-radius: 3px;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.gm-log-entry.damage {
+    border-left-color: var(--gm-red);
+    color: var(--gm-red);
+}
+
+.gm-log-entry.heal {
+    border-left-color: var(--gm-green);
+    color: var(--gm-green);
+}
+
+.gm-log-entry.death {
+    border-left-color: var(--gm-red);
+    color: var(--gm-red);
+    font-weight: 700;
+}
+
+.gm-log-entry.turn {
+    border-left-color: var(--gm-gold);
+    color: var(--gm-gold);
+}
+
+.gm-log-entry.round {
+    border-left-color: var(--gm-gold);
+    color: var(--gm-gold);
+    font-weight: 700;
+    text-align: center;
+    border-left: none;
+    border-top: 2px solid var(--gm-gold);
+    border-bottom: 2px solid var(--gm-gold);
+}
+
+.gm-log-entry.system {
+    border-left-color: var(--gm-text-dim);
+    color: var(--gm-text-dim);
+}
+
+.gm-log-time {
+    color: var(--gm-text-dim);
+    font-size: 0.65rem;
+    margin-right: 0.25rem;
+}
+
+/* Notes Section - Compact */
+.gm-notes {
+    max-height: 50px;
+}
+
+.gm-notes-textarea {
+    width: 100%;
+    height: 50px;
+    background: rgba(13, 13, 13, 0.5);
+    border: 1px solid var(--gm-border);
+    border-radius: 4px;
+    padding: 0.4rem;
+    color: var(--gm-text);
+    font-size: 0.7rem;
+    font-family: var(--font-body);
+    resize: none;
+}
+
+.gm-notes-textarea:focus {
+    outline: none;
+    border-color: var(--gm-gold);
+}
+
+.gm-notes-textarea::placeholder {
+    color: var(--gm-text-dim);
+}
+
+/* Expanded Character Modal */
+.gm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.gm-modal-content {
+    position: relative;
+    background: var(--gm-card-hero);
+    border: 3px solid var(--gm-gold);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 1200px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.4);
+}
+
+.gm-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--gm-border);
+    border-radius: 4px;
+    color: var(--gm-text);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.gm-modal-close:hover {
+    background: var(--gm-gold);
+    color: #000;
+    border-color: var(--gm-gold);
+}
+
 /* Responsive adjustments */
+@media (max-width: 1400px) {
+    .gm-main-grid {
+        grid-template-columns: 1.5fr 1fr 180px;
+    }
+}
+
 @media (max-width: 1024px) {
+    .gm-main-grid {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+    }
+    
+    .gm-sidebar {
+        max-height: 300px;
+    }
+    
     .focus-container {
         grid-template-columns: 1fr;
     }
@@ -4140,6 +5052,18 @@ body.app-active::before {
 }
 
 @media (max-width: 768px) {
+    .gm-header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .gm-header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
     .compact-cards-grid {
         grid-template-columns: 1fr;
     }
