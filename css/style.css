@@ -370,8 +370,8 @@ body.app-active::before {
 .characters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
 .character-card { display: flex; gap: 1rem; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); cursor: pointer; transition: all 0.2s; }
 .character-card:hover { border-color: var(--accent-gold); }
-.char-portrait { width: 60px; height: 60px; background: var(--bg-elevated); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-.char-portrait svg { width: 32px; height: 32px; color: var(--accent-gold); }
+.char-portrait { width: 64px; height: 64px; background: var(--bg-elevated); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.char-portrait svg { width: 64px; height: 64px; color: var(--accent-gold); }
 .char-info { flex: 1; }
 .char-name { font-weight: 600; margin-bottom: 0.25rem; }
 .char-subtitle { font-size: 0.813rem; color: var(--text-muted); margin-bottom: 0.5rem; }
