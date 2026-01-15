@@ -4253,85 +4253,123 @@ body.app-active::before {
     align-items: center;
 }
 
+.gm-init-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gm-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
 .gm-initiative-tokens {
     display: flex;
     gap: 0.75rem;
     align-items: center;
 }
 
-.gm-initiative-token {
-    position: relative;
-    min-width: 60px;
-    height: 60px;
+.gm-init-token {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    background: rgba(30, 33, 40, 0.8);
-    border: 2px solid var(--gm-border);
+    padding: 8px 16px;
+    background: rgba(30, 33, 40, 0.9);
+    border: 1px solid #2d3341;
     border-radius: 8px;
+    position: relative;
+    min-width: 80px;
     cursor: pointer;
     transition: all 0.2s;
-    padding: 0.5rem;
 }
 
-.gm-initiative-token:hover {
+.gm-init-token:hover {
     transform: translateY(-2px);
     border-color: var(--gm-gold);
 }
 
-.gm-initiative-token.current {
-    border-color: var(--gm-gold);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+.gm-init-token-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
-.gm-initiative-token.hero {
-    border-color: rgba(212, 175, 55, 0.5);
+.gm-init-token-name {
+    font-size: 11px;
+    color: #f5f5f5;
+    text-align: center;
 }
 
-.gm-initiative-token.monster {
-    border-color: rgba(220, 38, 38, 0.5);
-}
-
-.gm-initiative-token.dead {
-    opacity: 0.5;
-    text-decoration: line-through;
-    border-color: var(--gm-text-dim);
-}
-
-/* Initiative card number badge */
-.gm-init-card-number {
+.gm-init-card-badge {
     position: absolute;
     top: -8px;
     right: -8px;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     background: linear-gradient(135deg, #d4af37, #f0d875);
-    border-radius: 4px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 12px;
     color: #1a1a1a;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.6);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.gm-token-number {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--gm-gold);
-    margin-bottom: 0.25rem;
+.gm-init-token.active {
+    position: relative;
 }
 
-.gm-token-name {
-    font-size: 0.65rem;
-    color: var(--gm-text-muted);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+/* Golden corner frame - TOP LEFT */
+.gm-init-token.active::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid #d4af37;
+    border-left: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+/* Golden corner frame - TOP RIGHT */
+.gm-init-token.active::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid #d4af37;
+    border-right: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+/* Need additional elements for bottom corners */
+.gm-init-token.active .corner-bl {
+    position: absolute;
+    bottom: -3px;
+    left: -3px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 3px solid #d4af37;
+    border-left: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.gm-init-token.active .corner-br {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 3px solid #d4af37;
+    border-right: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
 
 /* Arrow between tokens */
@@ -4341,27 +4379,69 @@ body.app-active::before {
     user-select: none;
 }
 
-/* Golden corner frame for active turn */
+/* Golden corner frames for active elements */
+.gm-hero-card.active::before,
+.gm-monster-card.active::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid #d4af37;
+    border-left: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.gm-hero-card.active::after,
+.gm-monster-card.active::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid #d4af37;
+    border-right: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.gm-hero-card.active .corner-bl,
+.gm-monster-card.active .corner-bl {
+    position: absolute;
+    bottom: -3px;
+    left: -3px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 3px solid #d4af37;
+    border-left: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.gm-hero-card.active .corner-br,
+.gm-monster-card.active .corner-br {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 20px;
+    height: 20px;
+    border-bottom: 3px solid #d4af37;
+    border-right: 3px solid #d4af37;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+/* Golden frame for modals */
 .golden-frame {
     position: relative;
 }
 
-.gm-active-frame {
-    position: relative;
-}
-
-.golden-frame::before,
-.golden-frame::after,
-.gm-active-frame::before,
-.gm-active-frame::after {
+.golden-frame::before {
     content: '';
     position: absolute;
-    pointer-events: none;
-}
-
-/* Top-left corner */
-.golden-frame::before,
-.gm-active-frame::before {
     top: -2px;
     left: -2px;
     width: 20px;
@@ -4369,11 +4449,12 @@ body.app-active::before {
     border-top: 3px solid var(--gm-gold);
     border-left: 3px solid var(--gm-gold);
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    pointer-events: none;
 }
 
-/* Top-right corner */
-.golden-frame::after,
-.gm-active-frame::after {
+.golden-frame::after {
+    content: '';
+    position: absolute;
     top: -2px;
     right: -2px;
     width: 20px;
@@ -4381,13 +4462,11 @@ body.app-active::before {
     border-top: 3px solid var(--gm-gold);
     border-right: 3px solid var(--gm-gold);
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    pointer-events: none;
 }
 
-/* Bottom corners via pseudo classes on child elements */
 .golden-frame .gm-frame-bl,
-.golden-frame .corner-bl,
-.gm-active-frame .gm-frame-bl,
-.gm-active-frame .corner-bl {
+.golden-frame .corner-bl {
     position: absolute;
     bottom: -2px;
     left: -2px;
@@ -4399,9 +4478,7 @@ body.app-active::before {
 }
 
 .golden-frame .gm-frame-br,
-.golden-frame .corner-br,
-.gm-active-frame .gm-frame-br,
-.gm-active-frame .corner-br {
+.golden-frame .corner-br {
     position: absolute;
     bottom: -2px;
     right: -2px;
@@ -4432,6 +4509,12 @@ body.app-active::before {
     padding-right: 0.5rem;
 }
 
+.gm-heroes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
 .gm-heroes-column::-webkit-scrollbar {
     width: 6px;
 }
@@ -4453,19 +4536,19 @@ body.app-active::before {
 /* Hero Card */
 .gm-hero-card {
     position: relative;
-    background: var(--gm-card-hero);
-    border: 2px solid rgba(212, 175, 55, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
+    background: linear-gradient(145deg, #1e2128 0%, #252a33 100%);
+    border: 1px solid #2d3341;
+    border-radius: 12px;
+    padding: 14px;
     transition: all 0.2s;
 }
 
 .gm-hero-card:hover {
     border-color: var(--gm-gold);
-    transform: translateX(4px);
+    transform: translateY(-2px);
 }
 
-.gm-hero-card.current-turn {
+.gm-hero-card.active {
     border-color: var(--gm-gold);
     box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
 }
@@ -4485,6 +4568,22 @@ body.app-active::before {
     background: var(--gm-red);
     transform: translateY(-50%) rotate(-5deg);
     pointer-events: none;
+    z-index: 1;
+}
+
+/* Hero initiative badge (blue badge in top-right) */
+.gm-hero-initiative-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #3b82f6;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: white;
+    font-weight: bold;
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .gm-card-header {
@@ -4995,7 +5094,7 @@ body.app-active::before {
 }
 
 .gm-stat-item-value.heroes {
-    color: var(--gm-gold);
+    color: #22c55e;
 }
 
 .gm-stat-item-value.monsters {

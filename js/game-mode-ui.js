@@ -179,6 +179,7 @@ var GameModeUI = {
             var initiative = this.currentSession.initiative;
             var currentIndex = this.currentSession.currentTurnIndex || 0;
             
+            html += '<div class="gm-init-label">INITIATIV:</div>';
             html += '<div class="gm-initiative-tokens">';
             
             var renderedCount = 0;
@@ -194,10 +195,9 @@ var GameModeUI = {
                 }
                 renderedCount++;
                 
-                var tokenClass = 'gm-initiative-token';
-                tokenClass += ' ' + item.type;
+                var tokenClass = 'gm-init-token';
                 if (index === currentIndex) {
-                    tokenClass += ' current gm-active-frame';
+                    tokenClass += ' active';
                 }
                 
                 var icon = item.type === 'monster' ? '💀' : '🧝';
@@ -207,16 +207,16 @@ var GameModeUI = {
                 
                 // Add golden frame corners for current turn
                 if (index === currentIndex) {
-                    html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+                    html += '<span class="corner-bl"></span><span class="corner-br"></span>';
                 }
                 
                 // Initiative card number badge (only if card was drawn)
                 if (cardNumber > 0) {
-                    html += '<div class="gm-init-card-number">' + cardNumber + '</div>';
+                    html += '<div class="gm-init-card-badge">' + cardNumber + '</div>';
                 }
                 
-                html += '<div>' + icon + '</div>' +
-                    '<div class="gm-token-name">' + item.name + '</div>' +
+                html += '<div class="gm-init-token-icon">' + icon + '</div>' +
+                    '<div class="gm-init-token-name">' + item.name + '</div>' +
                     '</div>';
             });
             
@@ -238,16 +238,17 @@ var GameModeUI = {
         var currentTurnEntityId = this.getCurrentTurnEntityId();
         
         var html = '<div class="gm-heroes-column">';
+        html += '<div class="gm-heroes-grid">';
         
         if (this.characters.length === 0) {
-            html += '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Inga hjältar i gruppen</div>';
+            html += '<div style="padding: 2rem; text-align: center; color: var(--text-muted); grid-column: 1/-1;">Inga hjältar i gruppen</div>';
         } else {
             this.characters.forEach(function(char) {
                 html += self.renderHeroCard(char, currentTurnEntityId);
             });
         }
         
-        html += '</div>';
+        html += '</div></div>';
         return html;
     },
     
@@ -264,13 +265,28 @@ var GameModeUI = {
         
         var cardClass = 'gm-hero-card';
         if (isDead) cardClass += ' dead';
-        if (isCurrentTurn) cardClass += ' current-turn gm-active-frame';
+        if (isCurrentTurn) cardClass += ' active';
         
         var html = '<div class="' + cardClass + '" data-character-id="' + character.id + '">';
         
         // Golden frame corners for current turn
         if (isCurrentTurn) {
-            html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+            html += '<span class="corner-bl"></span><span class="corner-br"></span>';
+        }
+        
+        // Initiative card badge (find in initiative order)
+        var initiativeCard = 0;
+        if (this.currentSession && this.currentSession.initiative) {
+            var initItem = this.currentSession.initiative.find(function(item) {
+                return item.type === 'character' && item.ownerId === character.id;
+            });
+            if (initItem) {
+                initiativeCard = initItem.initiativeCard || 0;
+            }
+        }
+        
+        if (initiativeCard > 0) {
+            html += '<div class="gm-hero-initiative-badge">' + initiativeCard + '</div>';
         }
         
         // Header
@@ -433,13 +449,13 @@ var GameModeUI = {
         
         var cardClass = 'gm-monster-card';
         if (isDead) cardClass += ' dead';
-        if (isCurrentTurn) cardClass += ' current-turn gm-active-frame';
+        if (isCurrentTurn) cardClass += ' active';
         
         var html = '<div class="' + cardClass + '" data-monster-id="' + monster.id + '">';
         
         // Golden frame corners for current turn
         if (isCurrentTurn) {
-            html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+            html += '<span class="corner-bl"></span><span class="corner-br"></span>';
         }
         
         // Header
