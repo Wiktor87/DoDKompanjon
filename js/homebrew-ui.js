@@ -181,34 +181,57 @@ var HomebrewUI = {
             html += HomebrewUI.getHomebrewCardHTML(item);
         });
         
+        // Add "Skapa nytt" card
+        html += '<div class="fantasy-create-card" style="width: 220px; height: 120px;" onclick="HomebrewUI.switchView(\'create\')">' +
+            '<div class="fantasy-create-plus">+</div>' +
+            '<div class="fantasy-create-text">Skapa nytt</div>' +
+        '</div>';
+        
         grid.innerHTML = html;
     },
     
     // Get homebrew card HTML
     getHomebrewCardHTML: function(item) {
         var category = HomebrewService.CATEGORIES[item.type] || { label: item.type, icon: '📜' };
-        var rating = item.rating > 0 ? '★ ' + item.rating.toFixed(1) : 'Ej betygsatt';
+        var rating = item.rating > 0 ? item.rating : 0;
         var description = this.escapeHtml(item.description);
         var truncatedDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
         
-        return '<div class="homebrew-card" data-homebrew-id="' + item.id + '" data-type="' + item.type + '" onclick="HomebrewUI.showHomebrewDetail(\'' + item.id + '\')">' +
-            '<div class="homebrew-card-header">' +
-                '<span class="homebrew-type-badge">' + category.icon + ' ' + category.label + '</span>' +
-                '<span class="homebrew-rating">' + rating + '</span>' +
-            '</div>' +
-            '<h3 class="homebrew-card-title">' + this.escapeHtml(item.name) + '</h3>' +
-            '<p class="homebrew-card-description">' + truncatedDesc + '</p>' +
-            '<div class="homebrew-card-footer">' +
-                '<div class="homebrew-author" data-author-id="' + item.authorId + '">' +
-                    '<div class="author-avatar">' + this.getInitials(item.authorName) + '</div>' +
-                    '<span class="author-name">' + this.escapeHtml(item.authorName) + '</span>' +
-                '</div>' +
-                '<div class="homebrew-stats">' +
-                    '<span class="stat-item">⬇️ ' + item.downloads + '</span>' +
-                '</div>' +
-            '</div>' +
-            '<button class="homebrew-add-btn" data-save-homebrew="' + item.id + '" onclick="event.stopPropagation()">+ Lägg till</button>' +
-        '</div>';
+        // Type colors matching JSX mockup
+        var typeColorMap = {
+            'monster': 'monster',
+            'item': 'item',
+            'spell': 'spell',
+            'adventure': 'adventure'
+        };
+        var typeClass = typeColorMap[item.type] || 'item';
+        
+        var html = '<div class="fantasy-homebrew-card" data-homebrew-id="' + item.id + '" data-type="' + item.type + '" onclick="HomebrewUI.showHomebrewDetail(\'' + item.id + '\')">';
+        
+        // Decorative L-corners (smaller)
+        html += '<svg class="decorative-corner-svg top-left" viewBox="0 0 25 25" style="width: 20px; height: 20px;"><path d="M0 0 L25 0 L25 3 L3 3 L3 25 L0 25 Z" fill="#d4af37" /></svg>';
+        html += '<svg class="decorative-corner-svg top-right" viewBox="0 0 25 25" style="width: 20px; height: 20px;"><path d="M0 0 L25 0 L25 25 L22 25 L22 3 L0 3 Z" fill="#d4af37" /></svg>';
+        html += '<svg class="decorative-corner-svg bottom-left" viewBox="0 0 25 25" style="width: 20px; height: 20px;"><path d="M0 0 L3 0 L3 22 L25 22 L25 25 L0 25 Z" fill="#d4af37" /></svg>';
+        html += '<svg class="decorative-corner-svg bottom-right" viewBox="0 0 25 25" style="width: 20px; height: 20px;"><path d="M22 0 L25 0 L25 25 L0 25 L0 22 L22 22 Z" fill="#d4af37" /></svg>';
+        
+        // Type badge
+        html += '<div class="fantasy-homebrew-type-badge ' + typeClass + '">' + category.label + '</div>';
+        
+        // Title
+        html += '<h3 class="fantasy-homebrew-title">' + this.escapeHtml(item.name) + '</h3>';
+        
+        // Footer with author and rating
+        html += '<div class="fantasy-homebrew-footer">';
+        html += '<div class="fantasy-homebrew-author">av ' + this.escapeHtml(item.authorName) + '</div>';
+        html += '<div class="fantasy-homebrew-rating">';
+        for (var i = 1; i <= 5; i++) {
+            html += i <= rating ? '★' : '☆';
+        }
+        html += '</div>';
+        html += '</div>';
+        
+        html += '</div>';
+        return html;
     },
     
     // Render collection view

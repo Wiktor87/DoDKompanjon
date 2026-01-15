@@ -541,11 +541,11 @@ var GameModeUI = {
         
         html += '<div class="gm-stats-panel">' +
             '<div class="gm-stats-row">' +
-            '<div class="gm-stat-item">' +
+            '<div class="gm-stat-item heroes">' +
             '<div class="gm-stat-item-label">HJÄLTAR</div>' +
             '<div class="gm-stat-item-value heroes">' + aliveHeroes + '</div>' +
             '</div>' +
-            '<div class="gm-stat-item">' +
+            '<div class="gm-stat-item monsters">' +
             '<div class="gm-stat-item-label">MONSTER</div>' +
             '<div class="gm-stat-item-value monsters">' + aliveMonsters + '</div>' +
             '</div>' +

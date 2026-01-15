@@ -5337,3 +5337,655 @@ body.app-active::before {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   FANTASY UI/UX REDESIGN - EXACT JSX MOCKUP
+   ============================================ */
+
+/* New color variables from JSX mockup */
+:root {
+    --site-bg: linear-gradient(180deg, #0d0d0d 0%, #1a1d24 100%);
+    --card-bg: linear-gradient(145deg, rgba(30, 33, 40, 0.95) 0%, rgba(25, 28, 35, 0.98) 50%, rgba(20, 23, 28, 0.95) 100%);
+    --gold-border: rgba(212, 175, 55, 0.15);
+    --gold-border-hover: rgba(212, 175, 55, 0.35);
+    --kp-bar: linear-gradient(90deg, #8b0000, #cc0000, #ff2020);
+    --kp-bg: #2d1515;
+    --kp-text: #ff6b6b;
+    --vp-bar: linear-gradient(90deg, #0a3d6e, #1565c0, #2196f3);
+    --vp-bg: #152535;
+    --vp-text: #64b5f6;
+    --heroes-green: #22c55e;
+    --monsters-red: #dc2626;
+    --text-fantasy: #f5e6c8;
+    --text-subtitle: #8b9dc3;
+}
+
+/* Fantasy Character Card V2 */
+.fantasy-character-card {
+    position: relative;
+    width: 260px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border: 1px solid var(--gold-border);
+}
+
+.fantasy-character-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 25px rgba(212,175,55,0.15);
+}
+
+/* Decorative L-corners SVG */
+.decorative-corner-svg {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+}
+
+.decorative-corner-svg.top-left {
+    top: -1px;
+    left: -1px;
+}
+
+.decorative-corner-svg.top-right {
+    top: -1px;
+    right: -1px;
+}
+
+.decorative-corner-svg.bottom-left {
+    bottom: -1px;
+    left: -1px;
+}
+
+.decorative-corner-svg.bottom-right {
+    bottom: -1px;
+    right: -1px;
+}
+
+/* Character Card Header with Portrait */
+.fantasy-card-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.fantasy-portrait {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(145deg, #2d3341, #1e2128);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #d4af37;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+
+.fantasy-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fantasy-portrait-emoji {
+    font-size: 28px;
+}
+
+/* Mini corner decorations on portrait */
+.portrait-corner-deco {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border: 2px solid #f0d875;
+}
+
+.portrait-corner-deco.top-left {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.portrait-corner-deco.top-right {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+}
+
+.portrait-corner-deco.bottom-left {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+}
+
+.portrait-corner-deco.bottom-right {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+}
+
+.fantasy-card-identity {
+    flex: 1;
+}
+
+.fantasy-card-name {
+    margin: 0 0 3px 0;
+    color: #f5e6c8;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Cinzel', 'Times New Roman', serif;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.fantasy-card-subtitle {
+    color: #8b9dc3;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fantasy-card-subtitle .icon {
+    color: #d4af37;
+}
+
+/* Divider */
+.fantasy-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent);
+    margin: 10px 0;
+}
+
+.fantasy-divider-light {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent);
+    margin: 10px 0;
+}
+
+/* Attributes Row */
+.fantasy-attributes {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 6px 4px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+.fantasy-attr-box {
+    text-align: center;
+    flex: 1;
+}
+
+.fantasy-attr-label {
+    font-size: 8px;
+    color: #6b7280;
+    margin-bottom: 1px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.fantasy-attr-value {
+    font-size: 14px;
+    color: #f5e6c8;
+    font-weight: bold;
+    font-family: 'Cinzel', serif;
+}
+
+/* Health Bars - KP & VP */
+.fantasy-health-container {
+    margin-bottom: 12px;
+}
+
+.fantasy-health-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.fantasy-health-icon {
+    font-size: 12px;
+    width: 18px;
+}
+
+.fantasy-health-track {
+    flex: 1;
+    height: 10px;
+    background: var(--kp-bg);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.fantasy-health-track.vp {
+    background: var(--vp-bg);
+}
+
+.fantasy-health-fill {
+    height: 100%;
+    background: var(--kp-bar);
+    border-radius: 5px;
+    box-shadow: 0 0 8px rgba(255,0,0,0.3);
+    transition: width 0.3s ease;
+}
+
+.fantasy-health-fill.vp {
+    background: var(--vp-bar);
+    box-shadow: 0 0 8px rgba(33,150,243,0.3);
+}
+
+.fantasy-health-value {
+    font-size: 11px;
+    color: var(--kp-text);
+    font-weight: bold;
+    min-width: 24px;
+    text-align: right;
+}
+
+.fantasy-health-value.vp {
+    color: var(--vp-text);
+}
+
+/* Action Buttons */
+.fantasy-card-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+}
+
+.fantasy-btn {
+    flex: 1;
+    padding: 7px 10px;
+    background: linear-gradient(145deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 5px;
+    color: #d4af37;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.fantasy-btn:hover {
+    background: linear-gradient(145deg, rgba(212,175,55,0.25), rgba(212,175,55,0.15));
+}
+
+.fantasy-btn.in-group {
+    background: linear-gradient(145deg, rgba(34,197,94,0.15), rgba(34,197,94,0.08));
+    border: 1px solid rgba(34,197,94,0.35);
+    color: #22c55e;
+}
+
+.fantasy-btn.not-in-group {
+    background: linear-gradient(145deg, rgba(100,100,100,0.15), rgba(80,80,80,0.08));
+    border: 1px solid rgba(150,150,150,0.2);
+    color: #888;
+}
+
+/* New Character Card - "Starta en ny legend" */
+.fantasy-new-character-card {
+    position: relative;
+    width: 260px;
+    height: 310px;
+    background: rgba(30, 33, 40, 0.6);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    border: 2px dashed rgba(212,175,55,0.25);
+}
+
+.fantasy-new-character-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.1);
+}
+
+.fantasy-book-icon {
+    width: 80px;
+    height: 105px;
+    background: linear-gradient(145deg, #2d3341, #1e2128);
+    border-radius: 4px 10px 10px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    border: 2px solid #d4af37;
+    position: relative;
+}
+
+.fantasy-book-spine {
+    position: absolute;
+    left: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 6px;
+    background: linear-gradient(90deg, #1a1d24, #2d3341);
+    border-radius: 4px 0 0 4px;
+}
+
+.fantasy-book-plus {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(145deg, #d4af37, #f0d875);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #1a1510;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(212,175,55,0.4);
+}
+
+.fantasy-book-rune {
+    position: absolute;
+    font-size: 7px;
+    color: #6b7280;
+    letter-spacing: 1px;
+}
+
+.fantasy-book-rune.top {
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.fantasy-book-rune.bottom {
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.fantasy-new-title {
+    color: #d4af37;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Cinzel', serif;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.fantasy-new-subtitle {
+    color: #6b7280;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* Group Card */
+.fantasy-group-card {
+    position: relative;
+    width: 300px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border: 1px solid var(--gold-border);
+}
+
+.fantasy-group-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 25px rgba(212,175,55,0.15);
+}
+
+.fantasy-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.fantasy-group-title {
+    margin: 0 0 4px 0;
+    color: #f5e6c8;
+    font-size: 16px;
+    font-family: 'Cinzel', serif;
+}
+
+.fantasy-group-meta {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.fantasy-group-badge-active {
+    background: linear-gradient(145deg, #22c55e, #16a34a);
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: white;
+    font-weight: 600;
+}
+
+.fantasy-group-avatars {
+    display: flex;
+    margin-bottom: 14px;
+}
+
+.fantasy-group-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(145deg, #2d3341, #1e2128);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #d4af37;
+    font-size: 16px;
+}
+
+.fantasy-group-avatar:not(:first-child) {
+    margin-left: -8px;
+}
+
+.fantasy-group-button {
+    width: 100%;
+    padding: 8px;
+    background: linear-gradient(145deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 5px;
+    color: #d4af37;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Homebrew Card */
+.fantasy-homebrew-card {
+    position: relative;
+    width: 220px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border: 1px solid var(--gold-border);
+}
+
+.fantasy-homebrew-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 25px rgba(212,175,55,0.15);
+}
+
+.fantasy-homebrew-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.fantasy-homebrew-type-badge.monster {
+    background: rgba(220, 38, 38, 0.2);
+    border: 1px solid rgba(220, 38, 38, 0.5);
+    color: #dc2626;
+}
+
+.fantasy-homebrew-type-badge.item {
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    color: #d4af37;
+}
+
+.fantasy-homebrew-type-badge.spell {
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    color: #8b5cf6;
+}
+
+.fantasy-homebrew-type-badge.adventure {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    color: #22c55e;
+}
+
+.fantasy-homebrew-title {
+    margin: 0 0 6px 0;
+    color: #f5e6c8;
+    font-size: 14px;
+    font-family: 'Cinzel', serif;
+}
+
+.fantasy-homebrew-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.fantasy-homebrew-author {
+    color: #6b7280;
+    font-size: 10px;
+}
+
+.fantasy-homebrew-rating {
+    color: #d4af37;
+    font-size: 11px;
+}
+
+/* Stats Panel - Game Mode */
+.gm-stats-panel {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.gm-stats-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.gm-stat-item {
+    background: rgba(30, 33, 40, 0.8);
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-align: center;
+    flex: 1;
+}
+
+.gm-stat-item-label {
+    color: #6b7280;
+    font-size: 10px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.gm-stat-item-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.gm-stat-item-value.heroes {
+    color: var(--heroes-green);
+}
+
+.gm-stat-item-value.monsters {
+    color: var(--monsters-red);
+}
+
+.gm-stat-item.heroes {
+    border: 1px solid rgba(34,197,94,0.3);
+}
+
+.gm-stat-item.monsters {
+    border: 1px solid rgba(220,38,38,0.3);
+}
+
+/* Back Button */
+.fantasy-back-button {
+    padding: 8px 16px;
+    background: rgba(45, 51, 65, 0.8);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 6px;
+    color: #d4af37;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+/* Create New Group/Homebrew Card */
+.fantasy-create-card {
+    background: rgba(30, 33, 40, 0.6);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(212,175,55,0.25);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.fantasy-create-card:hover {
+    border-color: rgba(212,175,55,0.4);
+    transform: translateY(-2px);
+}
+
+.fantasy-create-plus {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(145deg, #d4af37, #f0d875);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #1a1510;
+    margin-bottom: 10px;
+}
+
+.fantasy-create-text {
+    color: #d4af37;
+    font-size: 12px;
+    font-weight: 600;
+}

@@ -32,7 +32,12 @@ var CharacterService = {
                 console.log('[CharacterService] Found:', snapshot.size);
                 var characters = [];
                 snapshot.forEach(function(doc) {
-                    characters. push(Object.assign({ id: doc. id }, doc.data()));
+                    var char = Object.assign({ id: doc. id }, doc.data());
+                    // Apply GIF icon migration if available
+                    if (typeof migrateCharacterGIFIcons === 'function') {
+                        char = migrateCharacterGIFIcons(char);
+                    }
+                    characters. push(char);
                 });
                 characters.sort(function(a, b) {
                     var aTime = a.createdAt && a.createdAt.toMillis ?  a.createdAt.toMillis() : 0;
@@ -46,7 +51,12 @@ var CharacterService = {
     getCharacter: function(id) {
         return db.collection('characters').doc(id).get().then(function(doc) {
             if (! doc.exists) throw new Error('Karaktär inte hittad');
-            return Object.assign({ id: doc.id }, doc.data());
+            var char = Object.assign({ id: doc.id }, doc.data());
+            // Apply GIF icon migration if available
+            if (typeof migrateCharacterGIFIcons === 'function') {
+                char = migrateCharacterGIFIcons(char);
+            }
+            return char;
         });
     },
     
