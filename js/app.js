@@ -176,7 +176,12 @@ function loadDashboard() {
                         '<button class="btn btn-gold-outline" onclick="openCharacterCreator()">Skapa karaktär</button>' +
                     '</div>';
                 } else {
-                    charContainer.innerHTML = characters.slice(0, 4).map(renderCharacterCardCompact).join('');
+                    var html = characters.slice(0, 4).map(renderCharacterCardCompact).join('');
+                    // Add "Starta en ny legend" card if less than 4 characters shown
+                    if (characters.length <= 3) {
+                        html += renderNewCharacterCard();
+                    }
+                    charContainer.innerHTML = html;
                 }
             }).catch(function(err) {
                 console.error('Error:', err);
