@@ -1000,9 +1000,15 @@ var GameModeUI = {
             '<h3 style="margin-bottom: 1rem;">Anpassat Monster</h3>' +
             '<div style="display: flex; flex-direction: column; gap: 1rem;">' +
             
+            '<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">' +
             '<div>' +
             '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Namn</label>' +
             '<input type="text" id="monsterNameInput" class="input-field" placeholder="Monsternamn" style="width: 100%;">' +
+            '</div>' +
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Antal (1-10)</label>' +
+            '<input type="number" id="monsterQuantityInput" class="input-field" value="1" min="1" max="10" style="width: 100%;">' +
+            '</div>' +
             '</div>' +
             
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
@@ -1028,13 +1034,20 @@ var GameModeUI = {
             '</div>' +
             
             '<div>' +
-            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Initiativkort (1-10)</label>' +
-            '<input type="number" id="monsterInitInput" class="input-field" value="5" min="1" max="10" style="width: 100%;">' +
+            '<label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">Attack</label>' +
+            '<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">' +
+            '<input type="text" id="monsterAttackNameInput" class="input-field" placeholder="Attacknamn (t.ex. Bett)" style="width: 100%;">' +
+            '<select id="monsterAttackDamageInput" class="input-field" style="width: 100%;">' +
+            '<option value="1T4">1T4</option>' +
+            '<option value="1T6">1T6</option>' +
+            '<option value="1T8" selected>1T8</option>' +
+            '<option value="1T10">1T10</option>' +
+            '<option value="1T12">1T12</option>' +
+            '<option value="2T6">2T6</option>' +
+            '<option value="2T8">2T8</option>' +
+            '<option value="2T10">2T10</option>' +
+            '</select>' +
             '</div>' +
-            
-            '<div>' +
-            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Attacker (JSON: [{name: "Bett", damage: "1T8"}])</label>' +
-            '<textarea id="monsterAttacksInput" class="input-field" rows="3" placeholder=\'[{"name": "Bett", "damage": "1T8"}]\' style="width: 100%; font-family: monospace; font-size: 0.875rem;"></textarea>' +
             '</div>' +
             
             '</div>' +
@@ -1058,21 +1071,38 @@ var GameModeUI = {
     },
     
     // Add preset monster
-    addPresetMonster: function(name, hp, armor, undvika, movement, attacks) {
+    addPresetMonster: function(name, hp, armor, undvika, movement, attacks, quantityParam) {
         var self = this;
         
-        var monster = {
-            name: name,
-            hp: hp,
-            maxHp: hp,
-            armor: armor,
-            undvika: undvika,
-            movement: movement,
-            attacks: attacks || [],
-            initiativkort: Math.floor(Math.random() * 10) + 1
-        };
+        // Ask for quantity if not provided
+        var quantity = quantityParam;
+        if (!quantity) {
+            quantity = parseInt(prompt('Hur många ' + name + '? (1-10)', '1'), 10);
+            if (isNaN(quantity) || quantity < 1) {
+                return; // User cancelled or invalid input
+            }
+            quantity = Math.min(10, quantity);
+        }
         
-        GameModeService.addMonster(this.currentSession.id, monster)
+        // Create monsters with unique names if quantity > 1
+        var promises = [];
+        for (var i = 0; i < quantity; i++) {
+            var monsterName = quantity > 1 ? name + ' ' + (i + 1) : name;
+            var monster = {
+                name: monsterName,
+                hp: hp,
+                maxHp: hp,
+                armor: armor,
+                undvika: undvika,
+                movement: movement,
+                attacks: attacks || [],
+                initiativkort: Math.floor(Math.random() * 10) + 1
+            };
+            
+            promises.push(GameModeService.addMonster(this.currentSession.id, monster));
+        }
+        
+        Promise.all(promises)
             .then(function() {
                 return db.collection('gameSessions').doc(self.currentSession.id).get();
             })
@@ -1080,7 +1110,11 @@ var GameModeUI = {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
                     self.combatLog = self.safeCombatLog(doc.data());
-                    self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    if (quantity === 1) {
+                        self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    } else {
+                        self.addLogEntry(quantity + ' ' + name + ' tillagda', 'system');
+                    }
                     self.render();
                     self.closeModal('addMonsterModalOverlay');
                 }
@@ -1094,41 +1128,51 @@ var GameModeUI = {
     // Submit custom monster
     submitCustomMonster: function() {
         var name = document.getElementById('monsterNameInput').value.trim();
+        var quantity = parseInt(document.getElementById('monsterQuantityInput').value, 10) || 1;
         var hp = parseInt(document.getElementById('monsterHPInput').value, 10);
         var armor = parseInt(document.getElementById('monsterArmorInput').value, 10);
         var undvika = parseInt(document.getElementById('monsterUndvikaInput').value, 10);
         var movement = parseInt(document.getElementById('monsterMovementInput').value, 10);
-        var initCard = parseInt(document.getElementById('monsterInitInput').value, 10);
-        var attacksText = document.getElementById('monsterAttacksInput').value.trim();
+        var attackName = document.getElementById('monsterAttackNameInput').value.trim();
+        var attackDamage = document.getElementById('monsterAttackDamageInput').value;
         
         if (!name) {
             alert('Monsternamn krävs');
             return;
         }
         
+        // Limit quantity
+        quantity = Math.max(1, Math.min(10, quantity));
+        
         var attacks = [];
-        if (attacksText) {
-            try {
-                attacks = JSON.parse(attacksText);
-            } catch (e) {
-                alert('Ogiltigt JSON-format för attacker. Exempel: [{"name": "Bett", "damage": "1T8"}]');
-                return;
-            }
+        if (attackName) {
+            attacks.push({
+                name: attackName,
+                damage: attackDamage
+            });
         }
         
         var self = this;
-        var monster = {
-            name: name,
-            hp: hp,
-            maxHp: hp,
-            armor: armor,
-            undvika: undvika,
-            movement: movement,
-            attacks: attacks,
-            initiativkort: initCard
-        };
         
-        GameModeService.addMonster(this.currentSession.id, monster)
+        // Create monsters with unique names if quantity > 1
+        var promises = [];
+        for (var i = 0; i < quantity; i++) {
+            var monsterName = quantity > 1 ? name + ' ' + (i + 1) : name;
+            var monster = {
+                name: monsterName,
+                hp: hp,
+                maxHp: hp,
+                armor: armor,
+                undvika: undvika,
+                movement: movement,
+                attacks: attacks,
+                initiativkort: Math.floor(Math.random() * 10) + 1
+            };
+            
+            promises.push(GameModeService.addMonster(this.currentSession.id, monster));
+        }
+        
+        Promise.all(promises)
             .then(function() {
                 return db.collection('gameSessions').doc(self.currentSession.id).get();
             })
@@ -1136,7 +1180,11 @@ var GameModeUI = {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
                     self.combatLog = self.safeCombatLog(doc.data());
-                    self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    if (quantity === 1) {
+                        self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    } else {
+                        self.addLogEntry(quantity + ' ' + name + ' tillagda', 'system');
+                    }
                     self.render();
                     self.closeModal('addMonsterModalOverlay');
                 }
