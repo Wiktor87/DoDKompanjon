@@ -242,8 +242,8 @@ function renderCharacterCardCompact(char) {
     var maxVp = attrs.PSY || 0;
     var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
     var vp = char.currentVP !== undefined ? char.currentVP : maxVp;
-    var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 100;
-    var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 100;
+    var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 0;
+    var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 0;
     var lastPlayed = char.lastPlayed || 'Aldrig';
     
     return '<div class="card-frame" onclick="viewCharacter(\'' + char.id + '\')">' +
@@ -366,6 +366,7 @@ function renderNewCharacterCard() {
     html += '<div class="fantasy-book-icon">';
     html += '<div class="fantasy-book-spine"></div>';
     html += '<div class="fantasy-book-plus">+</div>';
+    // Elder Futhark runes: ᚠᚢᚦᚨᚱ (FUTHAR) and ᛒᛖᚱᚲᚨ (BERKA) for decorative fantasy effect
     html += '<div class="fantasy-book-rune top">ᚠᚢᚦᚨᚱ</div>';
     html += '<div class="fantasy-book-rune bottom">ᛒᛖᚱᚲᚨ</div>';
     html += '</div>';
