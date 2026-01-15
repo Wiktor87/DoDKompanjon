@@ -1,14 +1,15 @@
 // Game Mode UI - DM interface for real-time party tracking
+// New Design Implementation with 3-column grid, initiative tracker, combat log
 var GameModeUI = {
     currentSession: null,
-    currentView: 'overview', // 'overview' or 'focus'
-    focusedCharacterId: null,
     characters: [],
+    monsters: [],
     party: null,
     unsubscribe: null,
+    combatLog: [],
     
-    // Helper: Get top 3 weapon skills for a character
-    getTop3WeaponSkills: function(character) {
+    // Helper: Get top 2-3 weapon skills for a character
+    getTopWeaponSkills: function(character) {
         var weaponSkills = character.weaponSkills || {};
         return Object.keys(weaponSkills)
             .map(function(name) {
@@ -36,11 +37,14 @@ var GameModeUI = {
             GameModeService.getActiveSession(partyId).then(function(session) {
                 if (session) {
                     self.currentSession = session;
+                    self.combatLog = session.combatLog || [];
                     self.startGameMode();
                 } else {
                     // Create new session
                     GameModeService.startSession(partyId).then(function(newSession) {
                         self.currentSession = newSession;
+                        self.combatLog = [];
+                        self.addLogEntry('Spelläge startat', 'system');
                         self.startGameMode();
                     }).catch(function(error) {
                         console.error('Error starting session:', error);
@@ -89,709 +93,567 @@ var GameModeUI = {
         var container = document.getElementById('gameModeContainer');
         if (!container) return;
         
-        if (this.currentView === 'overview') {
-            this.renderOverview();
-        } else if (this.currentView === 'focus') {
-            this.renderFocus(this.focusedCharacterId);
-        }
+        var self = this;
+        this.monsters = (this.currentSession && this.currentSession.monsters) || [];
+        
+        var html = '';
+        
+        // Header Bar
+        html += this.renderHeaderBar();
+        
+        // Initiative Bar
+        html += this.renderInitiativeBar();
+        
+        // Main 3-Column Grid
+        html += '<div class="gm-main-grid">';
+        
+        // Column 1: Heroes
+        html += this.renderHeroesColumn();
+        
+        // Column 2: Monsters
+        html += this.renderMonstersColumn();
+        
+        // Column 3: Sidebar (Combat Log + Notes)
+        html += this.renderSidebar();
+        
+        html += '</div>'; // end gm-main-grid
+        
+        container.innerHTML = html;
+        
+        // Auto-scroll combat log to bottom
+        setTimeout(function() {
+            var logEntries = document.querySelector('.gm-log-entries');
+            if (logEntries) {
+                logEntries.scrollTop = logEntries.scrollHeight;
+            }
+        }, 100);
     },
     
-    // Render overview mode (all characters)
-    renderOverview: function() {
-        var self = this;
-        var container = document.getElementById('gameModeContainer');
-        if (!container) return;
+    // Render Header Bar
+    renderHeaderBar: function() {
+        var round = (this.currentSession && this.currentSession.round) || 1;
         
-        var html = '<div class="game-mode-header">' +
-            '<div class="game-mode-header-left">' +
-            '<h1 class="game-mode-title">🎮 ' + (self.party.name || 'Spelläge') + '</h1>' +
-            '<div class="game-mode-subtitle">Översiktsläge</div>' +
+        return '<div class="gm-header-bar">' +
+            '<div class="gm-header-left">' +
+            '<div class="gm-title">🎮 ' + (this.party.name || 'Spelläge') + '</div>' +
+            '<div class="gm-round-display">Runda ' + round + '</div>' +
             '</div>' +
-            '<div class="game-mode-header-right">' +
+            '<div class="gm-header-actions">' +
             '<button class="btn btn-ghost" onclick="GameModeUI.exit()">✕ Avsluta</button>' +
             '</div>' +
             '</div>';
+    },
+    
+    // Render Initiative Bar
+    renderInitiativeBar: function() {
+        var self = this;
+        var html = '<div class="gm-initiative-bar">';
         
-        // DM Toolbar
-        html += this.renderDMToolbar();
-        
-        // Initiative Tracker
-        html += this.renderInitiativeTracker();
-        
-        // Monsters Panel
-        html += this.renderMonstersPanel();
-        
-        // Quick Notes
-        html += this.renderQuickNotes();
-        
-        // Characters Grid
-        html += '<div class="game-mode-content">' +
-            '<div class="compact-cards-grid">';
-        
-        if (self.characters.length === 0) {
-            html += '<div class="empty-state"><p>Inga karaktärer i gruppen</p></div>';
+        if (this.currentSession && this.currentSession.initiative && this.currentSession.initiative.length > 0) {
+            var initiative = this.currentSession.initiative;
+            var currentIndex = this.currentSession.currentTurnIndex || 0;
+            
+            html += '<div class="gm-initiative-tokens">';
+            
+            initiative.forEach(function(item, index) {
+                // Skip dead entities (hp <= 0)
+                var isDead = false;
+                if (item.type === 'character') {
+                    var char = self.characters.find(function(c) { return c.id === item.ownerId; });
+                    if (char) {
+                        var maxKp = (char.attributes && char.attributes.FYS) || 0;
+                        var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
+                        isDead = kp <= 0;
+                    }
+                } else if (item.type === 'monster') {
+                    var monster = self.monsters.find(function(m) { return m.id === item.ownerId; });
+                    if (monster) {
+                        isDead = monster.hp <= 0;
+                    }
+                }
+                
+                if (isDead) return; // Skip dead entities
+                
+                var tokenClass = 'gm-initiative-token';
+                tokenClass += ' ' + item.type;
+                if (index === currentIndex) {
+                    tokenClass += ' current golden-frame';
+                }
+                
+                var icon = item.type === 'monster' ? '💀' : '🧝';
+                
+                html += '<div class="' + tokenClass + '" data-index="' + index + '">';
+                if (index === currentIndex) {
+                    html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+                }
+                html += '<div class="gm-token-number">' + (index + 1) + '</div>' +
+                    '<div>' + icon + '</div>' +
+                    '<div class="gm-token-name">' + item.name + '</div>' +
+                    '<div>' + item.total + '</div>' +
+                    '</div>';
+            });
+            
+            html += '</div>';
+            html += '<button class="btn btn-gold" onclick="GameModeUI.nextTurn()">Nästa tur →</button>';
         } else {
-            self.characters.forEach(function(char) {
-                html += self.renderCompactCard(char);
+            html += '<div style="display: flex; gap: 1rem; align-items: center;">' +
+                '<span style="color: var(--text-muted);">Ingen initiativ-ordning ännu</span>' +
+                '<button class="btn btn-gold" onclick="GameModeUI.rollInitiative()">🎲 Slå initiativ</button>' +
+                '</div>';
+        }
+        
+        html += '</div>';
+        return html;
+    },
+    
+    // Render Heroes Column
+    renderHeroesColumn: function() {
+        var self = this;
+        var currentTurnEntityId = this.getCurrentTurnEntityId();
+        
+        var html = '<div class="gm-heroes-column">';
+        
+        if (this.characters.length === 0) {
+            html += '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Inga hjältar i gruppen</div>';
+        } else {
+            this.characters.forEach(function(char) {
+                html += self.renderHeroCard(char, currentTurnEntityId);
             });
         }
         
-        html += '</div></div>';
-        
-        container.innerHTML = html;
+        html += '</div>';
+        return html;
     },
     
-    // Render focus mode (one expanded)
-    renderFocus: function(characterId) {
-        var self = this;
-        var container = document.getElementById('gameModeContainer');
-        if (!container) return;
-        
-        var focusedChar = self.characters.find(function(c) { return c.id === characterId; });
-        if (!focusedChar) {
-            self.currentView = 'overview';
-            self.renderOverview();
-            return;
-        }
-        
-        var html = '<div class="game-mode-header">' +
-            '<div class="game-mode-header-left">' +
-            '<button class="btn btn-ghost" onclick="GameModeUI.switchView(\'overview\')">← Tillbaka</button>' +
-            '<h1 class="game-mode-title">' + focusedChar.name + '</h1>' +
-            '</div>' +
-            '<div class="game-mode-header-right">' +
-            '<button class="btn btn-ghost" onclick="GameModeUI.exit()">✕ Avsluta</button>' +
-            '</div>' +
-            '</div>';
-        
-        html += '<div class="focus-container">' +
-            '<div class="focus-main">' +
-            self.renderExpandedView(focusedChar) +
-            '</div>' +
-            '<div class="focus-sidebar">';
-        
-        self.characters.forEach(function(char) {
-            if (char.id !== characterId) {
-                html += self.renderSidebarCard(char);
-            }
-        });
-        
-        html += '</div></div>';
-        
-        container.innerHTML = html;
-    },
-    
-    // Render compact character card
-    renderCompactCard: function(character) {
-        var self = this;
+    // Render Hero Card
+    renderHeroCard: function(character, currentTurnEntityId) {
         var attrs = character.attributes || {};
         var maxKp = attrs.FYS || 0;
         var maxVp = attrs.PSY || 0;
         var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
         var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
         
-        var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 0;
-        var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 0;
+        var isDead = kp <= 0;
+        var isCurrentTurn = currentTurnEntityId === character.id;
         
-        var isCritical = kpPercent <= 25;
-        var isLowVP = vpPercent <= 25;
+        var cardClass = 'gm-hero-card';
+        if (isDead) cardClass += ' dead';
+        if (isCurrentTurn) cardClass += ' current-turn golden-frame';
         
-        var cardClass = 'compact-card';
-        if (isCritical) cardClass += ' critical';
+        var html = '<div class="' + cardClass + '" data-character-id="' + character.id + '">';
         
-        var html = '<div class="' + cardClass + '" data-character-id="' + character.id + '">' +
-            '<div class="compact-card-header">' +
-            '<div class="character-avatar">' + getKinIcon(character.kin || 'default') + '</div>' +
-            '<div class="character-info">' +
-            '<div class="character-name">' + character.name + '</div>' +
-            '<div class="character-meta">' + (character.kin || '') + ' • ' + (character.profession || '') + '</div>' +
-            '</div>' +
-            '</div>';
+        // Golden frame corners for current turn
+        if (isCurrentTurn) {
+            html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+        }
         
-        // KP Tracker
-        html += '<div class="pip-tracker kp-tracker">' +
-            '<div class="tracker-label">KP</div>' +
-            '<div class="pips">';
+        // Header
+        html += '<div class="gm-card-header">' +
+            '<div>' + getKinIcon(character.kin || 'default') + '</div>' +
+            '<div style="flex: 1;">' +
+            '<div class="gm-card-name">' + character.name + '</div>' +
+            '<div class="gm-card-meta">' + (character.kin || '') + ' • ' + (character.profession || '') + '</div>';
+        
+        if (isDead) {
+            html += '<div class="gm-death-badge">💀 DÖD</div>';
+        }
+        
+        html += '</div></div>';
+        
+        // KP/VP Row with pips
+        html += '<div class="gm-hp-vp-row">';
+        
+        // KP Box
+        html += '<div class="gm-stat-box">' +
+            '<div class="gm-stat-label">KP</div>' +
+            '<div class="gm-stat-pips">';
         for (var i = 1; i <= maxKp; i++) {
-            var pipClass = 'pip';
-            if (i <= kp) pipClass += ' filled';
-            if (i <= kp && kpPercent <= 25) pipClass += ' critical';
+            var pipClass = 'gm-pip';
+            if (i <= kp) pipClass += ' filled-kp';
             html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentKP\', ' + i + ')">●</span>';
         }
         html += '</div>' +
-            '<div class="tracker-value">' + kp + '/' + maxKp + '</div>' +
+            '<div class="gm-stat-value">' + kp + '/' + maxKp + '</div>' +
+            '<div class="gm-stat-buttons">' +
+            '<button class="gm-stat-btn" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentKP\', -1)">−</button>' +
+            '<button class="gm-stat-btn" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentKP\', 1)">+</button>' +
+            '</div>' +
             '</div>';
         
-        // VP Tracker
-        html += '<div class="pip-tracker vp-tracker">' +
-            '<div class="tracker-label">VP</div>' +
-            '<div class="pips">';
+        // VP Box
+        html += '<div class="gm-stat-box">' +
+            '<div class="gm-stat-label">VP</div>' +
+            '<div class="gm-stat-pips">';
         for (var i = 1; i <= maxVp; i++) {
-            var pipClass = 'pip';
-            if (i <= vp) pipClass += ' filled';
-            if (i <= vp && vpPercent <= 25) pipClass += ' low';
+            var pipClass = 'gm-pip';
+            if (i <= vp) pipClass += ' filled-vp';
             html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentVP\', ' + i + ')">●</span>';
         }
         html += '</div>' +
-            '<div class="tracker-value">' + vp + '/' + maxVp + '</div>' +
+            '<div class="gm-stat-value">' + vp + '/' + maxVp + '</div>' +
+            '<div class="gm-stat-buttons">' +
+            '<button class="gm-stat-btn" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentVP\', -1)">−</button>' +
+            '<button class="gm-stat-btn" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentVP\', 1)">+</button>' +
+            '</div>' +
             '</div>';
         
-        // Top 3 Weapon Skills
-        var topWeapons = this.getTop3WeaponSkills(character);
+        html += '</div>'; // end gm-hp-vp-row
         
-        if (topWeapons.length > 0) {
-            html += '<div class="compact-weapon-skills">' +
-                '<span class="weapon-skills-label">🎯 Vapen:</span> ';
-            topWeapons.forEach(function(weapon, index) {
-                if (index > 0) html += ', ';
-                html += weapon.name + ' ' + weapon.value;
-            });
+        // Combat Stats Row (Skadebonus, Movement, etc.)
+        html += '<div class="gm-combat-row">';
+        
+        html += '<div class="gm-combat-stat">' +
+            '<span class="gm-combat-stat-label">STY:</span>' +
+            '<span class="gm-combat-stat-value">' + (character.damageBonusSTY || 'T4') + '</span>' +
+            '</div>';
+        
+        html += '<div class="gm-combat-stat">' +
+            '<span class="gm-combat-stat-label">SMI:</span>' +
+            '<span class="gm-combat-stat-value">' + (character.damageBonusSMI || 'T6') + '</span>' +
+            '</div>';
+        
+        html += '<div class="gm-combat-stat">' +
+            '<span class="gm-combat-stat-label">🏃:</span>' +
+            '<span class="gm-combat-stat-value">' + (character.movement || 10) + '</span>' +
+            '</div>';
+        
+        var totalArmor = (character.armorProtection || 0) + (character.helmetProtection || 0);
+        html += '<div class="gm-combat-stat">' +
+            '<span class="gm-combat-stat-label">🛡️:</span>' +
+            '<span class="gm-combat-stat-value">' + totalArmor + '</span>' +
+            '</div>';
+        
+        html += '</div>'; // end gm-combat-row
+        
+        // Top 2-3 Weapons
+        var topWeapons = this.getTopWeaponSkills(character);
+        if (topWeapons.length > 0 || (character.weapons && character.weapons.length > 0)) {
+            html += '<div class="gm-weapons-list">' +
+                '<div class="gm-weapons-title">⚔️ Vapen</div>';
+            
+            if (character.weapons && character.weapons.length > 0) {
+                character.weapons.slice(0, 3).forEach(function(weapon) {
+                    if (weapon.name) {
+                        html += '<div class="gm-weapon-item">' +
+                            '<span class="gm-weapon-name">' + weapon.name + '</span>' +
+                            '<span class="gm-weapon-dmg">' + (weapon.damage || '-') + '</span>' +
+                            '</div>';
+                    }
+                });
+            } else if (topWeapons.length > 0) {
+                topWeapons.forEach(function(weapon) {
+                    html += '<div class="gm-weapon-item">' +
+                        '<span class="gm-weapon-name">' + weapon.name + '</span>' +
+                        '<span class="gm-weapon-dmg">' + weapon.value + '</span>' +
+                        '</div>';
+                });
+            }
+            
             html += '</div>';
         }
-        
-        // Stats
-        var armor = character.armorProtection || 0;
-        html += '<div class="compact-stats">' +
-            '<div class="stat-item">🛡️ Rustning: ' + armor + '</div>' +
-            '</div>';
         
         // Conditions
         var conditions = this.getActiveConditions(character);
         if (conditions.length > 0) {
-            html += '<div class="condition-row">';
+            html += '<div class="gm-conditions">';
             conditions.forEach(function(cond) {
-                html += '<span class="condition-badge active">◆ ' + cond + '</span>';
+                html += '<span class="gm-condition-badge">◆ ' + cond + '</span>';
             });
             html += '</div>';
         }
         
-        // Action button
-        html += '<button class="btn btn-outline btn-sm" style="width: 100%; margin-top: 0.5rem;" onclick="GameModeUI.focusCharacter(\'' + character.id + '\')">Visa detaljer</button>';
+        // Actions
+        html += '<div class="gm-card-actions">' +
+            '<button class="gm-btn-info" onclick="GameModeUI.openExpandedCharacterModal(\'' + character.id + '\')">📋 Detaljer</button>' +
+            '</div>';
         
         html += '</div>';
-        
         return html;
     },
     
-    // Render expanded character view
-    renderExpandedView: function(character) {
-        var attrs = character.attributes || {};
-        var maxKp = attrs.FYS || 0;
-        var maxVp = attrs.PSY || 0;
-        var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
-        var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
+    // Render Monsters Column
+    renderMonstersColumn: function() {
+        var self = this;
+        var currentTurnEntityId = this.getCurrentTurnEntityId();
         
-        var html = '<div class="expanded-view">';
+        var html = '<div class="gm-monsters-column">';
         
-        // HEADER: Basic Info
-        html += '<div class="expanded-header">' +
-            '<h2>' + character.name + '</h2>' +
-            '<p class="char-identity">' + 
-            (character.kin || '') + ' • ' + 
-            (character.profession || '') + 
-            (character.age ? ' • ' + character.age : '') +
-            '</p>';
+        html += '<div class="gm-monsters-header">' +
+            '<div class="gm-monsters-title">👹 Monster</div>' +
+            '<button class="gm-btn-add-monster" onclick="GameModeUI.openAddMonsterModal()">+ Lägg till</button>' +
+            '</div>';
         
-        if (character.weakness || character.memento) {
-            html += '<p class="char-details">';
-            if (character.weakness) html += '<span>Svaghet: ' + character.weakness + '</span>';
-            if (character.weakness && character.memento) html += ' • ';
-            if (character.memento) html += '<span>Minnesak: ' + character.memento + '</span>';
-            html += '</p>';
+        if (this.monsters.length === 0) {
+            html += '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Inga monster tillagda</div>';
+        } else {
+            this.monsters.forEach(function(monster) {
+                html += self.renderMonsterCard(monster, currentTurnEntityId);
+            });
         }
         
         html += '</div>';
+        return html;
+    },
+    
+    // Render Monster Card
+    renderMonsterCard: function(monster, currentTurnEntityId) {
+        var isDead = monster.hp <= 0;
+        var isCurrentTurn = currentTurnEntityId === monster.id;
         
-        // SECTION: Attributes with Conditions
-        html += '<div class="expanded-section">' +
-            '<h3>🎯 Attribut & Tillstånd</h3>' +
-            '<div class="attributes-grid">';
+        var cardClass = 'gm-monster-card';
+        if (isDead) cardClass += ' dead';
+        if (isCurrentTurn) cardClass += ' current-turn golden-frame';
         
-        var conditionMap = {
-            'STY': 'Utmattad',
-            'FYS': 'Krasslig',
-            'SMI': 'Omtöcknad',
-            'INT': 'Arg',
-            'PSY': 'Rädd',
-            'KAR': 'Uppgiven'
-        };
+        var html = '<div class="' + cardClass + '" data-monster-id="' + monster.id + '">';
         
-        var charConditions = character.conditions || {};
-        var attributesList = ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'];
+        // Golden frame corners for current turn
+        if (isCurrentTurn) {
+            html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+        }
         
-        attributesList.forEach(function(attr) {
-            var value = attrs[attr] || 0;
-            var condition = conditionMap[attr];
-            var isActive = charConditions[attr] === true;
-            var btnClass = 'attr-condition-btn' + (isActive ? ' active' : '');
-            
-            html += '<div class="attribute-card">' +
-                '<div class="attr-name">' + attr + '</div>' +
-                '<div class="attr-value">' + value + '</div>' +
-                '<button class="' + btnClass + '" onclick="GameModeUI.handleConditionToggle(\'' + character.id + '\', \'' + attr + '\')">' +
-                (isActive ? '◆' : '○') + ' ' + condition +
-                '</button>' +
-                '</div>';
-        });
+        // Header
+        html += '<div class="gm-monster-header">' +
+            '<div class="gm-monster-name">💀 ' + this.escapeHtml(monster.name) + '</div>' +
+            '<button class="gm-btn-remove" onclick="GameModeUI.removeMonster(\'' + monster.id + '\')">✕</button>' +
+            '</div>';
         
-        html += '</div></div>';
+        if (isDead) {
+            html += '<div class="gm-death-badge">💀 DÖD</div>';
+        }
         
-        // SECTION: KP/VP and Death Saves
-        html += '<div class="expanded-section">' +
-            '<h3>💖 Kroppspoäng & Viljepoäng</h3>' +
-            '<div class="kp-vp-container">';
-        
-        // KP Tracker
-        html += '<div class="expanded-tracker">' +
-            '<div class="tracker-header">Kroppspoäng (KP)</div>' +
-            '<div class="pips large">';
-        for (var i = 1; i <= maxKp; i++) {
-            var pipClass = 'pip';
-            if (i <= kp) pipClass += ' filled';
-            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentKP\', ' + i + ')">●</span>';
+        // HP with pips
+        html += '<div class="gm-monster-hp">' +
+            '<div class="gm-stat-label">KP</div>' +
+            '<div class="gm-stat-pips">';
+        for (var i = 1; i <= monster.maxHp; i++) {
+            var pipClass = 'gm-pip';
+            if (i <= monster.hp) pipClass += ' filled-kp';
+            html += '<span class="' + pipClass + '" onclick="GameModeUI.setMonsterHP(\'' + monster.id + '\', ' + i + ')">●</span>';
         }
         html += '</div>' +
-            '<div class="tracker-value-large">' + kp + '/' + maxKp + '</div>' +
-            '<div class="tracker-buttons">' +
-            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentKP\', -1)">− Skada</button>' +
-            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentKP\', 1)">+ Läk</button>' +
+            '<div class="gm-stat-value">' + monster.hp + '/' + monster.maxHp + '</div>' +
+            '<div class="gm-stat-buttons">' +
+            '<button class="gm-stat-btn" onclick="GameModeUI.adjustMonsterHP(\'' + monster.id + '\', -1)">−</button>' +
+            '<button class="gm-stat-btn" onclick="GameModeUI.adjustMonsterHP(\'' + monster.id + '\', 1)">+</button>' +
             '</div>' +
             '</div>';
         
-        // VP Tracker
-        html += '<div class="expanded-tracker">' +
-            '<div class="tracker-header">Viljepoäng (VP)</div>' +
-            '<div class="pips large">';
-        for (var i = 1; i <= maxVp; i++) {
-            var pipClass = 'pip';
-            if (i <= vp) pipClass += ' filled vp';
-            html += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + character.id + '\', \'currentVP\', ' + i + ')">●</span>';
-        }
-        html += '</div>' +
-            '<div class="tracker-value-large">' + vp + '/' + maxVp + '</div>' +
-            '<div class="tracker-buttons">' +
-            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentVP\', -1)">− Använd</button>' +
-            '<button class="btn-sm" onclick="GameModeUI.adjustStat(\'' + character.id + '\', \'currentVP\', 1)">+ Återställ</button>' +
+        // Stats Grid
+        html += '<div class="gm-monster-stats-grid">' +
+            '<div class="gm-monster-stat">' +
+            '<div class="gm-monster-stat-icon">🛡️</div>' +
+            '<div class="gm-monster-stat-value">' + (monster.armor || 0) + '</div>' +
+            '<div class="gm-monster-stat-label">Rustning</div>' +
+            '</div>' +
+            '<div class="gm-monster-stat">' +
+            '<div class="gm-monster-stat-icon">🔄</div>' +
+            '<div class="gm-monster-stat-value">' + (monster.undvika || 10) + '</div>' +
+            '<div class="gm-monster-stat-label">Undvika</div>' +
+            '</div>' +
+            '<div class="gm-monster-stat">' +
+            '<div class="gm-monster-stat-icon">🏃</div>' +
+            '<div class="gm-monster-stat-value">' + (monster.movement || 10) + '</div>' +
+            '<div class="gm-monster-stat-label">Förfl.</div>' +
             '</div>' +
             '</div>';
         
-        html += '</div>';
-        
-        // Death Saves
-        var deathSaves = character.deathSaves || { successes: 0, failures: 0 };
-        html += '<div class="death-saves">' +
-            '<div class="death-saves-label">Dödsslag:</div>' +
-            '<div class="death-saves-pips">';
-        for (var i = 0; i < 3; i++) {
-            html += '<span class="death-pip ' + (i < deathSaves.successes ? 'success' : '') + '">○</span>';
-        }
-        html += '<span class="death-label">Lyck</span>';
-        for (var i = 0; i < 3; i++) {
-            html += '<span class="death-pip ' + (i < deathSaves.failures ? 'fail' : '') + '">○</span>';
-        }
-        html += '<span class="death-label">Miss</span>';
-        html += '</div></div>';
-        
-        html += '</div>';
-        
-        // SECTION: Combat Stats
-        html += '<div class="expanded-section">' +
-            '<h3>⚔️ Strid</h3>' +
-            '<div class="combat-stats">' +
-            '<div class="combat-stat"><label>Förflyttning:</label><span>' + (character.movement || 10) + '</span></div>' +
-            '<div class="combat-stat"><label>Skadebonus (STY):</label><span>' + (character.damageBonusSTY || 'T4') + '</span></div>' +
-            '<div class="combat-stat"><label>Skadebonus (SMI):</label><span>' + (character.damageBonusSMI || 'T6') + '</span></div>' +
-            '</div>';
-        
-        // Armor
-        var totalArmor = (character.armorProtection || 0) + (character.helmetProtection || 0);
-        html += '<div class="armor-display">' +
-            '<div class="armor-item">' +
-            '<label>Rustning:</label>' +
-            '<span>' + (character.armor || 'Ingen') + ' (🛡️ ' + (character.armorProtection || 0) + ')</span>' +
-            '</div>' +
-            '<div class="armor-item">' +
-            '<label>Hjälm:</label>' +
-            '<span>' + (character.helmet || 'Ingen') + ' (🛡️ ' + (character.helmetProtection || 0) + ')</span>' +
-            '</div>' +
-            '<div class="armor-total">Total rustning: 🛡️ ' + totalArmor + '</div>' +
-            '</div>';
-        
-        html += '</div>';
-        
-        // SECTION: Weapons
-        if (character.weapons && character.weapons.length > 0) {
-            html += '<div class="expanded-section">' +
-                '<h3>🗡️ Vapen</h3>' +
-                '<div class="weapons-table-expanded">' +
-                '<table>' +
-                '<thead>' +
-                '<tr>' +
-                '<th>Namn</th>' +
-                '<th>Grepp</th>' +
-                '<th>Skada</th>' +
-                '<th>Räckvidd</th>' +
-                '</tr>' +
-                '</thead>' +
-                '<tbody>';
+        // Attacks
+        if (monster.attacks && monster.attacks.length > 0) {
+            html += '<div class="gm-monster-attacks">' +
+                '<div class="gm-monster-attack-title">⚔️ Attacker</div>';
             
-            character.weapons.forEach(function(weapon) {
-                if (weapon.name) {
-                    html += '<tr>' +
-                        '<td>' + weapon.name + '</td>' +
-                        '<td>' + (weapon.grip || '-') + '</td>' +
-                        '<td>' + (weapon.damage || '-') + '</td>' +
-                        '<td>' + (weapon.range || '-') + '</td>' +
-                        '</tr>';
-                }
+            monster.attacks.forEach(function(attack) {
+                html += '<div class="gm-monster-attack">' +
+                    '<span class="gm-monster-attack-name">' + attack.name + '</span>' +
+                    '<span class="gm-monster-attack-dmg">' + attack.damage + '</span>' +
+                    '</div>';
             });
             
-            html += '</tbody></table></div></div>';
-        }
-        
-        // SECTION: Skills
-        html += '<div class="expanded-section">' +
-            '<h3>🎭 Färdigheter</h3>' +
-            '<div class="skills-weapons-grid">';
-        
-        // Regular Skills
-        html += '<div class="skills-column">' +
-            '<h4>Färdigheter</h4>' +
-            '<div class="skills-list">';
-        
-        if (character.skills) {
-            for (var skillName in character.skills) {
-                var skill = character.skills[skillName];
-                if (skill.value > 0 || skill.isCore) {
-                    var skillClass = 'skill-item' + (skill.isCore ? ' core' : '');
-                    html += '<div class="' + skillClass + '">' +
-                        '<span class="skill-name">' + skillName + ' (' + skill.attr + ')</span>' +
-                        '<span class="skill-value">' + skill.value + '</span>' +
-                        '</div>';
-                }
-            }
-        }
-        
-        html += '</div></div>';
-        
-        // Weapon Skills
-        html += '<div class="skills-column">' +
-            '<h4>Vapenfärdigheter</h4>' +
-            '<div class="skills-list">';
-        
-        if (character.weaponSkills) {
-            for (var skillName in character.weaponSkills) {
-                var skill = character.weaponSkills[skillName];
-                if (skill.value > 0 || skill.isCore) {
-                    var skillClass = 'skill-item' + (skill.isCore ? ' core' : '');
-                    html += '<div class="' + skillClass + '">' +
-                        '<span class="skill-name">' + skillName + ' (' + skill.attr + ')</span>' +
-                        '<span class="skill-value">' + skill.value + '</span>' +
-                        '</div>';
-                }
-            }
-        }
-        
-        html += '</div></div>';
-        
-        html += '</div></div>';
-        
-        // SECTION: Heroic Abilities
-        if (character.heroicAbility || character.kinAbility) {
-            html += '<div class="expanded-section">' +
-                '<h3>✨ Heroiska Förmågor</h3>' +
-                '<div class="abilities-list">';
-            
-            if (character.heroicAbility) {
-                html += '<div class="ability-card">' +
-                    '<div class="ability-name">⚔️ ' + character.heroicAbility + '</div>' +
-                    '</div>';
-            }
-            
-            if (character.kinAbility) {
-                html += '<div class="ability-card">' +
-                    '<div class="ability-name">🌟 ' + character.kinAbility + ' (Släktförmåga)</div>' +
-                    '</div>';
-            }
-            
-            html += '</div></div>';
-        }
-        
-        // SECTION: Equipment & Money
-        html += '<div class="expanded-section">' +
-            '<h3>🎒 Utrustning & Mynt</h3>';
-        
-        if (character.inventory && character.inventory.length > 0) {
-            html += '<div class="inventory-list">' +
-                character.inventory.join(', ') +
-                '</div>';
-        } else {
-            html += '<p class="empty-text">Ingen utrustning listad</p>';
-        }
-        
-        // Money
-        var currency = character.currency || { guld: 0, silver: 0, brons: 0 };
-        html += '<div class="money-display">' +
-            '<span class="money-item">💰 Guld: ' + currency.guld + '</span>' +
-            '<span class="money-item">⚪ Silver: ' + currency.silver + '</span>' +
-            '<span class="money-item">🟤 Brons: ' + currency.brons + '</span>' +
-            '</div>';
-        
-        html += '</div>';
-        
-        // SECTION: Notes
-        if (character.notes) {
-            html += '<div class="expanded-section">' +
-                '<h3>📝 Anteckningar</h3>' +
-                '<div class="notes-display">' + character.notes + '</div>' +
-                '</div>';
+            html += '</div>';
         }
         
         html += '</div>';
-        
         return html;
     },
     
-    // Helper: Adjust stat by delta
+    // Render Sidebar (Combat Log + Notes)
+    renderSidebar: function() {
+        var html = '<div class="gm-sidebar">';
+        
+        // Combat Log
+        html += '<div class="gm-sidebar-panel gm-combat-log">' +
+            '<div class="gm-sidebar-title">📜 Stridslogg</div>' +
+            '<div class="gm-log-entries">';
+        
+        if (this.combatLog.length === 0) {
+            html += '<div class="gm-log-entry system">Ingen aktivitet ännu...</div>';
+        } else {
+            this.combatLog.forEach(function(entry) {
+                var entryClass = 'gm-log-entry ' + (entry.type || 'system');
+                html += '<div class="' + entryClass + '">' +
+                    '<span class="gm-log-time">' + entry.time + '</span> ' +
+                    entry.message +
+                    '</div>';
+            });
+        }
+        
+        html += '</div></div>'; // end combat log
+        
+        // Notes
+        var notes = (this.currentSession && this.currentSession.notes) || '';
+        html += '<div class="gm-sidebar-panel gm-notes">' +
+            '<div class="gm-sidebar-title">📝 Anteckningar</div>' +
+            '<textarea id="gmNotesTextarea" class="gm-notes-textarea" placeholder="Anteckningar för denna session...">' + notes + '</textarea>' +
+            '<button class="btn btn-gold btn-sm" style="margin-top: 0.5rem; width: 100%;" onclick="GameModeUI.saveNotes()">💾 Spara</button>' +
+            '</div>';
+        
+        html += '</div>'; // end gm-sidebar
+        return html;
+    },
+    
+    // Get current turn entity ID
+    getCurrentTurnEntityId: function() {
+        if (!this.currentSession || !this.currentSession.initiative || this.currentSession.initiative.length === 0) {
+            return null;
+        }
+        var currentIndex = this.currentSession.currentTurnIndex || 0;
+        var currentItem = this.currentSession.initiative[currentIndex];
+        return currentItem ? currentItem.ownerId : null;
+    },
+    
+    // Add log entry
+    addLogEntry: function(message, type) {
+        var time = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+        this.combatLog.push({ message: message, type: type || 'system', time: time });
+        
+        // Keep only last 100 entries
+        if (this.combatLog.length > 100) {
+            this.combatLog = this.combatLog.slice(-100);
+        }
+        
+        // Save to session
+        if (this.currentSession) {
+            db.collection('gameSessions').doc(this.currentSession.id).update({
+                combatLog: this.combatLog
+            }).catch(function(error) {
+                console.error('Error saving combat log:', error);
+            });
+        }
+    },
+    
+    // Adjust stat by delta
     adjustStat: function(characterId, field, delta) {
+        var self = this;
         var char = this.characters.find(function(c) { return c.id === characterId; });
         if (!char) return;
         
         var attrs = char.attributes || {};
         var currentValue = char[field];
         var maxValue;
+        var statLabel = '';
         
         if (field === 'currentKP') {
             maxValue = attrs.FYS || 0;
             currentValue = currentValue !== undefined ? currentValue : maxValue;
+            statLabel = 'KP';
         } else if (field === 'currentVP') {
             maxValue = attrs.PSY || 0;
             currentValue = currentValue !== undefined ? currentValue : maxValue;
+            statLabel = 'VP';
         } else {
             return;
         }
         
+        var oldValue = currentValue;
         var newValue = Math.max(0, Math.min(maxValue, currentValue + delta));
         
         GameModeService.updateCharacterStat(characterId, field, newValue)
+            .then(function() {
+                // Log the change
+                if (delta < 0) {
+                    self.addLogEntry(char.name + ' tog ' + Math.abs(delta) + ' skada (' + statLabel + ': ' + oldValue + ' → ' + newValue + ')', 'damage');
+                    if (newValue === 0) {
+                        self.addLogEntry('💀 ' + char.name + ' föll medvetslös!', 'death');
+                    }
+                } else if (delta > 0 && field === 'currentKP') {
+                    self.addLogEntry(char.name + ' helade ' + delta + ' ' + statLabel + ' (' + oldValue + ' → ' + newValue + ')', 'heal');
+                }
+            })
             .catch(function(error) {
                 console.error('Error updating stat:', error);
                 alert('Kunde inte uppdatera: ' + error.message);
             });
     },
     
-    // Render sidebar card
-    renderSidebarCard: function(character) {
-        var attrs = character.attributes || {};
-        var maxKp = attrs.FYS || 0;
-        var maxVp = attrs.PSY || 0;
-        var kp = character.currentKP !== undefined ? character.currentKP : maxKp;
-        var vp = character.currentVP !== undefined ? character.currentVP : maxVp;
-        
-        // Top 3 Weapon Skills
-        var topWeapons = this.getTop3WeaponSkills(character);
-        
-        var html = '<div class="sidebar-card" onclick="GameModeUI.focusCharacter(\'' + character.id + '\')">' +
-            '<div class="sidebar-card-name">' + character.name + '</div>' +
-            '<div class="sidebar-card-stats">' +
-            '<div>KP: ' + kp + '/' + maxKp + '</div>' +
-            '<div>VP: ' + vp + '/' + maxVp + '</div>';
-        
-        if (topWeapons.length > 0) {
-            html += '<div class="sidebar-weapons">🎯 ';
-            topWeapons.forEach(function(weapon, index) {
-                if (index > 0) html += ', ';
-                html += weapon.name + ' ' + weapon.value;
-            });
-            html += '</div>';
-        }
-        
-        html += '</div></div>';
-        
-        return html;
-    },
-    
-    // Render initiative tracker
-    renderInitiativeTracker: function() {
+    // Handle KP/VP pip clicks
+    handlePipClick: function(characterId, field, newValue) {
         var self = this;
+        var char = this.characters.find(function(c) { return c.id === characterId; });
+        if (!char) return;
         
-        var html = '<div class="initiative-tracker">' +
-            '<div class="initiative-header">' +
-            '<h3>⚔️ Initiativ</h3>' +
-            '<button class="btn btn-gold btn-sm" onclick="GameModeUI.rollInitiative()">🎲 Slå initiativ</button>' +
-            '</div>';
+        var attrs = char.attributes || {};
+        var oldValue = char[field];
+        var maxValue;
+        var statLabel = '';
         
-        if (self.currentSession && self.currentSession.initiative && self.currentSession.initiative.length > 0) {
-            html += '<div class="initiative-list">';
-            
-            var currentIndex = self.currentSession.currentTurnIndex || 0;
-            var round = self.currentSession.round || 1;
-            
-            html += '<div class="initiative-round">Runda ' + round + '</div>';
-            
-            self.currentSession.initiative.forEach(function(item, index) {
-                var itemClass = 'initiative-item';
-                if (index === currentIndex) itemClass += ' current';
-                
-                var rollDisplay = item.roll ? ' 🎲' + item.roll : '';
-                
-                // Add icon based on type
-                var icon = item.type === 'monster' ? '💀' : '🧝';
-                
-                html += '<div class="' + itemClass + '">' +
-                    '<span class="initiative-number">' + (index + 1) + '.</span>' +
-                    '<span class="initiative-icon">' + icon + '</span>' +
-                    '<span class="initiative-name">' + item.name + '</span>' +
-                    '<span class="initiative-total">' + rollDisplay + ' (' + item.total + ')</span>' +
-                    '</div>';
-            });
-            
-            html += '<button class="btn btn-outline btn-sm" style="margin-top: 0.5rem;" onclick="GameModeUI.nextTurn()">Nästa tur</button>';
-            
-            html += '</div>';
-        } else {
-            html += '<p style="color: var(--text-muted); padding: 1rem; text-align: center;">Slå initiativ för att börja</p>';
+        if (field === 'currentKP') {
+            maxValue = attrs.FYS || 0;
+            oldValue = oldValue !== undefined ? oldValue : maxValue;
+            statLabel = 'KP';
+        } else if (field === 'currentVP') {
+            maxValue = attrs.PSY || 0;
+            oldValue = oldValue !== undefined ? oldValue : maxValue;
+            statLabel = 'VP';
         }
         
-        html += '</div>';
+        var delta = newValue - oldValue;
         
-        return html;
-    },
-    
-    // Render DM toolbar
-    renderDMToolbar: function() {
-        var html = '<div class="dm-toolbar">' +
-            '<h3>🎲 DM-verktyg</h3>' +
-            '<div class="dm-toolbar-actions">' +
-            '<button class="dm-tool-btn" onclick="GameModeUI.openDamageAllModal()">💥 Skada alla</button>' +
-            '<button class="dm-tool-btn" onclick="GameModeUI.openRestAllModal()">😴 Vila alla</button>' +
-            '<button class="dm-tool-btn" onclick="GameModeUI.openAddMonsterModal()">➕ Lägg till monster</button>' +
-            '</div>' +
-            '</div>';
-        
-        return html;
-    },
-    
-    // Render quick notes
-    renderQuickNotes: function() {
-        var notes = (this.currentSession && this.currentSession.notes) || '';
-        
-        var html = '<div class="quick-notes">' +
-            '<h3>📝 Sessionsanteckningar</h3>' +
-            '<textarea id="sessionNotes" class="session-notes-textarea" placeholder="Anteckningar för denna session...">' + notes + '</textarea>' +
-            '<button class="btn btn-gold btn-sm" onclick="GameModeUI.saveSessionNotes()">💾 Spara</button>' +
-            '</div>';
-        
-        return html;
-    },
-    
-    // Render monsters panel
-    renderMonstersPanel: function() {
-        var monsters = (this.currentSession && this.currentSession.monsters) || [];
-        
-        var html = '<div class="monsters-panel">' +
-            '<div class="monsters-header">' +
-            '<h3>👹 Monster</h3>' +
-            '</div>';
-        
-        if (monsters.length === 0) {
-            html += '<p style="color: var(--text-muted); padding: 1rem; text-align: center;">Inga monster tillagda</p>';
-        } else {
-            html += '<div class="monsters-grid">';
-            monsters.forEach(function(monster) {
-                html += this.renderMonsterCard(monster);
-            }.bind(this));
-            html += '</div>';
-        }
-        
-        html += '</div>';
-        
-        return html;
-    },
-    
-    // Render monster card
-    renderMonsterCard: function(monster) {
-        return '<div class="monster-card" data-monster-id="' + monster.id + '">' +
-            '<div class="monster-header">' +
-            '<span class="monster-name">🐺 ' + this.escapeHtml(monster.name) + '</span>' +
-            '<button class="btn-remove-monster" onclick="GameModeUI.removeMonster(\'' + monster.id + '\')">✕</button>' +
-            '</div>' +
-            '<div class="monster-hp">' +
-            '<label>KP:</label>' +
-            '<span class="monster-hp-value">' + monster.hp + '/' + monster.maxHp + '</span>' +
-            '<button class="btn-sm" onclick="GameModeUI.adjustMonsterHP(\'' + monster.id + '\', -1)">−</button>' +
-            '<button class="btn-sm" onclick="GameModeUI.adjustMonsterHP(\'' + monster.id + '\', 1)">+</button>' +
-            '</div>' +
-            '<div class="monster-stats">' +
-            '<div class="monster-stat">' +
-            '<span class="stat-icon">🛡️</span>' +
-            '<span class="stat-value">' + monster.armor + '</span>' +
-            '<span class="stat-label">Rustning</span>' +
-            '</div>' +
-            '<div class="monster-stat">' +
-            '<span class="stat-icon">🔄</span>' +
-            '<span class="stat-value">' + (monster.undvika || 0) + '</span>' +
-            '<span class="stat-label">Undvika</span>' +
-            '</div>' +
-            '<div class="monster-stat">' +
-            '<span class="stat-icon">🏃</span>' +
-            '<span class="stat-value">' + (monster.movement || 10) + '</span>' +
-            '<span class="stat-label">Förfl.</span>' +
-            '</div>' +
-            '</div>' +
-            (monster.notes ? '<div class="monster-notes">' + this.escapeHtml(monster.notes) + '</div>' : '') +
-            '</div>';
-    },
-    
-    // Escape HTML to prevent XSS
-    escapeHtml: function(text) {
-        var map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
-    },
-    
-    // Remove monster
-    removeMonster: function(monsterId) {
-        var self = this;
-        if (!confirm('Ta bort detta monster?')) return;
-        
-        GameModeService.removeMonster(self.currentSession.id, monsterId)
+        GameModeService.updateCharacterStat(characterId, field, newValue)
             .then(function() {
-                return db.collection('gameSessions').doc(self.currentSession.id).get();
-            })
-            .then(function(doc) {
-                if (doc.exists) {
-                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.render();
+                // Log the change
+                if (delta < 0) {
+                    self.addLogEntry(char.name + ' tog ' + Math.abs(delta) + ' skada (' + statLabel + ': ' + oldValue + ' → ' + newValue + ')', 'damage');
+                    if (newValue === 0) {
+                        self.addLogEntry('💀 ' + char.name + ' föll medvetslös!', 'death');
+                    }
+                } else if (delta > 0 && field === 'currentKP') {
+                    self.addLogEntry(char.name + ' helade ' + delta + ' ' + statLabel + ' (' + oldValue + ' → ' + newValue + ')', 'heal');
                 }
             })
             .catch(function(error) {
-                console.error('Error removing monster:', error);
-                alert('Kunde inte ta bort monster: ' + error.message);
+                console.error('Error updating stat:', error);
+                alert('Kunde inte uppdatera: ' + error.message);
             });
     },
     
     // Adjust monster HP
     adjustMonsterHP: function(monsterId, delta) {
         var self = this;
-        var monsters = (self.currentSession && self.currentSession.monsters) || [];
-        var monster = monsters.find(function(m) { return m.id === monsterId; });
+        var monster = this.monsters.find(function(m) { return m.id === monsterId; });
         if (!monster) return;
         
-        var newHP = Math.max(0, Math.min(monster.maxHp, monster.hp + delta));
+        var oldHP = monster.hp;
+        var newHP = Math.max(0, Math.min(monster.maxHp, oldHP + delta));
         
-        GameModeService.updateMonster(self.currentSession.id, monsterId, { hp: newHP })
+        GameModeService.updateMonster(this.currentSession.id, monsterId, { hp: newHP })
             .then(function() {
                 return db.collection('gameSessions').doc(self.currentSession.id).get();
             })
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    
+                    // Log the change
+                    if (delta < 0) {
+                        self.addLogEntry(monster.name + ' tog ' + Math.abs(delta) + ' skada (KP: ' + oldHP + ' → ' + newHP + ')', 'damage');
+                        if (newHP === 0) {
+                            self.addLogEntry('💀 ' + monster.name + ' föll i strid!', 'death');
+                        }
+                    } else if (delta > 0) {
+                        self.addLogEntry(monster.name + ' helade ' + delta + ' KP (' + oldHP + ' → ' + newHP + ')', 'heal');
+                    }
+                    
                     self.render();
                 }
             })
@@ -800,31 +662,123 @@ var GameModeUI = {
             });
     },
     
-    // Handle KP/VP pip clicks
-    handlePipClick: function(characterId, field, newValue) {
-        GameModeService.updateCharacterStat(characterId, field, newValue)
+    // Set monster HP via pip click
+    setMonsterHP: function(monsterId, newHP) {
+        var self = this;
+        var monster = this.monsters.find(function(m) { return m.id === monsterId; });
+        if (!monster) return;
+        
+        var oldHP = monster.hp;
+        var delta = newHP - oldHP;
+        
+        GameModeService.updateMonster(this.currentSession.id, monsterId, { hp: newHP })
+            .then(function() {
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    
+                    // Log the change
+                    if (delta < 0) {
+                        self.addLogEntry(monster.name + ' tog ' + Math.abs(delta) + ' skada (KP: ' + oldHP + ' → ' + newHP + ')', 'damage');
+                        if (newHP === 0) {
+                            self.addLogEntry('💀 ' + monster.name + ' föll i strid!', 'death');
+                        }
+                    } else if (delta > 0) {
+                        self.addLogEntry(monster.name + ' helade ' + delta + ' KP (' + oldHP + ' → ' + newHP + ')', 'heal');
+                    }
+                    
+                    self.render();
+                }
+            })
             .catch(function(error) {
-                console.error('Error updating stat:', error);
-                alert('Kunde inte uppdatera: ' + error.message);
+                console.error('Error updating monster HP:', error);
             });
     },
     
-    // Handle condition toggle
-    handleConditionToggle: function(characterId, conditionAttr) {
-        var char = this.characters.find(function(c) { return c.id === characterId; });
-        if (!char) return;
+    // Roll initiative for all characters and monsters
+    rollInitiative: function() {
+        var self = this;
         
-        var charConditions = char.conditions || {};
-        var newValue = !charConditions[conditionAttr];
+        // Skip dead entities
+        var aliveCharacters = this.characters.filter(function(char) {
+            var attrs = char.attributes || {};
+            var maxKp = attrs.FYS || 0;
+            var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
+            return kp > 0;
+        });
         
-        // Update the conditions object
-        var updatedConditions = Object.assign({}, charConditions);
-        updatedConditions[conditionAttr] = newValue;
+        var aliveMonsters = this.monsters.filter(function(monster) {
+            return monster.hp > 0;
+        });
         
-        GameModeService.updateCharacterStat(characterId, 'conditions', updatedConditions)
+        if (aliveCharacters.length === 0 && aliveMonsters.length === 0) {
+            alert('Inga levande karaktärer eller monster att slå initiativ för');
+            return;
+        }
+        
+        var initiative = GameModeService.rollInitiative(aliveCharacters, aliveMonsters);
+        
+        GameModeService.setInitiativeOrder(this.currentSession.id, initiative)
+            .then(function() {
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.addLogEntry('🎲 Initiativ slaget! Strid börjar.', 'system');
+                    self.addLogEntry('--- Runda 1 ---', 'round');
+                    if (initiative.length > 0) {
+                        self.addLogEntry('Ny tur: ' + initiative[0].name, 'turn');
+                    }
+                    self.render();
+                }
+            })
             .catch(function(error) {
-                console.error('Error toggling condition:', error);
-                alert('Kunde inte uppdatera tillstånd: ' + error.message);
+                console.error('Error rolling initiative:', error);
+                alert('Kunde inte slå initiativ: ' + error.message);
+            });
+    },
+    
+    // Next turn in initiative
+    nextTurn: function() {
+        var self = this;
+        
+        var currentIndex = this.currentSession.currentTurnIndex || 0;
+        var currentRound = this.currentSession.round || 1;
+        var initiative = this.currentSession.initiative || [];
+        
+        GameModeService.nextTurn(this.currentSession.id)
+            .then(function() {
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    
+                    var newIndex = self.currentSession.currentTurnIndex || 0;
+                    var newRound = self.currentSession.round || 1;
+                    
+                    // Log round change
+                    if (newRound > currentRound) {
+                        self.addLogEntry('--- Runda ' + newRound + ' ---', 'round');
+                    }
+                    
+                    // Log turn change
+                    if (initiative[newIndex]) {
+                        self.addLogEntry('Ny tur: ' + initiative[newIndex].name, 'turn');
+                    }
+                    
+                    self.render();
+                }
+            })
+            .catch(function(error) {
+                console.error('Error advancing turn:', error);
+                alert('Kunde inte gå till nästa tur: ' + error.message);
             });
     },
     
@@ -850,152 +804,95 @@ var GameModeUI = {
         return conditions;
     },
     
-    // Switch view mode
-    switchView: function(view) {
-        this.currentView = view;
-        this.render();
-    },
-    
-    // Focus on a character
-    focusCharacter: function(characterId) {
-        this.currentView = 'focus';
-        this.focusedCharacterId = characterId;
-        this.render();
-    },
-    
-    // Roll initiative for all characters
-    rollInitiative: function() {
-        var self = this;
-        
-        if (self.characters.length === 0 && (!self.currentSession.monsters || self.currentSession.monsters.length === 0)) {
-            alert('Inga karaktärer eller monster att slå initiativ för');
-            return;
-        }
-        
-        var monsters = (self.currentSession && self.currentSession.monsters) || [];
-        var initiative = GameModeService.rollInitiative(self.characters, monsters);
-        
-        GameModeService.setInitiativeOrder(self.currentSession.id, initiative)
-            .then(function() {
-                // Refresh session data
-                return db.collection('gameSessions').doc(self.currentSession.id).get();
-            })
-            .then(function(doc) {
-                if (doc.exists) {
-                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.render();
-                }
-            })
-            .catch(function(error) {
-                console.error('Error rolling initiative:', error);
-                alert('Kunde inte slå initiativ: ' + error.message);
-            });
-    },
-    
-    // Next turn in initiative
-    nextTurn: function() {
-        var self = this;
-        
-        GameModeService.nextTurn(self.currentSession.id)
-            .then(function() {
-                return db.collection('gameSessions').doc(self.currentSession.id).get();
-            })
-            .then(function(doc) {
-                if (doc.exists) {
-                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
-                    self.render();
-                }
-            })
-            .catch(function(error) {
-                console.error('Error advancing turn:', error);
-                alert('Kunde inte gå till nästa tur: ' + error.message);
-            });
-    },
-    
-    // Open damage all modal
-    openDamageAllModal: function() {
-        var amount = prompt('Hur mycket skada ska alla ta?');
-        if (amount === null) return;
-        
-        amount = parseInt(amount, 10);
-        if (isNaN(amount) || amount < 0) {
-            alert('Ogiltigt värde');
-            return;
-        }
-        
-        var characterIds = this.characters.map(function(c) { return c.id; });
-        GameModeService.damageAll(characterIds, amount)
-            .then(function(results) {
-                var message = 'Skada applicerad!\n\n';
-                if (results.updated.length > 0) {
-                    message += 'Uppdaterade (' + results.updated.length + '):\n';
-                    results.updated.forEach(function(char) {
-                        message += '✓ ' + char.name + '\n';
-                    });
-                }
-                if (results.skipped.length > 0) {
-                    message += '\nHoppades över (' + results.skipped.length + '):\n';
-                    results.skipped.forEach(function(char) {
-                        message += '✗ ' + (char.name || char.id) + ' (' + char.reason + ')\n';
-                    });
-                }
-                alert(message);
-            })
-            .catch(function(error) {
-                console.error('Error applying damage:', error);
-                alert('Kunde inte applicera skada: ' + error.message);
-            });
-    },
-    
-    // Open rest all modal
-    openRestAllModal: function() {
-        var restType = confirm('Välj vilotyp:\nOK = Lång vila (återställ allt)\nAvbryt = Kort vila (halvera KP)') ? 'long' : 'short';
-        
-        var characterIds = this.characters.map(function(c) { return c.id; });
-        GameModeService.restAll(characterIds, restType)
-            .then(function(results) {
-                var message = 'Vila applicerad!\n\n';
-                if (results.updated.length > 0) {
-                    message += 'Uppdaterade (' + results.updated.length + '):\n';
-                    results.updated.forEach(function(char) {
-                        message += '✓ ' + char.name + '\n';
-                    });
-                }
-                if (results.skipped.length > 0) {
-                    message += '\nHoppades över (' + results.skipped.length + '):\n';
-                    results.skipped.forEach(function(char) {
-                        message += '✗ ' + (char.name || char.id) + ' (' + char.reason + ')\n';
-                    });
-                }
-                alert(message);
-            })
-            .catch(function(error) {
-                console.error('Error applying rest:', error);
-                alert('Kunde inte applicera vila: ' + error.message);
-            });
-    },
-    
-    // Open add monster modal
+    // Open Add Monster Modal
     openAddMonsterModal: function() {
         var self = this;
-        var name = prompt('Monsternamn:');
-        if (!name) return;
         
-        var hp = prompt('HP:', '10');
-        hp = parseInt(hp, 10);
-        if (isNaN(hp)) hp = 10;
+        // Create modal overlay
+        var overlay = document.createElement('div');
+        overlay.className = 'gm-modal-overlay';
+        overlay.id = 'addMonsterModalOverlay';
         
-        var armor = prompt('Rustning:', '0');
-        armor = parseInt(armor, 10);
-        if (isNaN(armor)) armor = 0;
+        var modalHTML = '<div class="gm-modal-content" style="max-width: 600px;">' +
+            '<button class="gm-modal-close" onclick="GameModeUI.closeModal(\'addMonsterModalOverlay\')">✕</button>' +
+            '<h2 style="margin-bottom: 1.5rem;">Lägg till Monster</h2>' +
+            
+            // Quick Add Section
+            '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem;">Snabbval</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">' +
+            '<button class="btn btn-outline" onclick="GameModeUI.addPresetMonster(\'Skuggvarg\', 8, 2, 12, 10, [{name: \'Bett\', damage: \'1T10\'}])">🐺 Skuggvarg</button>' +
+            '<button class="btn btn-outline" onclick="GameModeUI.addPresetMonster(\'Skelettkrigar\', 6, 3, 10, 8, [{name: \'Svärd\', damage: \'1T8\'}])">💀 Skelettkrigar</button>' +
+            '<button class="btn btn-outline" onclick="GameModeUI.addPresetMonster(\'Goblin\', 5, 1, 11, 10, [{name: \'Kort svärd\', damage: \'1T6\'}])">👹 Goblin</button>' +
+            '<button class="btn btn-outline" onclick="GameModeUI.addPresetMonster(\'Orch\', 12, 4, 9, 8, [{name: \'Yxa\', damage: \'1T10+2\'}])">👺 Orch</button>' +
+            '</div>' +
+            '</div>' +
+            
+            // Custom Form Section
+            '<div>' +
+            '<h3 style="margin-bottom: 1rem;">Anpassat Monster</h3>' +
+            '<div style="display: flex; flex-direction: column; gap: 1rem;">' +
+            
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Namn</label>' +
+            '<input type="text" id="monsterNameInput" class="input-field" placeholder="Monsternamn" style="width: 100%;">' +
+            '</div>' +
+            
+            '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">KP (max)</label>' +
+            '<input type="number" id="monsterHPInput" class="input-field" value="10" min="1" style="width: 100%;">' +
+            '</div>' +
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Rustning</label>' +
+            '<input type="number" id="monsterArmorInput" class="input-field" value="0" min="0" style="width: 100%;">' +
+            '</div>' +
+            '</div>' +
+            
+            '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Undvika</label>' +
+            '<input type="number" id="monsterUndvikaInput" class="input-field" value="10" min="1" style="width: 100%;">' +
+            '</div>' +
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Förflyttning</label>' +
+            '<input type="number" id="monsterMovementInput" class="input-field" value="10" min="1" style="width: 100%;">' +
+            '</div>' +
+            '</div>' +
+            
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Initiativkort (1-10)</label>' +
+            '<input type="number" id="monsterInitInput" class="input-field" value="5" min="1" max="10" style="width: 100%;">' +
+            '</div>' +
+            
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Attacker (JSON: [{name: "Bett", damage: "1T8"}])</label>' +
+            '<textarea id="monsterAttacksInput" class="input-field" rows="3" placeholder=\'[{"name": "Bett", "damage": "1T8"}]\' style="width: 100%; font-family: monospace; font-size: 0.875rem;"></textarea>' +
+            '</div>' +
+            
+            '</div>' +
+            
+            '<div style="display: flex; gap: 1rem; margin-top: 1.5rem;">' +
+            '<button class="btn btn-outline" style="flex: 1;" onclick="GameModeUI.closeModal(\'addMonsterModalOverlay\')">Avbryt</button>' +
+            '<button class="btn btn-gold" style="flex: 1;" onclick="GameModeUI.submitCustomMonster()">Lägg till</button>' +
+            '</div>' +
+            
+            '</div>' +
+            '</div>';
         
-        var undvika = prompt('Undvika:', '10');
-        undvika = parseInt(undvika, 10);
-        if (isNaN(undvika)) undvika = 10;
+        overlay.innerHTML = modalHTML;
+        document.body.appendChild(overlay);
         
-        var movement = prompt('Förflyttning:', '10');
-        movement = parseInt(movement, 10);
-        if (isNaN(movement)) movement = 10;
+        // Focus first input
+        setTimeout(function() {
+            var input = document.getElementById('monsterNameInput');
+            if (input) input.focus();
+        }, 100);
+    },
+    
+    // Add preset monster
+    addPresetMonster: function(name, hp, armor, undvika, movement, attacks) {
+        var self = this;
         
         var monster = {
             name: name,
@@ -1004,19 +901,21 @@ var GameModeUI = {
             armor: armor,
             undvika: undvika,
             movement: movement,
-            notes: ''
+            attacks: attacks || [],
+            initiativkort: Math.floor(Math.random() * 10) + 1
         };
         
         GameModeService.addMonster(this.currentSession.id, monster)
             .then(function() {
-                console.log('Monster added');
-                // Refresh session to show new monster
                 return db.collection('gameSessions').doc(self.currentSession.id).get();
             })
             .then(function(doc) {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.addLogEntry('Monster tillagt: ' + name, 'system');
                     self.render();
+                    self.closeModal('addMonsterModalOverlay');
                 }
             })
             .catch(function(error) {
@@ -1025,19 +924,293 @@ var GameModeUI = {
             });
     },
     
-    // Save session notes
-    saveSessionNotes: function() {
-        var notes = document.getElementById('sessionNotes');
-        if (!notes) return;
+    // Submit custom monster
+    submitCustomMonster: function() {
+        var name = document.getElementById('monsterNameInput').value.trim();
+        var hp = parseInt(document.getElementById('monsterHPInput').value, 10);
+        var armor = parseInt(document.getElementById('monsterArmorInput').value, 10);
+        var undvika = parseInt(document.getElementById('monsterUndvikaInput').value, 10);
+        var movement = parseInt(document.getElementById('monsterMovementInput').value, 10);
+        var initCard = parseInt(document.getElementById('monsterInitInput').value, 10);
+        var attacksText = document.getElementById('monsterAttacksInput').value.trim();
         
-        GameModeService.updateNotes(this.currentSession.id, notes.value)
+        if (!name) {
+            alert('Monsternamn krävs');
+            return;
+        }
+        
+        var attacks = [];
+        if (attacksText) {
+            try {
+                attacks = JSON.parse(attacksText);
+            } catch (e) {
+                alert('Ogiltigt JSON-format för attacker. Exempel: [{"name": "Bett", "damage": "1T8"}]');
+                return;
+            }
+        }
+        
+        var self = this;
+        var monster = {
+            name: name,
+            hp: hp,
+            maxHp: hp,
+            armor: armor,
+            undvika: undvika,
+            movement: movement,
+            attacks: attacks,
+            initiativkort: initCard
+        };
+        
+        GameModeService.addMonster(this.currentSession.id, monster)
             .then(function() {
-                alert('Anteckningar sparade!');
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    self.render();
+                    self.closeModal('addMonsterModalOverlay');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error adding monster:', error);
+                alert('Kunde inte lägga till monster: ' + error.message);
+            });
+    },
+    
+    // Remove monster
+    removeMonster: function(monsterId) {
+        var self = this;
+        var monster = this.monsters.find(function(m) { return m.id === monsterId; });
+        if (!monster) return;
+        
+        if (!confirm('Ta bort ' + monster.name + '?')) return;
+        
+        GameModeService.removeMonster(this.currentSession.id, monsterId)
+            .then(function() {
+                return db.collection('gameSessions').doc(self.currentSession.id).get();
+            })
+            .then(function(doc) {
+                if (doc.exists) {
+                    self.currentSession = Object.assign({ id: doc.id }, doc.data());
+                    self.combatLog = doc.data().combatLog || self.combatLog;
+                    self.addLogEntry('Monster borttaget: ' + monster.name, 'system');
+                    self.render();
+                }
+            })
+            .catch(function(error) {
+                console.error('Error removing monster:', error);
+                alert('Kunde inte ta bort monster: ' + error.message);
+            });
+    },
+    
+    // Open Expanded Character Modal
+    openExpandedCharacterModal: function(characterId) {
+        var char = this.characters.find(function(c) { return c.id === characterId; });
+        if (!char) return;
+        
+        var overlay = document.createElement('div');
+        overlay.className = 'gm-modal-overlay';
+        overlay.id = 'expandedCharModalOverlay';
+        
+        var attrs = char.attributes || {};
+        var maxKp = attrs.FYS || 0;
+        var maxVp = attrs.PSY || 0;
+        var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
+        var vp = char.currentVP !== undefined ? char.currentVP : maxVp;
+        
+        var modalHTML = '<div class="gm-modal-content golden-frame" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">' +
+            '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>' +
+            '<button class="gm-modal-close" onclick="GameModeUI.closeModal(\'expandedCharModalOverlay\')">✕</button>' +
+            
+            '<div style="text-align: center; margin-bottom: 2rem;">' +
+            '<div style="font-size: 3rem; margin-bottom: 0.5rem;">' + getKinIcon(char.kin || 'default') + '</div>' +
+            '<h1 style="margin-bottom: 0.5rem;">' + char.name + '</h1>' +
+            '<div style="color: var(--text-muted);">' + (char.kin || '') + ' • ' + (char.profession || '') + '</div>' +
+            '</div>' +
+            
+            // Attributes Grid
+            '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem;">Attribut</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem;">';
+        
+        ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'].forEach(function(attr) {
+            var value = attrs[attr] || 0;
+            modalHTML += '<div style="text-align: center; padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
+                '<div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">' + attr + '</div>' +
+                '<div style="font-size: 1.5rem; font-weight: bold;">' + value + '</div>' +
+                '</div>';
+        });
+        
+        modalHTML += '</div></div>';
+        
+        // KP/VP with clickable pips
+        modalHTML += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem;">Kroppspoäng & Viljepoäng</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
+            
+            '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
+            '<div style="font-weight: bold; margin-bottom: 0.5rem;">KP: ' + kp + '/' + maxKp + '</div>' +
+            '<div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem;">';
+        
+        for (var i = 1; i <= maxKp; i++) {
+            var pipClass = 'gm-pip';
+            if (i <= kp) pipClass += ' filled-kp';
+            modalHTML += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + characterId + '\', \'currentKP\', ' + i + ')" style="cursor: pointer;">●</span>';
+        }
+        
+        modalHTML += '</div></div>' +
+            
+            '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
+            '<div style="font-weight: bold; margin-bottom: 0.5rem;">VP: ' + vp + '/' + maxVp + '</div>' +
+            '<div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem;">';
+        
+        for (var i = 1; i <= maxVp; i++) {
+            var pipClass = 'gm-pip';
+            if (i <= vp) pipClass += ' filled-vp';
+            modalHTML += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + characterId + '\', \'currentVP\', ' + i + ')" style="cursor: pointer;">●</span>';
+        }
+        
+        modalHTML += '</div></div>' +
+            
+            '</div></div>';
+        
+        // Skills & Weapon Skills
+        modalHTML += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem;">Färdigheter & Vapenfärdigheter</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
+            
+            '<div>' +
+            '<h4 style="margin-bottom: 0.5rem;">Färdigheter</h4>' +
+            '<div style="display: flex; flex-direction: column; gap: 0.25rem;">';
+        
+        if (char.skills) {
+            for (var skillName in char.skills) {
+                var skill = char.skills[skillName];
+                if (skill.value > 0 || skill.isCore) {
+                    modalHTML += '<div style="display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; background: var(--card-bg); border-radius: 4px;">' +
+                        '<span>' + skillName + ' (' + skill.attr + ')</span>' +
+                        '<span>' + skill.value + '</span>' +
+                        '</div>';
+                }
+            }
+        }
+        
+        modalHTML += '</div></div>' +
+            
+            '<div>' +
+            '<h4 style="margin-bottom: 0.5rem;">Vapenfärdigheter</h4>' +
+            '<div style="display: flex; flex-direction: column; gap: 0.25rem;">';
+        
+        if (char.weaponSkills) {
+            for (var skillName in char.weaponSkills) {
+                var skill = char.weaponSkills[skillName];
+                if (skill.value > 0 || skill.isCore) {
+                    modalHTML += '<div style="display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; background: var(--card-bg); border-radius: 4px;">' +
+                        '<span>' + skillName + ' (' + skill.attr + ')</span>' +
+                        '<span>' + skill.value + '</span>' +
+                        '</div>';
+                }
+            }
+        }
+        
+        modalHTML += '</div></div>' +
+            
+            '</div></div>';
+        
+        // Weapons
+        if (char.weapons && char.weapons.length > 0) {
+            modalHTML += '<div style="margin-bottom: 2rem;">' +
+                '<h3 style="margin-bottom: 1rem;">⚔️ Vapen</h3>' +
+                '<table style="width: 100%; border-collapse: collapse;">' +
+                '<thead>' +
+                '<tr style="background: var(--card-bg);">' +
+                '<th style="padding: 0.5rem; text-align: left;">Namn</th>' +
+                '<th style="padding: 0.5rem; text-align: left;">Grepp</th>' +
+                '<th style="padding: 0.5rem; text-align: left;">Skada</th>' +
+                '<th style="padding: 0.5rem; text-align: left;">Räckvidd</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>';
+            
+            char.weapons.forEach(function(weapon) {
+                if (weapon.name) {
+                    modalHTML += '<tr>' +
+                        '<td style="padding: 0.5rem;">' + weapon.name + '</td>' +
+                        '<td style="padding: 0.5rem;">' + (weapon.grip || '-') + '</td>' +
+                        '<td style="padding: 0.5rem;">' + (weapon.damage || '-') + '</td>' +
+                        '<td style="padding: 0.5rem;">' + (weapon.range || '-') + '</td>' +
+                        '</tr>';
+                }
+            });
+            
+            modalHTML += '</tbody></table></div>';
+        }
+        
+        // Equipment & Currency
+        modalHTML += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem;">🎒 Utrustning & Mynt</h3>';
+        
+        if (char.inventory && char.inventory.length > 0) {
+            modalHTML += '<div style="margin-bottom: 1rem;">' + char.inventory.join(', ') + '</div>';
+        }
+        
+        var currency = char.currency || { guld: 0, silver: 0, brons: 0 };
+        modalHTML += '<div style="display: flex; gap: 1rem;">' +
+            '<span>💰 Guld: ' + currency.guld + '</span>' +
+            '<span>⚪ Silver: ' + currency.silver + '</span>' +
+            '<span>🟤 Brons: ' + currency.brons + '</span>' +
+            '</div>';
+        
+        modalHTML += '</div>';
+        
+        modalHTML += '</div>';
+        
+        overlay.innerHTML = modalHTML;
+        document.body.appendChild(overlay);
+    },
+    
+    // Close modal
+    closeModal: function(overlayId) {
+        var overlay = document.getElementById(overlayId);
+        if (overlay) {
+            overlay.remove();
+        }
+    },
+    
+    // Save notes
+    saveNotes: function() {
+        var textarea = document.getElementById('gmNotesTextarea');
+        if (!textarea) return;
+        
+        GameModeService.updateNotes(this.currentSession.id, textarea.value)
+            .then(function() {
+                // Show brief success indicator
+                var btn = event.target;
+                var originalText = btn.textContent;
+                btn.textContent = '✓ Sparat!';
+                setTimeout(function() {
+                    btn.textContent = originalText;
+                }, 1500);
             })
             .catch(function(error) {
                 console.error('Error saving notes:', error);
                 alert('Kunde inte spara anteckningar: ' + error.message);
             });
+    },
+    
+    // Escape HTML to prevent XSS
+    escapeHtml: function(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
     },
     
     // Exit game mode
