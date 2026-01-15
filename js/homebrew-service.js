@@ -4,7 +4,8 @@ var HomebrewService = {
     CATEGORIES: {
         abilities: { 
             label: 'Heroiska Förmågor', 
-            icon: '⚔️',
+            // icon: '⚔️',
+			icon: '<img src="icons/CombatAction.gif" class="custom-icon-img" alt="Abilities">',
             fields: ['name', 'requirement', 'wp', 'abilityType', 'description']
         },
         monsters: { 
