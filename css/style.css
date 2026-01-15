@@ -129,7 +129,7 @@ body.app-active::before {
 .nav-brand { text-decoration: none; }
 .brand-logo { height: 60px; width: auto; }
 .nav-actions { display: flex; gap: 0.75rem; }
-.hero { max-width: 100%; margin: 0 auto; padding: 4rem 3rem; text-align: center; position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.hero { max-width: 100%; margin: 0 auto; padding: 4rem 3rem; text-align: center; position: relative; flex: 1; display: flex; align-items: center; justify-content: center; }
 
 /* Video Carousel Container */
 .bg-video-carousel {
@@ -197,13 +197,8 @@ body.app-active::before {
 
 /* Carousel Indicators */
 .carousel-indicators {
-    position: absolute;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
     gap: 0.75rem;
-    z-index: 10;
 }
 
 .carousel-dot {
@@ -225,6 +220,91 @@ body.app-active::before {
 .carousel-dot.active {
     background: var(--accent-gold);
     box-shadow: 0 0 10px var(--accent-gold);
+}
+
+/* Carousel Controls Container */
+.carousel-controls {
+    position: absolute;
+    bottom: 8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    z-index: 10;
+}
+
+/* Navigation Arrows */
+.carousel-nav {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-gold);
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--accent-gold);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.carousel-nav:hover {
+    background: var(--accent-gold);
+    color: var(--bg-dark);
+    transform: scale(1.1);
+}
+
+.carousel-nav svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Center Section */
+.carousel-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Progress Bar */
+.carousel-progress {
+    width: 120px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.carousel-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+    border-radius: 2px;
+    transition: width 0.05s linear;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .carousel-controls {
+        gap: 1rem;
+    }
+    
+    .carousel-nav {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .carousel-nav svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .carousel-progress {
+        width: 80px;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
