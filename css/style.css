@@ -4182,6 +4182,65 @@ body.app-active::before {
     gap: 0.75rem;
 }
 
+/* Header Button Styles */
+.gm-btn-primary {
+    background: linear-gradient(135deg, #d4af37, #f0d875);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #1a1a1a;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.gm-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212,175,55,0.4);
+}
+
+.gm-btn-success {
+    background: linear-gradient(135deg, #22c55e, #4ade80);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #1a1a1a;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.gm-btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34,197,94,0.4);
+}
+
+.gm-btn-decrease {
+    background: #dc2626 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.gm-btn-increase {
+    background: #22c55e !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
 /* Initiative Tracker - Horizontal tokens */
 .gm-initiative-bar {
     background: rgba(26, 29, 36, 0.8);
@@ -4189,6 +4248,9 @@ body.app-active::before {
     padding: 0.75rem 1.5rem;
     overflow-x: auto;
     flex-shrink: 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
 }
 
 .gm-initiative-tokens {
@@ -4237,6 +4299,24 @@ body.app-active::before {
     border-color: var(--gm-text-dim);
 }
 
+/* Initiative card number badge */
+.gm-init-card-number {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #d4af37, #f0d875);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 11px;
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.6);
+}
+
 .gm-token-number {
     font-size: 1.25rem;
     font-weight: 700;
@@ -4254,24 +4334,34 @@ body.app-active::before {
     max-width: 100%;
 }
 
+/* Arrow between tokens */
+.gm-initiative-arrow {
+    color: var(--gm-text-dim);
+    font-size: 1.25rem;
+    user-select: none;
+}
+
 /* Golden corner frame for active turn */
 .golden-frame {
     position: relative;
 }
 
+.gm-active-frame {
+    position: relative;
+}
+
 .golden-frame::before,
 .golden-frame::after,
-.golden-frame .corner-tl,
-.golden-frame .corner-tr,
-.golden-frame .corner-bl,
-.golden-frame .corner-br {
+.gm-active-frame::before,
+.gm-active-frame::after {
     content: '';
     position: absolute;
     pointer-events: none;
 }
 
 /* Top-left corner */
-.golden-frame::before {
+.golden-frame::before,
+.gm-active-frame::before {
     top: -2px;
     left: -2px;
     width: 20px;
@@ -4282,7 +4372,8 @@ body.app-active::before {
 }
 
 /* Top-right corner */
-.golden-frame::after {
+.golden-frame::after,
+.gm-active-frame::after {
     top: -2px;
     right: -2px;
     width: 20px;
@@ -4293,7 +4384,10 @@ body.app-active::before {
 }
 
 /* Bottom corners via pseudo classes on child elements */
-.golden-frame .gm-frame-bl {
+.golden-frame .gm-frame-bl,
+.golden-frame .corner-bl,
+.gm-active-frame .gm-frame-bl,
+.gm-active-frame .corner-bl {
     position: absolute;
     bottom: -2px;
     left: -2px;
@@ -4304,7 +4398,10 @@ body.app-active::before {
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
 
-.golden-frame .gm-frame-br {
+.golden-frame .gm-frame-br,
+.golden-frame .corner-br,
+.gm-active-frame .gm-frame-br,
+.gm-active-frame .corner-br {
     position: absolute;
     bottom: -2px;
     right: -2px;
@@ -4318,8 +4415,8 @@ body.app-active::before {
 /* Main Grid Layout */
 .gm-main-grid {
     display: grid;
-    grid-template-columns: 1.5fr 0.8fr 180px;
-    gap: 1rem;
+    grid-template-columns: 1.5fr 0.8fr 200px;
+    gap: 12px;
     padding: 1rem 1.5rem;
     overflow: hidden;
     flex: 1;
@@ -4501,19 +4598,30 @@ body.app-active::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-    color: var(--gm-text-muted);
+    border: none;
+    border-radius: 4px;
+    color: white;
     cursor: pointer;
     font-size: 0.75rem;
+    font-weight: bold;
     transition: all 0.2s;
+    padding: 4px 8px;
 }
 
-.gm-stat-btn:hover {
-    background: var(--gm-gold);
-    border-color: var(--gm-gold);
-    color: #000;
+.gm-btn-decrease {
+    background: #dc2626 !important;
+}
+
+.gm-btn-decrease:hover {
+    background: #b91c1c !important;
+}
+
+.gm-btn-increase {
+    background: #22c55e !important;
+}
+
+.gm-btn-increase:hover {
+    background: #16a34a !important;
 }
 
 /* Combat Stats Row */
@@ -4854,6 +4962,46 @@ body.app-active::before {
     font-weight: 600;
 }
 
+/* Stats Panel (HJÄLTAR/MONSTER counts) */
+.gm-stats-panel {
+    background: rgba(30, 33, 40, 0.8);
+    border: 1px solid var(--gm-border);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.gm-stats-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 0.5rem;
+}
+
+.gm-stat-item {
+    text-align: center;
+}
+
+.gm-stat-item-label {
+    font-size: 0.65rem;
+    color: var(--gm-text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.05em;
+}
+
+.gm-stat-item-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.gm-stat-item-value.heroes {
+    color: var(--gm-gold);
+}
+
+.gm-stat-item-value.monsters {
+    color: var(--gm-red);
+}
+
 /* Combat Log */
 .gm-combat-log {
     flex: 1;
@@ -4893,14 +5041,15 @@ body.app-active::before {
     line-height: 1.4;
 }
 
-.gm-log-entry.damage {
+.gm-log-entry.damage,
+.gm-log-entry.monster {
     border-left-color: var(--gm-red);
-    color: var(--gm-red);
+    color: #f87171;
 }
 
 .gm-log-entry.heal {
     border-left-color: var(--gm-green);
-    color: var(--gm-green);
+    color: #86efac;
 }
 
 .gm-log-entry.death {
@@ -4909,9 +5058,10 @@ body.app-active::before {
     font-weight: 700;
 }
 
-.gm-log-entry.turn {
+.gm-log-entry.turn,
+.gm-log-entry.hero {
     border-left-color: var(--gm-gold);
-    color: var(--gm-gold);
+    color: #fbbf24;
 }
 
 .gm-log-entry.round {
