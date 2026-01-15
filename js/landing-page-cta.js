@@ -14,7 +14,7 @@
                 titleSub: 'Börjar Här',
                 description: 'Skapa karaktärer, organisera kampanjer och dela äventyr med dina vänner.',
                 primaryBtn: {
-                    text: '⚔️ Börja Äventyra',
+                    text: '<img src="icons/CombatAction.gif" width="32" height="32"> Börja Äventyra',
                     action: 'signup'
                 },
                 secondaryBtn: {
@@ -28,7 +28,7 @@
                 titleSub: 'Din Fantasi, Dina Regler',
                 description: 'Skapa egna monster, föremål, besvärjelser och bakgrunder. Dela med communityn eller håll dem privata.',
                 primaryBtn: {
-                    text: '🧪 Utforska Hemmabryggt',
+                    text: '<img src="icons/Brew.gif" width="32" height="32"> Utforska Hemmabryggt',
                     action: 'homebrew'
                 },
                 secondaryBtn: {
