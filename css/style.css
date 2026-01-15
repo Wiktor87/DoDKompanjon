@@ -170,6 +170,63 @@ body.app-active::before {
     opacity: 0.5;
 }
 
+/* CTA Content Transitions */
+.hero-content {
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.hero-content.cta-fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.hero-content.cta-fade-in {
+    animation: ctaFadeIn 0.5s ease-out forwards;
+}
+
+@keyframes ctaFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Carousel Indicators */
+.carousel-indicators {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.75rem;
+    z-index: 10;
+}
+
+.carousel-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-gold);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.carousel-dot:hover {
+    background: var(--accent-gold-dark);
+    transform: scale(1.1);
+}
+
+.carousel-dot.active {
+    background: var(--accent-gold);
+    box-shadow: 0 0 10px var(--accent-gold);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .bg-video {
         display: none;
