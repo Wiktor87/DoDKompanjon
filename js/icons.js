@@ -39,4 +39,25 @@ function getIconSVG(category, name) {
     return (ICONS[category] && ICONS[category][name]) || (ICONS[category] && ICONS[category]['default']) || '';
 }
 
+// GIF Icon Migration - Update character avatarGif based on kin
+function migrateCharacterGIFIcons(character) {
+    if (!character || !character.kin) return character;
+    
+    var kinToGif = {
+        'Människa': '/icons/Manniska.gif',
+        'Alv': '/icons/Alv.gif',
+        'Dvärg': '/icons/Dvarg.gif',
+        'Halvling': '/icons/NewCharacter.gif',
+        'Anka': '/icons/Anka.gif',
+        'Vargfolk': '/icons/Varg.gif'
+    };
+    
+    // Only update if avatarGif is not already set
+    if (!character.avatarGif && kinToGif[character.kin]) {
+        character.avatarGif = kinToGif[character.kin];
+    }
+    
+    return character;
+}
+
 console.log('✅ Icons loaded');

@@ -232,10 +232,11 @@ function loadDashboardParties() {
 
 function renderCharacterCardCompact(char) {
     var icon = getKinIcon(char.kin);
-    var kp = char.currentKP || (char.attributes && char.attributes.FYS) || 0;
-    var maxKp = (char.attributes && char.attributes.FYS) || kp || 1;
-    var vp = char.currentVP || (char.attributes && char.attributes.PSY) || 0;
-    var maxVp = (char.attributes && char.attributes.PSY) || vp || 1;
+    var attrs = char.attributes || {};
+    var maxKp = attrs.FYS || 0;
+    var maxVp = attrs.PSY || 0;
+    var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
+    var vp = char.currentVP !== undefined ? char.currentVP : maxVp;
     var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 100;
     var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 100;
     var lastPlayed = char.lastPlayed || 'Aldrig';
@@ -344,35 +345,108 @@ function loadCharactersList() {
         if (characters.length === 0) {
             container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🎭</div><h3>Inga karaktärer ännu</h3><button class="btn btn-gold" onclick="openCharacterCreator()">Skapa din första</button></div>';
         } else {
-            container.innerHTML = characters.map(renderCharacterCardFull).join('');
+            var html = characters.map(renderCharacterCardFull).join('');
+            // Add "Starta en ny legend" card
+            html += renderNewCharacterCard();
+            container.innerHTML = html;
         }
     }).catch(function(err) {
         container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Fel</h3><p>' + err.message + '</p></div>';
     });
 }
 
+// Render "Starta en ny legend" card
+function renderNewCharacterCard() {
+    var html = '<div class="fantasy-new-character-card" onclick="openCharacterCreator()">';
+    html += '<div class="fantasy-book-icon">';
+    html += '<div class="fantasy-book-spine"></div>';
+    html += '<div class="fantasy-book-plus">+</div>';
+    html += '<div class="fantasy-book-rune top">ᚠᚢᚦᚨᚱ</div>';
+    html += '<div class="fantasy-book-rune bottom">ᛒᛖᚱᚲᚨ</div>';
+    html += '</div>';
+    html += '<div class="fantasy-new-title">Starta en ny legend</div>';
+    html += '<div class="fantasy-new-subtitle">Skapa ny karaktär</div>';
+    html += '</div>';
+    return html;
+}
+
 function renderCharacterCardFull(char) {
     var icon = getKinIcon(char.kin);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
-    return '<div class="character-card-full" onclick="viewCharacter(\'' + char.id + '\')">' +
-        '<div class="card-header"><div class="card-portrait">' + icon + '</div>' +
-        '<div class="card-identity"><div class="card-name">' + (char.name || 'Namnlös') + '</div>' +
-        '<div class="card-subtitle">' + [char.kin, char.profession].filter(Boolean).join(' ') + '</div></div></div>' +
-        '<div class="card-body"><div class="card-stats-grid">' +
-        ['STY','FYS','SMI','INT','PSY'].map(function(a) {
-            return '<div class="stat-box"><div class="stat-name">' + a + '</div><div class="stat-value">' + (attrs[a] || '—') + '</div></div>';
-        }).join('') + '</div>' +
-        '<div class="card-derived">' +
-        '<div class="derived-stat"><div class="derived-label">KP</div><div class="derived-value hp">' + (attrs.FYS || '?') + '</div></div>' +
-        '<div class="derived-stat"><div class="derived-label">VP</div><div class="derived-value wp">' + (attrs.PSY || '?') + '</div></div>' +
-        '<div class="derived-stat"><div class="derived-label">Förfl.</div><div class="derived-value mv">10</div></div>' +
-        '</div></div>' +
-        '<div class="card-footer" style="cursor: default;"><span>' + profIcon + ' ' + (char.heroicAbility || '—') + '</span>' +
-        '<div style="display: flex; gap: 0.5rem;">' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button>' +
-        '</div></div></div>';
+    var maxKp = attrs.FYS || 0;
+    var maxVp = attrs.PSY || 0;
+    var currentKp = char.currentKP !== undefined ? char.currentKP : maxKp;
+    var currentVp = char.currentVP !== undefined ? char.currentVP : maxVp;
+    var kpPercent = maxKp > 0 ? (currentKp / maxKp) * 100 : 0;
+    var vpPercent = maxVp > 0 ? (currentVp / maxVp) * 100 : 0;
+    var isInGroup = char.isInGroup || false;
+    
+    var html = '<div class="fantasy-character-card" onclick="viewCharacter(\'' + char.id + '\')">';
+    
+    // Decorative L-corners
+    html += '<svg class="decorative-corner-svg top-left" viewBox="0 0 25 25"><path d="M0 0 L25 0 L25 3 L3 3 L3 25 L0 25 Z" fill="#d4af37" /></svg>';
+    html += '<svg class="decorative-corner-svg top-right" viewBox="0 0 25 25"><path d="M0 0 L25 0 L25 25 L22 25 L22 3 L0 3 Z" fill="#d4af37" /></svg>';
+    html += '<svg class="decorative-corner-svg bottom-left" viewBox="0 0 25 25"><path d="M0 0 L3 0 L3 22 L25 22 L25 25 L0 25 Z" fill="#d4af37" /></svg>';
+    html += '<svg class="decorative-corner-svg bottom-right" viewBox="0 0 25 25"><path d="M22 0 L25 0 L25 25 L0 25 L0 22 L22 22 Z" fill="#d4af37" /></svg>';
+    
+    // Header with portrait and name
+    html += '<div class="fantasy-card-header">';
+    html += '<div class="fantasy-portrait">';
+    html += icon;
+    // Mini corner decorations
+    html += '<div class="portrait-corner-deco top-left"></div>';
+    html += '<div class="portrait-corner-deco top-right"></div>';
+    html += '<div class="portrait-corner-deco bottom-left"></div>';
+    html += '<div class="portrait-corner-deco bottom-right"></div>';
+    html += '</div>';
+    html += '<div class="fantasy-card-identity">';
+    html += '<h3 class="fantasy-card-name">' + (char.name || 'Namnlös') + '</h3>';
+    html += '<div class="fantasy-card-subtitle"><span class="icon">⚔</span>' + (char.kin || 'Okänd') + ' • ' + (char.profession || 'Okänt yrke') + '</div>';
+    html += '</div></div>';
+    
+    // Divider
+    html += '<div class="fantasy-divider"></div>';
+    
+    // Attributes row
+    html += '<div class="fantasy-attributes">';
+    ['STY','FYS','SMI','INT','PSY','KAR'].forEach(function(attr) {
+        html += '<div class="fantasy-attr-box">';
+        html += '<div class="fantasy-attr-label">' + attr + '</div>';
+        html += '<div class="fantasy-attr-value">' + (attrs[attr] || '—') + '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+    
+    // Health bars
+    html += '<div class="fantasy-health-container">';
+    // KP bar
+    html += '<div class="fantasy-health-bar">';
+    html += '<span class="fantasy-health-icon">❤️</span>';
+    html += '<div class="fantasy-health-track"><div class="fantasy-health-fill" style="width: ' + kpPercent + '%"></div></div>';
+    html += '<span class="fantasy-health-value">' + currentKp + '</span>';
+    html += '</div>';
+    // VP bar
+    html += '<div class="fantasy-health-bar">';
+    html += '<span class="fantasy-health-icon">💠</span>';
+    html += '<div class="fantasy-health-track vp"><div class="fantasy-health-fill vp" style="width: ' + vpPercent + '%"></div></div>';
+    html += '<span class="fantasy-health-value vp">' + currentVp + '</span>';
+    html += '</div>';
+    html += '</div>';
+    
+    // Divider
+    html += '<div class="fantasy-divider-light"></div>';
+    
+    // Action buttons
+    html += '<div class="fantasy-card-buttons">';
+    html += '<button class="fantasy-btn" onclick="event.stopPropagation();"><span>✨</span> ' + (char.heroicAbility || 'Förmåga') + '</button>';
+    var groupBtnClass = isInGroup ? 'in-group' : 'not-in-group';
+    var groupBtnText = isInGroup ? 'I grupp' : 'Lägg till';
+    html += '<button class="fantasy-btn ' + groupBtnClass + '" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')"><span>👥</span> ' + groupBtnText + '</button>';
+    html += '</div>';
+    
+    html += '</div>';
+    return html;
 }
 
 // View Character
@@ -487,8 +561,8 @@ function renderFullCharacterSheet(char) {
     
     // Tab navigation
     html += '<div class="sheet-tabs-v2">';
-    html += '<button class="sheet-tab-v2 active" onclick="switchSheetTabV2(this, \'overview\')">Översikt</button>';
-    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'skills\')">Färdigheter</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'overview\')">Översikt</button>';
+    html += '<button class="sheet-tab-v2 active" onclick="switchSheetTabV2(this, \'skills\')">Färdigheter</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'combat\')">Strid</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'equipment\')">Utrustning</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'notes\')">Anteckningar</button>';
@@ -501,13 +575,13 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-main-v2">';
     
     // Tab content: Overview
-    html += '<div class="sheet-tab-content-v2 active" id="tab-overview-v2">';
+    html += '<div class="sheet-tab-content-v2" id="tab-overview-v2" style="display: none;">';
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Översikt</h3></div>';
     html += '<div class="sheet-panel-v2-content"><p style="color: var(--text-secondary);">Grundläggande karaktärsinformation visas här.</p></div></div>';
     html += '</div>';
     
     // Tab content: Skills
-    html += '<div class="sheet-tab-content-v2" id="tab-skills-v2" style="display: none;">';
+    html += '<div class="sheet-tab-content-v2 active" id="tab-skills-v2">';
     html += renderSkillsPanel(skills, SKILLS);
     html += '</div>';
     
