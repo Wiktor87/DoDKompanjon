@@ -3,6 +3,7 @@
     'use strict';
     
     var TRANSITION_DURATION_MS = 1000; // Fade transition duration
+    var PROGRESS_UPDATE_INTERVAL = 50; // How often to update progress bar (ms)
     
     var VideoCarousel = {
         // Slide data: each slide has video + CTA content
@@ -40,6 +41,8 @@
         videoElements: [],
         isTransitioning: false,
         heroContentEl: null,
+        progressInterval: null,
+        progressBarEl: null,
         
         init: function() {
             var container = document.querySelector('.bg-video-carousel');
@@ -78,12 +81,13 @@
             // Update CTA content to initial slide
             this.updateCTAContent(0, false);
             
-            // Create carousel indicators
-            this.createIndicators();
+            // Create carousel controls (nav arrows, indicators, progress)
+            this.createCarouselControls();
             
             // Start playing the first video
             if (this.videoElements.length > 0) {
                 this.playVideo(0);
+                this.startProgressTracking();
             }
             
             // Set up event listeners for video end
@@ -94,10 +98,29 @@
             }.bind(this));
         },
         
-        createIndicators: function() {
-            var heroSection = document.querySelector('.hero');
+        createCarouselControls: function() {
+            var heroSection = document.querySelector('.landing-header');
             if (!heroSection) return;
             
+            // Create controls container
+            var controlsContainer = document.createElement('div');
+            controlsContainer.className = 'carousel-controls';
+            
+            // Previous button
+            var prevBtn = document.createElement('button');
+            prevBtn.className = 'carousel-nav carousel-prev';
+            prevBtn.setAttribute('aria-label', 'Föregående slide');
+            prevBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+            prevBtn.onclick = function() {
+                this.transitionToPrev();
+            }.bind(this);
+            controlsContainer.appendChild(prevBtn);
+            
+            // Center section (indicators + progress)
+            var centerSection = document.createElement('div');
+            centerSection.className = 'carousel-center';
+            
+            // Indicators
             var indicatorContainer = document.createElement('div');
             indicatorContainer.className = 'carousel-indicators';
             
@@ -113,7 +136,60 @@
                 indicatorContainer.appendChild(dot);
             }.bind(this));
             
-            heroSection.appendChild(indicatorContainer);
+            centerSection.appendChild(indicatorContainer);
+            
+            // Progress bar
+            var progressContainer = document.createElement('div');
+            progressContainer.className = 'carousel-progress';
+            var progressBar = document.createElement('div');
+            progressBar.className = 'carousel-progress-bar';
+            progressContainer.appendChild(progressBar);
+            this.progressBarEl = progressBar;
+            
+            centerSection.appendChild(progressContainer);
+            controlsContainer.appendChild(centerSection);
+            
+            // Next button
+            var nextBtn = document.createElement('button');
+            nextBtn.className = 'carousel-nav carousel-next';
+            nextBtn.setAttribute('aria-label', 'Nästa slide');
+            nextBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            nextBtn.onclick = function() {
+                this.transitionToNext();
+            }.bind(this);
+            controlsContainer.appendChild(nextBtn);
+            
+            heroSection.appendChild(controlsContainer);
+        },
+        
+        startProgressTracking: function() {
+            var self = this;
+            
+            // Clear any existing interval
+            if (this.progressInterval) {
+                clearInterval(this.progressInterval);
+            }
+            
+            this.progressInterval = setInterval(function() {
+                self.updateProgress();
+            }, PROGRESS_UPDATE_INTERVAL);
+        },
+        
+        updateProgress: function() {
+            if (!this.progressBarEl) return;
+            if (this.isTransitioning) return;
+            
+            var currentVideo = this.videoElements[this.currentIndex];
+            if (!currentVideo || !currentVideo.duration) return;
+            
+            var progress = (currentVideo.currentTime / currentVideo.duration) * 100;
+            this.progressBarEl.style.width = progress + '%';
+        },
+        
+        resetProgress: function() {
+            if (this.progressBarEl) {
+                this.progressBarEl.style.width = '0%';
+            }
         },
         
         updateIndicators: function(index) {
@@ -233,6 +309,7 @@
             if (targetIndex === this.currentIndex) return;
             
             this.isTransitioning = true;
+            this.resetProgress();
             
             var currentVideo = this.videoElements[this.currentIndex];
             var nextVideo = this.videoElements[targetIndex];
@@ -271,6 +348,11 @@
         transitionToNext: function() {
             var nextIndex = (this.currentIndex + 1) % this.slides.length;
             this.transitionToSlide(nextIndex);
+        },
+        
+        transitionToPrev: function() {
+            var prevIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
+            this.transitionToSlide(prevIndex);
         }
     };
     
