@@ -981,8 +981,8 @@ body.app-active::before {
 }
 
 .character-card-new .char-portrait-new svg {
-    width: 32px;
-    height: 32px;
+    width: 64px;
+    height: 64px;
     color: var(--accent-gold);
 }
 
