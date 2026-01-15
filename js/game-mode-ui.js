@@ -179,6 +179,7 @@ var GameModeUI = {
             var initiative = this.currentSession.initiative;
             var currentIndex = this.currentSession.currentTurnIndex || 0;
             
+            html += '<div class="gm-init-label">INITIATIV:</div>';
             html += '<div class="gm-initiative-tokens">';
             
             var renderedCount = 0;
@@ -194,10 +195,9 @@ var GameModeUI = {
                 }
                 renderedCount++;
                 
-                var tokenClass = 'gm-initiative-token';
-                tokenClass += ' ' + item.type;
+                var tokenClass = 'gm-init-token';
                 if (index === currentIndex) {
-                    tokenClass += ' current gm-active-frame';
+                    tokenClass += ' active';
                 }
                 
                 var icon = item.type === 'monster' ? '💀' : '🧝';
@@ -207,16 +207,16 @@ var GameModeUI = {
                 
                 // Add golden frame corners for current turn
                 if (index === currentIndex) {
-                    html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+                    html += '<span class="corner-bl"></span><span class="corner-br"></span>';
                 }
                 
                 // Initiative card number badge (only if card was drawn)
                 if (cardNumber > 0) {
-                    html += '<div class="gm-init-card-number">' + cardNumber + '</div>';
+                    html += '<div class="gm-init-card-badge">' + cardNumber + '</div>';
                 }
                 
-                html += '<div>' + icon + '</div>' +
-                    '<div class="gm-token-name">' + item.name + '</div>' +
+                html += '<div class="gm-init-token-icon">' + icon + '</div>' +
+                    '<div class="gm-init-token-name">' + item.name + '</div>' +
                     '</div>';
             });
             
@@ -238,16 +238,17 @@ var GameModeUI = {
         var currentTurnEntityId = this.getCurrentTurnEntityId();
         
         var html = '<div class="gm-heroes-column">';
+        html += '<div class="gm-heroes-grid">';
         
         if (this.characters.length === 0) {
-            html += '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Inga hjältar i gruppen</div>';
+            html += '<div style="padding: 2rem; text-align: center; color: var(--text-muted); grid-column: 1/-1;">Inga hjältar i gruppen</div>';
         } else {
             this.characters.forEach(function(char) {
                 html += self.renderHeroCard(char, currentTurnEntityId);
             });
         }
         
-        html += '</div>';
+        html += '</div></div>';
         return html;
     },
     
@@ -264,13 +265,28 @@ var GameModeUI = {
         
         var cardClass = 'gm-hero-card';
         if (isDead) cardClass += ' dead';
-        if (isCurrentTurn) cardClass += ' current-turn gm-active-frame';
+        if (isCurrentTurn) cardClass += ' active';
         
         var html = '<div class="' + cardClass + '" data-character-id="' + character.id + '">';
         
         // Golden frame corners for current turn
         if (isCurrentTurn) {
-            html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+            html += '<span class="corner-bl"></span><span class="corner-br"></span>';
+        }
+        
+        // Initiative card badge (find in initiative order)
+        var initiativeCard = 0;
+        if (this.currentSession && this.currentSession.initiative) {
+            var initItem = this.currentSession.initiative.find(function(item) {
+                return item.type === 'character' && item.ownerId === character.id;
+            });
+            if (initItem) {
+                initiativeCard = initItem.initiativeCard || 0;
+            }
+        }
+        
+        if (initiativeCard > 0) {
+            html += '<div class="gm-hero-initiative-badge">' + initiativeCard + '</div>';
         }
         
         // Header
@@ -433,13 +449,13 @@ var GameModeUI = {
         
         var cardClass = 'gm-monster-card';
         if (isDead) cardClass += ' dead';
-        if (isCurrentTurn) cardClass += ' current-turn gm-active-frame';
+        if (isCurrentTurn) cardClass += ' active';
         
         var html = '<div class="' + cardClass + '" data-monster-id="' + monster.id + '">';
         
         // Golden frame corners for current turn
         if (isCurrentTurn) {
-            html += '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>';
+            html += '<span class="corner-bl"></span><span class="corner-br"></span>';
         }
         
         // Header
@@ -984,9 +1000,15 @@ var GameModeUI = {
             '<h3 style="margin-bottom: 1rem;">Anpassat Monster</h3>' +
             '<div style="display: flex; flex-direction: column; gap: 1rem;">' +
             
+            '<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">' +
             '<div>' +
             '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Namn</label>' +
             '<input type="text" id="monsterNameInput" class="input-field" placeholder="Monsternamn" style="width: 100%;">' +
+            '</div>' +
+            '<div>' +
+            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Antal (1-10)</label>' +
+            '<input type="number" id="monsterQuantityInput" class="input-field" value="1" min="1" max="10" style="width: 100%;">' +
+            '</div>' +
             '</div>' +
             
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
@@ -1012,13 +1034,20 @@ var GameModeUI = {
             '</div>' +
             
             '<div>' +
-            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Initiativkort (1-10)</label>' +
-            '<input type="number" id="monsterInitInput" class="input-field" value="5" min="1" max="10" style="width: 100%;">' +
+            '<label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">Attack</label>' +
+            '<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">' +
+            '<input type="text" id="monsterAttackNameInput" class="input-field" placeholder="Attacknamn (t.ex. Bett)" style="width: 100%;">' +
+            '<select id="monsterAttackDamageInput" class="input-field" style="width: 100%;">' +
+            '<option value="1T4">1T4</option>' +
+            '<option value="1T6">1T6</option>' +
+            '<option value="1T8" selected>1T8</option>' +
+            '<option value="1T10">1T10</option>' +
+            '<option value="1T12">1T12</option>' +
+            '<option value="2T6">2T6</option>' +
+            '<option value="2T8">2T8</option>' +
+            '<option value="2T10">2T10</option>' +
+            '</select>' +
             '</div>' +
-            
-            '<div>' +
-            '<label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Attacker (JSON: [{name: "Bett", damage: "1T8"}])</label>' +
-            '<textarea id="monsterAttacksInput" class="input-field" rows="3" placeholder=\'[{"name": "Bett", "damage": "1T8"}]\' style="width: 100%; font-family: monospace; font-size: 0.875rem;"></textarea>' +
             '</div>' +
             
             '</div>' +
@@ -1042,21 +1071,38 @@ var GameModeUI = {
     },
     
     // Add preset monster
-    addPresetMonster: function(name, hp, armor, undvika, movement, attacks) {
+    addPresetMonster: function(name, hp, armor, undvika, movement, attacks, quantityParam) {
         var self = this;
         
-        var monster = {
-            name: name,
-            hp: hp,
-            maxHp: hp,
-            armor: armor,
-            undvika: undvika,
-            movement: movement,
-            attacks: attacks || [],
-            initiativkort: Math.floor(Math.random() * 10) + 1
-        };
+        // Ask for quantity if not provided
+        var quantity = quantityParam;
+        if (!quantity) {
+            quantity = parseInt(prompt('Hur många ' + name + '? (1-10)', '1'), 10);
+            if (isNaN(quantity) || quantity < 1) {
+                return; // User cancelled or invalid input
+            }
+            quantity = Math.min(10, quantity);
+        }
         
-        GameModeService.addMonster(this.currentSession.id, monster)
+        // Create monsters with unique names if quantity > 1
+        var promises = [];
+        for (var i = 0; i < quantity; i++) {
+            var monsterName = quantity > 1 ? name + ' ' + (i + 1) : name;
+            var monster = {
+                name: monsterName,
+                hp: hp,
+                maxHp: hp,
+                armor: armor,
+                undvika: undvika,
+                movement: movement,
+                attacks: attacks || [],
+                initiativkort: Math.floor(Math.random() * 10) + 1
+            };
+            
+            promises.push(GameModeService.addMonster(this.currentSession.id, monster));
+        }
+        
+        Promise.all(promises)
             .then(function() {
                 return db.collection('gameSessions').doc(self.currentSession.id).get();
             })
@@ -1064,7 +1110,11 @@ var GameModeUI = {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
                     self.combatLog = self.safeCombatLog(doc.data());
-                    self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    if (quantity === 1) {
+                        self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    } else {
+                        self.addLogEntry(quantity + ' ' + name + ' tillagda', 'system');
+                    }
                     self.render();
                     self.closeModal('addMonsterModalOverlay');
                 }
@@ -1078,41 +1128,51 @@ var GameModeUI = {
     // Submit custom monster
     submitCustomMonster: function() {
         var name = document.getElementById('monsterNameInput').value.trim();
+        var quantity = parseInt(document.getElementById('monsterQuantityInput').value, 10) || 1;
         var hp = parseInt(document.getElementById('monsterHPInput').value, 10);
         var armor = parseInt(document.getElementById('monsterArmorInput').value, 10);
         var undvika = parseInt(document.getElementById('monsterUndvikaInput').value, 10);
         var movement = parseInt(document.getElementById('monsterMovementInput').value, 10);
-        var initCard = parseInt(document.getElementById('monsterInitInput').value, 10);
-        var attacksText = document.getElementById('monsterAttacksInput').value.trim();
+        var attackName = document.getElementById('monsterAttackNameInput').value.trim();
+        var attackDamage = document.getElementById('monsterAttackDamageInput').value;
         
         if (!name) {
             alert('Monsternamn krävs');
             return;
         }
         
+        // Limit quantity
+        quantity = Math.max(1, Math.min(10, quantity));
+        
         var attacks = [];
-        if (attacksText) {
-            try {
-                attacks = JSON.parse(attacksText);
-            } catch (e) {
-                alert('Ogiltigt JSON-format för attacker. Exempel: [{"name": "Bett", "damage": "1T8"}]');
-                return;
-            }
+        if (attackName) {
+            attacks.push({
+                name: attackName,
+                damage: attackDamage
+            });
         }
         
         var self = this;
-        var monster = {
-            name: name,
-            hp: hp,
-            maxHp: hp,
-            armor: armor,
-            undvika: undvika,
-            movement: movement,
-            attacks: attacks,
-            initiativkort: initCard
-        };
         
-        GameModeService.addMonster(this.currentSession.id, monster)
+        // Create monsters with unique names if quantity > 1
+        var promises = [];
+        for (var i = 0; i < quantity; i++) {
+            var monsterName = quantity > 1 ? name + ' ' + (i + 1) : name;
+            var monster = {
+                name: monsterName,
+                hp: hp,
+                maxHp: hp,
+                armor: armor,
+                undvika: undvika,
+                movement: movement,
+                attacks: attacks,
+                initiativkort: Math.floor(Math.random() * 10) + 1
+            };
+            
+            promises.push(GameModeService.addMonster(this.currentSession.id, monster));
+        }
+        
+        Promise.all(promises)
             .then(function() {
                 return db.collection('gameSessions').doc(self.currentSession.id).get();
             })
@@ -1120,7 +1180,11 @@ var GameModeUI = {
                 if (doc.exists) {
                     self.currentSession = Object.assign({ id: doc.id }, doc.data());
                     self.combatLog = self.safeCombatLog(doc.data());
-                    self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    if (quantity === 1) {
+                        self.addLogEntry('Monster tillagt: ' + name, 'system');
+                    } else {
+                        self.addLogEntry(quantity + ' ' + name + ' tillagda', 'system');
+                    }
                     self.render();
                     self.closeModal('addMonsterModalOverlay');
                 }
@@ -1172,39 +1236,67 @@ var GameModeUI = {
         var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
         var vp = char.currentVP !== undefined ? char.currentVP : maxVp;
         
-        var modalHTML = '<div class="gm-modal-content golden-frame" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">' +
+        var modalHTML = '<div class="gm-modal-content golden-frame" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">' +
             '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>' +
             '<button class="gm-modal-close" onclick="GameModeUI.closeModal(\'expandedCharModalOverlay\')">✕</button>' +
             
+            // Header
             '<div style="text-align: center; margin-bottom: 2rem;">' +
             '<div style="font-size: 3rem; margin-bottom: 0.5rem;">' + getKinIcon(char.kin || 'default') + '</div>' +
             '<h1 style="margin-bottom: 0.5rem;">' + char.name + '</h1>' +
-            '<div style="color: var(--text-muted);">' + (char.kin || '') + ' • ' + (char.profession || '') + '</div>' +
+            '<div style="color: var(--text-muted);">' + (char.kin || '') + ' • ' + (char.profession || '') + (char.age ? ' • ' + char.age + ' år' : '') + '</div>' +
             '</div>' +
             
-            // Attributes Grid
+            // Attributes Grid with Conditions
             '<div style="margin-bottom: 2rem;">' +
-            '<h3 style="margin-bottom: 1rem;">Attribut</h3>' +
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">⚡ Attribut</h3>' +
             '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem;">';
+        
+        var conditionLabels = { STY: 'Utmattad', FYS: 'Krasslig', SMI: 'Omtöcknad', INT: 'Arg', PSY: 'Rädd', KAR: 'Uppgiven' };
+        var charConditions = char.conditions || {};
         
         ['STY', 'FYS', 'SMI', 'INT', 'PSY', 'KAR'].forEach(function(attr) {
             var value = attrs[attr] || 0;
-            modalHTML += '<div style="text-align: center; padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
+            var hasCondition = charConditions[attr] === true;
+            modalHTML += '<div style="text-align: center; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 2px solid ' + (hasCondition ? 'var(--red-hp)' : 'transparent') + ';">' +
                 '<div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">' + attr + '</div>' +
                 '<div style="font-size: 1.5rem; font-weight: bold;">' + value + '</div>' +
+                (hasCondition ? '<div style="font-size: 0.7rem; color: var(--red-hp); margin-top: 0.25rem;">⚠️ ' + conditionLabels[attr] + '</div>' : '') +
                 '</div>';
         });
         
         modalHTML += '</div></div>';
         
-        // KP/VP with clickable pips
+        // Combat Stats
         modalHTML += '<div style="margin-bottom: 2rem;">' +
-            '<h3 style="margin-bottom: 1rem;">Kroppspoäng & Viljepoäng</h3>' +
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">⚔️ Stridsvärden</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SKADEBONUS (STY)</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + (char.damageBonusSTY || 'T4') + '</div>' +
+            '</div>' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SKADEBONUS (SMI)</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + (char.damageBonusSMI || 'T6') + '</div>' +
+            '</div>' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">FÖRFLYTTNING</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold;">' + (char.movement || 10) + '</div>' +
+            '</div>' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">BÄRVÄRDE</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold;">' + (char.carryCapacity || (attrs.STY * 2) || 0) + '</div>' +
+            '</div>' +
+            '</div></div>';
+        
+        // KP/VP with Death Saves
+        modalHTML += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">💚 Kroppspoäng & Viljepoäng</h3>' +
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
             
-            '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
-            '<div style="font-weight: bold; margin-bottom: 0.5rem;">KP: ' + kp + '/' + maxKp + '</div>' +
-            '<div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem;">';
+            '<div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red-hp); border-radius: 8px;">' +
+            '<div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--red-hp);">KP: ' + kp + '/' + maxKp + '</div>' +
+            '<div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.75rem;">';
         
         for (var i = 1; i <= maxKp; i++) {
             var pipClass = 'gm-pip';
@@ -1212,11 +1304,18 @@ var GameModeUI = {
             modalHTML += '<span class="' + pipClass + '" onclick="GameModeUI.handlePipClick(\'' + characterId + '\', \'currentKP\', ' + i + ')" style="cursor: pointer;">●</span>';
         }
         
-        modalHTML += '</div></div>' +
+        modalHTML += '</div>';
+        
+        // Death saves
+        var deathSaves = char.deathSaves || { successes: 0, failures: 0 };
+        modalHTML += '<div style="display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid rgba(239,68,68,0.3);">' +
+            '<div><span style="font-size: 0.75rem; color: var(--text-muted);">Räddning: </span><span style="color: var(--green-vp);">' + deathSaves.successes + '/3</span></div>' +
+            '<div><span style="font-size: 0.75rem; color: var(--text-muted);">Misslyckande: </span><span style="color: var(--red-hp);">' + deathSaves.failures + '/3</span></div>' +
+            '</div></div>' +
             
-            '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
-            '<div style="font-weight: bold; margin-bottom: 0.5rem;">VP: ' + vp + '/' + maxVp + '</div>' +
-            '<div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem;">';
+            '<div style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid var(--green-vp); border-radius: 8px;">' +
+            '<div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--green-vp);">VP: ' + vp + '/' + maxVp + '</div>' +
+            '<div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">';
         
         for (var i = 1; i <= maxVp; i++) {
             var pipClass = 'gm-pip';
@@ -1225,74 +1324,46 @@ var GameModeUI = {
         }
         
         modalHTML += '</div></div>' +
-            
             '</div></div>';
         
-        // Skills & Weapon Skills
+        // Armor & Helmet
         modalHTML += '<div style="margin-bottom: 2rem;">' +
-            '<h3 style="margin-bottom: 1rem;">Färdigheter & Vapenfärdigheter</h3>' +
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">🛡️ Rustning & Hjälm</h3>' +
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
-            
-            '<div>' +
-            '<h4 style="margin-bottom: 0.5rem;">Färdigheter</h4>' +
-            '<div style="display: flex; flex-direction: column; gap: 0.25rem;">';
-        
-        if (char.skills) {
-            for (var skillName in char.skills) {
-                var skill = char.skills[skillName];
-                if (skill.value > 0 || skill.isCore) {
-                    modalHTML += '<div style="display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; background: var(--card-bg); border-radius: 4px;">' +
-                        '<span>' + skillName + ' (' + skill.attr + ')</span>' +
-                        '<span>' + skill.value + '</span>' +
-                        '</div>';
-                }
-            }
-        }
-        
-        modalHTML += '</div></div>' +
-            
-            '<div>' +
-            '<h4 style="margin-bottom: 0.5rem;">Vapenfärdigheter</h4>' +
-            '<div style="display: flex; flex-direction: column; gap: 0.25rem;">';
-        
-        if (char.weaponSkills) {
-            for (var skillName in char.weaponSkills) {
-                var skill = char.weaponSkills[skillName];
-                if (skill.value > 0 || skill.isCore) {
-                    modalHTML += '<div style="display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; background: var(--card-bg); border-radius: 4px;">' +
-                        '<span>' + skillName + ' (' + skill.attr + ')</span>' +
-                        '<span>' + skill.value + '</span>' +
-                        '</div>';
-                }
-            }
-        }
-        
-        modalHTML += '</div></div>' +
-            
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px;">' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Rustning</div>' +
+            '<div><span style="font-weight: bold;">' + (char.armor || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.armorProtection || 0) + ')</span></div>' +
+            '</div>' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px;">' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Hjälm</div>' +
+            '<div><span style="font-weight: bold;">' + (char.helmet || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.helmetProtection || 0) + ')</span></div>' +
+            '</div>' +
             '</div></div>';
         
-        // Weapons
+        // Weapons Table
         if (char.weapons && char.weapons.length > 0) {
             modalHTML += '<div style="margin-bottom: 2rem;">' +
-                '<h3 style="margin-bottom: 1rem;">⚔️ Vapen</h3>' +
-                '<table style="width: 100%; border-collapse: collapse;">' +
+                '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">⚔️ Vapen</h3>' +
+                '<table style="width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 8px; overflow: hidden;">' +
                 '<thead>' +
-                '<tr style="background: var(--card-bg);">' +
-                '<th style="padding: 0.5rem; text-align: left;">Namn</th>' +
-                '<th style="padding: 0.5rem; text-align: left;">Grepp</th>' +
-                '<th style="padding: 0.5rem; text-align: left;">Skada</th>' +
-                '<th style="padding: 0.5rem; text-align: left;">Räckvidd</th>' +
+                '<tr style="background: rgba(212,175,55,0.1);">' +
+                '<th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-panel);">Namn</th>' +
+                '<th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-panel);">Grepp</th>' +
+                '<th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-panel);">Färdighet</th>' +
+                '<th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-panel);">Skada</th>' +
+                '<th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-panel);">Räckvidd</th>' +
                 '</tr>' +
                 '</thead>' +
                 '<tbody>';
             
-            char.weapons.forEach(function(weapon) {
+            char.weapons.forEach(function(weapon, idx) {
                 if (weapon.name) {
-                    modalHTML += '<tr>' +
-                        '<td style="padding: 0.5rem;">' + weapon.name + '</td>' +
-                        '<td style="padding: 0.5rem;">' + (weapon.grip || '-') + '</td>' +
-                        '<td style="padding: 0.5rem;">' + (weapon.damage || '-') + '</td>' +
-                        '<td style="padding: 0.5rem;">' + (weapon.range || '-') + '</td>' +
+                    modalHTML += '<tr' + (idx % 2 === 0 ? '' : ' style="background: rgba(0,0,0,0.2);"') + '>' +
+                        '<td style="padding: 0.75rem;">' + weapon.name + '</td>' +
+                        '<td style="padding: 0.75rem;">' + (weapon.grip || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + (weapon.skill || '-') + '</td>' +
+                        '<td style="padding: 0.75rem; color: var(--red-hp); font-weight: bold;">' + (weapon.damage || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + (weapon.range || '-') + '</td>' +
                         '</tr>';
                 }
             });
@@ -1300,22 +1371,125 @@ var GameModeUI = {
             modalHTML += '</tbody></table></div>';
         }
         
-        // Equipment & Currency
+        // Skills & Weapon Skills
         modalHTML += '<div style="margin-bottom: 2rem;">' +
-            '<h3 style="margin-bottom: 1rem;">🎒 Utrustning & Mynt</h3>';
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">📚 Färdigheter</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">' +
+            
+            '<div>' +
+            '<h4 style="margin-bottom: 0.75rem; font-size: 1rem; color: var(--text-secondary);">Allmänna Färdigheter</h4>' +
+            '<div style="display: flex; flex-direction: column; gap: 0.3rem;">';
         
-        if (char.inventory && char.inventory.length > 0) {
-            modalHTML += '<div style="margin-bottom: 1rem;">' + char.inventory.join(', ') + '</div>';
+        if (char.skills) {
+            var hasSkills = false;
+            for (var skillName in char.skills) {
+                var skill = char.skills[skillName];
+                if (skill.value > 0 || skill.isCore) {
+                    hasSkills = true;
+                    modalHTML += '<div style="display: flex; justify-content: space-between; padding: 0.4rem 0.75rem; background: var(--card-bg); border-radius: 4px; border-left: 3px solid ' + (skill.isCore ? 'var(--gold-primary)' : 'transparent') + ';">' +
+                        '<span>' + skillName + ' <span style="color: var(--text-muted); font-size: 0.85rem;">(' + skill.attr + ')</span></span>' +
+                        '<span style="font-weight: bold;">' + skill.value + '</span>' +
+                        '</div>';
+                }
+            }
+            if (!hasSkills) {
+                modalHTML += '<div style="color: var(--text-muted); font-style: italic;">Inga färdigheter</div>';
+            }
+        } else {
+            modalHTML += '<div style="color: var(--text-muted); font-style: italic;">Inga färdigheter</div>';
         }
         
-        var currency = char.currency || { guld: 0, silver: 0, brons: 0 };
-        modalHTML += '<div style="display: flex; gap: 1rem;">' +
-            '<span>💰 Guld: ' + currency.guld + '</span>' +
-            '<span>⚪ Silver: ' + currency.silver + '</span>' +
-            '<span>🟤 Brons: ' + currency.brons + '</span>' +
-            '</div>';
+        modalHTML += '</div></div>' +
+            
+            '<div>' +
+            '<h4 style="margin-bottom: 0.75rem; font-size: 1rem; color: var(--text-secondary);">Vapenfärdigheter</h4>' +
+            '<div style="display: flex; flex-direction: column; gap: 0.3rem;">';
+        
+        if (char.weaponSkills) {
+            var hasWeaponSkills = false;
+            for (var skillName in char.weaponSkills) {
+                var skill = char.weaponSkills[skillName];
+                if (skill.value > 0 || skill.isCore) {
+                    hasWeaponSkills = true;
+                    modalHTML += '<div style="display: flex; justify-content: space-between; padding: 0.4rem 0.75rem; background: var(--card-bg); border-radius: 4px; border-left: 3px solid ' + (skill.isCore ? 'var(--gold-primary)' : 'transparent') + ';">' +
+                        '<span>' + skillName + ' <span style="color: var(--text-muted); font-size: 0.85rem;">(' + skill.attr + ')</span></span>' +
+                        '<span style="font-weight: bold;">' + skill.value + '</span>' +
+                        '</div>';
+                }
+            }
+            if (!hasWeaponSkills) {
+                modalHTML += '<div style="color: var(--text-muted); font-style: italic;">Inga vapenfärdigheter</div>';
+            }
+        } else {
+            modalHTML += '<div style="color: var(--text-muted); font-style: italic;">Inga vapenfärdigheter</div>';
+        }
+        
+        modalHTML += '</div></div>' +
+            '</div></div>';
+        
+        // Heroic Abilities
+        if (char.heroicAbilities && char.heroicAbilities.length > 0) {
+            modalHTML += '<div style="margin-bottom: 2rem;">' +
+                '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">✨ Heroiska Förmågor</h3>' +
+                '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+            
+            char.heroicAbilities.forEach(function(ability) {
+                modalHTML += '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--gold-primary);">' +
+                    '<div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--gold-primary);">' + ability.name + '</div>' +
+                    '<div style="font-size: 0.875rem; color: var(--text-muted);">' + (ability.description || '') + '</div>' +
+                    '</div>';
+            });
+            
+            modalHTML += '</div></div>';
+        }
+        
+        // Equipment & Inventory
+        modalHTML += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">🎒 Utrustning</h3>';
+        
+        if (char.inventory && char.inventory.length > 0) {
+            modalHTML += '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px;">' +
+                '<ul style="list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 1rem;">';
+            char.inventory.forEach(function(item) {
+                modalHTML += '<li style="padding: 0.25rem 0; break-inside: avoid;">• ' + item + '</li>';
+            });
+            modalHTML += '</ul></div>';
+        } else {
+            modalHTML += '<div style="color: var(--text-muted); font-style: italic; padding: 1rem; background: var(--card-bg); border-radius: 8px;">Ingen utrustning</div>';
+        }
         
         modalHTML += '</div>';
+        
+        // Currency
+        var currency = char.currency || { guld: 0, silver: 0, brons: 0 };
+        modalHTML += '<div style="margin-bottom: 2rem;">' +
+            '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">💰 Mynt</h3>' +
+            '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 2rem; margin-bottom: 0.25rem;">💰</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold;">' + (currency.guld || 0) + '</div>' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted);">Guld</div>' +
+            '</div>' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 2rem; margin-bottom: 0.25rem;">⚪</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold;">' + (currency.silver || 0) + '</div>' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted);">Silver</div>' +
+            '</div>' +
+            '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
+            '<div style="font-size: 2rem; margin-bottom: 0.25rem;">🟤</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold;">' + (currency.brons || 0) + '</div>' +
+            '<div style="font-size: 0.75rem; color: var(--text-muted);">Brons</div>' +
+            '</div>' +
+            '</div></div>';
+        
+        // Notes
+        if (char.notes) {
+            modalHTML += '<div style="margin-bottom: 1rem;">' +
+                '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">📝 Anteckningar</h3>' +
+                '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; white-space: pre-wrap; font-family: var(--font-body); line-height: 1.6;">' +
+                char.notes +
+                '</div></div>';
+        }
         
         modalHTML += '</div>';
         
