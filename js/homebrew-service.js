@@ -10,27 +10,32 @@ var HomebrewService = {
         },
         monsters: { 
             label: 'Monster & Varelser', 
-            icon: '🐉',
+            // icon: '🐉',
+			icon: '<img src="icons/Enemy.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
             fields: ['name', 'hp', 'armor', 'movement', 'skills', 'attacks', 'abilities', 'tags', 'description']
         },
         kin: { 
             label: 'Släkten', 
-            icon: '👥',
+            // icon: '👥',
+			icon: '<img src="icons/NewCharacter.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
             fields: ['name', 'ability', 'statModifiers', 'description']
         },
         professions: { 
             label: 'Yrken', 
-            icon: '🎭',
+            // icon: '🎭',
+			icon: '<img src="icons/Quill.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
             fields: ['name', 'skills', 'abilities', 'equipment', 'description']
         },
         spells: { 
             label: 'Besvärjelser', 
-            icon: '✨',
+            // icon: '✨',
+			icon: '<img src="icons/Scroll.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
             fields: ['name', 'school', 'wp', 'range', 'duration', 'effect', 'description']
         },
         items: { 
             label: 'Magiska Föremål', 
-            icon: '💎',
+            // icon: '💎',
+			icon: '<img src="icons/Magic.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
             fields: ['name', 'itemType', 'rarity', 'effect', 'value', 'description']
         }
     },
