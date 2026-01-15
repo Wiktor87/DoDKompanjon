@@ -176,7 +176,10 @@ function loadDashboard() {
                         '<button class="btn btn-gold-outline" onclick="openCharacterCreator()">Skapa karaktär</button>' +
                     '</div>';
                 } else {
-                    charContainer.innerHTML = characters.slice(0, 4).map(renderCharacterCardCompact).join('');
+                    // Show up to 3 characters + "Starta en ny legend" card if there's room
+                    var cardsHtml = characters.slice(0, 3).map(renderCharacterCardCompact).join('');
+                    cardsHtml += renderNewCharacterCard();
+                    charContainer.innerHTML = cardsHtml;
                 }
             }).catch(function(err) {
                 console.error('Error:', err);
@@ -344,35 +347,106 @@ function loadCharactersList() {
         if (characters.length === 0) {
             container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🎭</div><h3>Inga karaktärer ännu</h3><button class="btn btn-gold" onclick="openCharacterCreator()">Skapa din första</button></div>';
         } else {
-            container.innerHTML = characters.map(renderCharacterCardFull).join('');
+            // Render existing characters + "Starta en ny legend" card
+            var cardsHtml = characters.map(renderCharacterCardFull).join('');
+            cardsHtml += renderNewCharacterCard();
+            container.innerHTML = cardsHtml;
         }
     }).catch(function(err) {
         container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Fel</h3><p>' + err.message + '</p></div>';
     });
 }
 
+// Render "Starta en ny legend" card
+function renderNewCharacterCard() {
+    return '<div class="new-character-card" onclick="openCharacterCreator()">' +
+        '<div class="new-character-book">' +
+            '<div class="new-character-book-runes">ᚱᚢᚾᛖᛋ<br>ᛟᚠ<br>ᛈᛟᚹᛖᚱ</div>' +
+        '</div>' +
+        '<div class="new-character-plus">+</div>' +
+        '<div class="new-character-text">Starta en ny legend</div>' +
+    '</div>';
+}
+
 function renderCharacterCardFull(char) {
     var icon = getKinIcon(char.kin);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
-    return '<div class="character-card-full" onclick="viewCharacter(\'' + char.id + '\')">' +
-        '<div class="card-header"><div class="card-portrait">' + icon + '</div>' +
-        '<div class="card-identity"><div class="card-name">' + (char.name || 'Namnlös') + '</div>' +
-        '<div class="card-subtitle">' + [char.kin, char.profession].filter(Boolean).join(' ') + '</div></div></div>' +
-        '<div class="card-body"><div class="card-stats-grid">' +
-        ['STY','FYS','SMI','INT','PSY'].map(function(a) {
-            return '<div class="stat-box"><div class="stat-name">' + a + '</div><div class="stat-value">' + (attrs[a] || '—') + '</div></div>';
-        }).join('') + '</div>' +
-        '<div class="card-derived">' +
-        '<div class="derived-stat"><div class="derived-label">KP</div><div class="derived-value hp">' + (attrs.FYS || '?') + '</div></div>' +
-        '<div class="derived-stat"><div class="derived-label">VP</div><div class="derived-value wp">' + (attrs.PSY || '?') + '</div></div>' +
-        '<div class="derived-stat"><div class="derived-label">Förfl.</div><div class="derived-value mv">10</div></div>' +
-        '</div></div>' +
-        '<div class="card-footer" style="cursor: default;"><span>' + profIcon + ' ' + (char.heroicAbility || '—') + '</span>' +
-        '<div style="display: flex; gap: 0.5rem;">' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button>' +
-        '</div></div></div>';
+    
+    // Calculate KP and VP percentages for progress bars
+    var kp = char.currentKP !== undefined ? char.currentKP : (attrs.FYS || 0);
+    var maxKp = attrs.FYS || 1;
+    var vp = char.currentVP !== undefined ? char.currentVP : (attrs.PSY || 0);
+    var maxVp = attrs.PSY || 1;
+    var kpPercent = maxKp > 0 ? (kp / maxKp) * 100 : 100;
+    var vpPercent = maxVp > 0 ? (vp / maxVp) * 100 : 100;
+    
+    // L-shaped corner SVG
+    var cornerSvg = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M0 0 L0 20 L2 20 L2 2 L20 2 L20 0 Z" fill="currentColor"/>' +
+        '</svg>';
+    
+    return '<div class="character-card-full fantasy-card" onclick="viewCharacter(\'' + char.id + '\')">' +
+        // Golden L-corners
+        '<div class="card-corner top-left">' + cornerSvg + '</div>' +
+        '<div class="card-corner top-right">' + cornerSvg + '</div>' +
+        '<div class="card-corner bottom-left">' + cornerSvg + '</div>' +
+        '<div class="card-corner bottom-right">' + cornerSvg + '</div>' +
+        
+        // Card Header - Portrait and Name
+        '<div class="card-header" style="display: flex; gap: 1rem; margin-bottom: 1rem;">' +
+            '<div class="char-portrait-frame">' + icon + '</div>' +
+            '<div class="card-identity" style="flex: 1;">' +
+                '<div class="char-name-cinzel">' + (char.name || 'Namnlös').toUpperCase() + '</div>' +
+                '<div class="card-subtitle" style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">' + 
+                    [char.kin, char.profession].filter(Boolean).join(' • ') + 
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        
+        // Attributes Row
+        '<div class="char-attributes-row">' +
+            ['STY','FYS','SMI','INT','PSY','KAR'].map(function(a) {
+                return '<div class="char-attr-box">' +
+                    '<div class="char-attr-label">' + a + '</div>' +
+                    '<div class="char-attr-value">' + (attrs[a] || '—') + '</div>' +
+                '</div>';
+            }).join('') +
+        '</div>' +
+        
+        // KP/VP Progress Bars
+        '<div style="display: flex; gap: 1rem; margin: 1rem 0;">' +
+            '<div style="flex: 1;">' +
+                '<div style="display: flex; justify-content: space-between; margin-bottom: 0.375rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.03em;">' +
+                    '<span style="color: var(--text-muted);">KP</span>' +
+                    '<span style="color: #ef4444;">' + kp + '/' + maxKp + '</span>' +
+                '</div>' +
+                '<div style="height: 6px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden;">' +
+                    '<div class="health-bar-kp" style="width: ' + kpPercent + '%; height: 100%; transition: width 0.3s ease;"></div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="flex: 1;">' +
+                '<div style="display: flex; justify-content: space-between; margin-bottom: 0.375rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.03em;">' +
+                    '<span style="color: var(--text-muted);">VP</span>' +
+                    '<span style="color: #a855f7;">' + vp + '/' + maxVp + '</span>' +
+                '</div>' +
+                '<div style="height: 6px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden;">' +
+                    '<div class="health-bar-vp" style="width: ' + vpPercent + '%; height: 100%; transition: width 0.3s ease;"></div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        
+        // Heroic Ability
+        '<div class="heroic-ability-btn" style="margin: 1rem 0; text-align: center;">' +
+            profIcon + ' ' + (char.heroicAbility || 'Hjälteförmåga') +
+        '</div>' +
+        
+        // Footer Actions
+        '<div class="card-footer" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">' +
+            '<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openAddToGroupModal(\'' + char.id + '\')">👥 Lägg till i grupp</button>' +
+            '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteCharacter(\'' + char.id + '\')">🗑️</button>' +
+        '</div>' +
+    '</div>';
 }
 
 // View Character
