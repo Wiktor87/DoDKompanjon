@@ -1233,7 +1233,10 @@ function loadPartiesList() {
         if (parties.length === 0) {
             container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👥</div><h3>Inga grupper ännu</h3><p>Skapa en grupp för att samla dina karaktärer och dela med andra spelare.</p><button class="btn btn-gold" onclick="openCreateParty()">Skapa grupp</button></div>';
         } else {
-            container.innerHTML = parties.map(renderPartyCard).join('');
+            var html = parties.map(renderPartyCard).join('');
+            // Add "Skapa ny grupp" card
+            html += renderNewGroupCard();
+            container.innerHTML = html;
         }
     }).catch(function(err) {
         container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Fel</h3><p>' + err.message + '</p></div>';
@@ -1243,24 +1246,51 @@ function loadPartiesList() {
 function renderPartyCard(party) {
     var memberCount = (party.memberIds || []).length;
     var charCount = (party.characterIds || []).length;
+    var user = getCurrentUser && getCurrentUser();
+    var isOwner = user && party.ownerId === user.uid;
+    var isActive = party.isActive || false;
     
-    return '<div class="character-card-full" onclick="viewParty(\'' + party.id + '\')">' +
-        '<div class="card-header">' +
-        '<div class="card-portrait">👥</div>' +
-        '<div class="card-identity">' +
-        '<div class="card-name">' + (party.name || 'Namnlös grupp') + '</div>' +
-        '<div class="card-subtitle">Ägare: ' + (party.ownerName || 'Okänd') + '</div>' +
-        '</div></div>' +
-        '<div class="card-body">' +
-        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
-        '<div style="display: flex; gap: 1rem; font-size: 0.875rem; color: var(--text-muted);">' +
-        '<span>👤 ' + memberCount + ' medlem' + (memberCount !== 1 ? 'mar' : '') + '</span>' +
-        '<span>🎭 ' + charCount + ' karaktär' + (charCount !== 1 ? 'er' : '') + '</span>' +
-        '</div></div>' +
-        '<div class="card-footer">' +
-        '<span></span>' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteParty(\'' + party.id + '\')">🗑️</button>' +
-        '</div></div>';
+    var html = '<div class="fantasy-group-card" onclick="viewParty(\'' + party.id + '\')">';
+    
+    // Decorative L-corners
+    html += '<svg class="decorative-corner-svg top-left" viewBox="0 0 25 25"><path d="M0 0 L25 0 L25 3 L3 3 L3 25 L0 25 Z" fill="#d4af37" /></svg>';
+    html += '<svg class="decorative-corner-svg top-right" viewBox="0 0 25 25"><path d="M0 0 L25 0 L25 25 L22 25 L22 3 L0 3 Z" fill="#d4af37" /></svg>';
+    html += '<svg class="decorative-corner-svg bottom-left" viewBox="0 0 25 25"><path d="M0 0 L3 0 L3 22 L25 22 L25 25 L0 25 Z" fill="#d4af37" /></svg>';
+    html += '<svg class="decorative-corner-svg bottom-right" viewBox="0 0 25 25"><path d="M22 0 L25 0 L25 25 L0 25 L0 22 L22 22 Z" fill="#d4af37" /></svg>';
+    
+    // Header
+    html += '<div class="fantasy-group-header">';
+    html += '<div>';
+    html += '<h3 class="fantasy-group-title">' + (party.name || 'Namnlös grupp') + '</h3>';
+    html += '<div class="fantasy-group-meta">' + memberCount + ' medlemmar' + (isOwner ? ' • Skapad av dig' : '') + '</div>';
+    html += '</div>';
+    if (isActive) {
+        html += '<div class="fantasy-group-badge-active">Aktiv</div>';
+    }
+    html += '</div>';
+    
+    // Member avatars (show up to 4)
+    html += '<div class="fantasy-group-avatars">';
+    var avatars = ['👤', '🧔', '🧝', '🧙'];
+    for (var i = 0; i < Math.min(memberCount, 4); i++) {
+        html += '<div class="fantasy-group-avatar" style="z-index: ' + (4 - i) + '">' + avatars[i % avatars.length] + '</div>';
+    }
+    html += '</div>';
+    
+    // Button
+    html += '<button class="fantasy-group-button" onclick="event.stopPropagation();viewParty(\'' + party.id + '\')">🎮 Starta Spelläge</button>';
+    
+    html += '</div>';
+    return html;
+}
+
+// Render "Skapa ny grupp" card
+function renderNewGroupCard() {
+    var html = '<div class="fantasy-create-card" style="width: 300px; height: 155px;" onclick="openCreateParty()">';
+    html += '<div class="fantasy-create-plus">+</div>';
+    html += '<div class="fantasy-create-text">Skapa ny grupp</div>';
+    html += '</div>';
+    return html;
 }
 
 function viewParty(id) {
