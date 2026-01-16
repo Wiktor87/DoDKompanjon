@@ -3,6 +3,19 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
+// Helper: Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 // Game constants
 var DAMAGE_BONUS_DIVISOR = 5;
 var DAMAGE_BONUS_BASE = -2;
@@ -1521,10 +1534,19 @@ function closePartyView() {
 function renderPartyView(party, partyChars, availableChars, joinRequests, messages, isOwner) {
     var html = '<div style="padding: 1rem;">' +
         '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">' +
-        '<div>' +
+        '<div style="flex: 1;">' +
         '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
-        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
-        '</div>' +
+        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>';
+    
+    // Admin actions for owner
+    if (isOwner) {
+        html += '<div class="group-admin-actions" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">' +
+            '<button class="btn btn-outline btn-sm" onclick="openEditGroupModal(\'' + party.id + '\', \'' + escapeHtml(party.name) + '\', \'' + escapeHtml(party.description || '') + '\')">✏️ Redigera grupp</button>' +
+            '<button class="btn btn-outline btn-sm" style="color: var(--red-hp); border-color: var(--red-hp);" onclick="confirmDeleteGroup(\'' + party.id + '\', \'' + escapeHtml(party.name) + '\')">🗑️ Radera grupp</button>' +
+            '</div>';
+    }
+    
+    html += '</div>' +
         '<div style="text-align: right;">' +
         '<div style="background: var(--bg-elevated); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 2px solid var(--accent-gold); margin-bottom: 0.5rem;">' +
         '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase;">Inbjudningskod</div>' +
@@ -2134,6 +2156,89 @@ function copyInviteCode(code) {
             showToast('Kunde inte kopiera', 'error');
         }
         document.body.removeChild(input);
+    }
+}
+
+// Edit Group Modal
+function openEditGroupModal(partyId, currentName, currentDescription) {
+    var modal = document.getElementById('editGroupModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'editGroupModal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    modal.innerHTML = 
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h2>✏️ Redigera Grupp</h2>' +
+        '<button class="modal-close" onclick="closeEditGroupModal()">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<form id="editGroupForm" onsubmit="saveGroupEdits(\'' + partyId + '\'); return false;">' +
+        '<div class="form-group">' +
+        '<label for="groupName">Gruppnamn</label>' +
+        '<input type="text" id="groupName" class="creator-input" required value="' + currentName + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<label for="groupDescription">Beskrivning (valfritt)</label>' +
+        '<textarea id="groupDescription" class="creator-input" rows="3">' + currentDescription + '</textarea>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-outline" onclick="closeEditGroupModal()">Avbryt</button>' +
+        '<button type="submit" class="btn btn-gold">💾 Spara</button>' +
+        '</div>' +
+        '</form>' +
+        '</div>' +
+        '</div>';
+    
+    modal.style.display = 'flex';
+}
+
+function closeEditGroupModal() {
+    var modal = document.getElementById('editGroupModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function saveGroupEdits(partyId) {
+    var nameInput = document.getElementById('groupName');
+    var descInput = document.getElementById('groupDescription');
+    
+    if (!nameInput) return;
+    
+    var name = nameInput.value.trim();
+    if (!name) {
+        showToast('Gruppnamn krävs', 'error');
+        return;
+    }
+    
+    var updates = {
+        name: name,
+        description: descInput ? descInput.value.trim() : ''
+    };
+    
+    PartyService.updateParty(partyId, updates).then(function() {
+        showToast('Grupp uppdaterad!', 'success');
+        closeEditGroupModal();
+        viewParty(partyId); // Refresh the party view
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+// Delete Group
+function confirmDeleteGroup(partyId, groupName) {
+    if (confirm('Är du säker på att du vill radera gruppen "' + groupName + '"? Detta kan inte ångras.')) {
+        PartyService.deleteParty(partyId).then(function() {
+            showToast('Grupp raderad', 'success');
+            // Navigate back to groups list
+            document.getElementById('groupsBtn').click();
+        }).catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
     }
 }
 
