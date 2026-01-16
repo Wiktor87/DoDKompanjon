@@ -3,6 +3,19 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
+// Helper: Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 // Game constants
 var DAMAGE_BONUS_DIVISOR = 5;
 var DAMAGE_BONUS_BASE = -2;
@@ -660,21 +673,45 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-tab-content-v2" id="tab-settings-v2" style="display: none;">';
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Inställningar</h3></div>';
     html += '<div class="sheet-panel-v2-content">';
+    
+    // Portrait Section
+    html += '<div class="portrait-section" style="margin-bottom: 2rem;">';
+    html += '<h4 style="margin-bottom: 1rem; color: var(--gold-primary);">🖼️ Porträtt</h4>';
+    html += '<div class="current-portrait" style="margin-bottom: 1rem; text-align: center;">';
+    html += '<div style="display: inline-block; padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 2px solid var(--border-panel);">';
+    html += icon;
+    html += '</div></div>';
+    html += '<div class="portrait-buttons" style="display: flex; gap: 0.5rem; justify-content: center;">';
+    html += '<button class="btn btn-outline" onclick="openIconBrowser()">🎨 Välj ikon</button>';
+    html += '<button class="btn btn-outline" onclick="triggerPortraitUpload()">📤 Ladda upp</button>';
+    html += '</div>';
+    html += '<input type="file" id="portraitUpload" hidden accept="image/*" onchange="handlePortraitUpload(event)" />';
+    html += '</div>';
+    
+    // Background Section
     html += '<div class="background-selector">';
-    html += '<label>Bakgrundsbild</label>';
-    html += '<div class="background-options">';
+    html += '<h4 style="margin-bottom: 1rem; color: var(--gold-primary);">🎭 Bakgrundsbild</h4>';
+    
+    // Background preview
+    if (char.backgroundImage && char.backgroundImage !== 'none') {
+        html += '<div class="bg-preview-box" style="width: 100%; height: 150px; margin-bottom: 1rem; background-image: url(charbgs/' + char.backgroundImage + '); background-size: cover; background-position: center; border-radius: var(--radius-md); border: 2px solid var(--border-panel); position: relative; overflow: hidden;">';
+        html += '<div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13, 13, 13, 0.9) 0%, rgba(13, 13, 13, 0) 35%, rgba(13, 13, 13, 0) 65%, rgba(13, 13, 13, 0.9) 100%);"></div>';
+        html += '</div>';
+    }
+    
+    html += '<div class="background-options" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; margin-bottom: 1rem;">';
     
     // None option
     var noneSelected = (!char.backgroundImage || char.backgroundImage === 'none') ? ' selected' : '';
-    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')">Ingen</div>';
+    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')" style="aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 2px solid ' + (noneSelected ? 'var(--accent-gold)' : 'var(--border-panel)') + '; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; color: var(--text-secondary);">Ingen</div>';
     
-    // Note: In a real implementation, you would dynamically scan the charbgs folder
-    // For now, we'll add a note that backgrounds can be added to the charbgs folder
-    html += '<div style="grid-column: 1/-1; text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem;">';
-    html += 'Lägg till bilder i mappen /charbgs för att använda dem som bakgrund';
+    // List potential backgrounds (will be populated dynamically in real use)
+    // For now, show instruction message
+    html += '</div>';
+    html += '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-panel);">';
+    html += '📁 Lägg till bilder i mappen <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">/charbgs</code> för att använda dem som bakgrund';
     html += '</div>';
     
-    html += '</div>'; // Close background-options
     html += '</div>'; // Close background-selector
     html += '</div></div>';
     html += '</div>';
@@ -1521,10 +1558,22 @@ function closePartyView() {
 function renderPartyView(party, partyChars, availableChars, joinRequests, messages, isOwner) {
     var html = '<div style="padding: 1rem;">' +
         '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">' +
-        '<div>' +
+        '<div style="flex: 1;">' +
         '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
-        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
-        '</div>' +
+        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>';
+    
+    // Admin actions for owner
+    if (isOwner) {
+        var escapedName = escapeHtml(party.name);
+        var escapedDesc = escapeHtml(party.description || '');
+        var escapedId = escapeHtml(party.id);
+        html += '<div class="group-admin-actions" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">' +
+            '<button class="btn btn-outline btn-sm" onclick="openEditGroupModal(\'' + escapedId + '\', \'' + escapedName + '\', \'' + escapedDesc + '\')">✏️ Redigera grupp</button>' +
+            '<button class="btn btn-outline btn-sm" style="color: var(--red-hp); border-color: var(--red-hp);" onclick="confirmDeleteGroup(\'' + escapedId + '\', \'' + escapedName + '\')">🗑️ Radera grupp</button>' +
+            '</div>';
+    }
+    
+    html += '</div>' +
         '<div style="text-align: right;">' +
         '<div style="background: var(--bg-elevated); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 2px solid var(--accent-gold); margin-bottom: 0.5rem;">' +
         '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase;">Inbjudningskod</div>' +
@@ -1610,9 +1659,33 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
             
             html += '</div></div>';
             
+            // Admin panel for adding participants (owner only)
+            if (isOwner && party.memberIds && party.memberIds.length > 0) {
+                html += '<div class="session-admin-panel" style="border-top: 1px solid var(--border-default); padding-top: 1rem; margin-top: 1rem;">' +
+                    '<h4 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">⚙️ Hantera deltagare</h4>' +
+                    '<div class="add-participant" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">' +
+                    '<select id="addParticipantSelect" class="creator-input" style="flex: 1;">' +
+                    '<option value="">Välj medlem...</option>';
+                
+                // List all group members who haven't responded yet
+                party.memberIds.forEach(function(memberId) {
+                    if (!attendees[memberId]) {
+                        // Get member name (would need to be passed in membersList)
+                        var escapedId = escapeHtml(memberId);
+                        html += '<option value="' + escapedId + '">Medlem ' + escapedId.substring(0, 8) + '</option>';
+                    }
+                });
+                
+                html += '</select>' +
+                    '<button class="btn btn-gold btn-sm" onclick="addParticipantToSession(\'' + party.id + '\')">+ Lägg till</button>' +
+                    '</div>' +
+                    '<p style="font-size: 0.75rem; color: var(--text-muted);">Lägg till gruppmedlemmar i sessionen</p>' +
+                    '</div>';
+            }
+            
             // RSVP for current user
             if (currentUserId) {
-                html += '<div class="session-rsvp" style="border-top: 1px solid var(--border-default); padding-top: 1rem;">' +
+                html += '<div class="session-rsvp" style="border-top: 1px solid var(--border-default); padding-top: 1rem; margin-top: 1rem;">' +
                     '<div style="margin-bottom: 0.75rem; font-weight: 600; color: var(--text-secondary);">Kommer du?</div>' +
                     '<div class="session-rsvp-buttons">' +
                     '<button class="rsvp-btn attending' + (currentUserStatus === 'attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'attending\')">✓ Ja</button>' +
@@ -2137,6 +2210,92 @@ function copyInviteCode(code) {
     }
 }
 
+// Edit Group Modal
+function openEditGroupModal(partyId, currentName, currentDescription) {
+    var modal = document.getElementById('editGroupModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'editGroupModal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    modal.innerHTML = 
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h2>✏️ Redigera Grupp</h2>' +
+        '<button class="modal-close" onclick="closeEditGroupModal()">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<form id="editGroupForm" onsubmit="saveGroupEdits(\'' + escapeHtml(partyId) + '\'); return false;">' +
+        '<div class="form-group">' +
+        '<label for="groupName">Gruppnamn</label>' +
+        '<input type="text" id="groupName" class="creator-input" required value="' + escapeHtml(currentName) + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<label for="groupDescription">Beskrivning (valfritt)</label>' +
+        '<textarea id="groupDescription" class="creator-input" rows="3">' + escapeHtml(currentDescription) + '</textarea>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-outline" onclick="closeEditGroupModal()">Avbryt</button>' +
+        '<button type="submit" class="btn btn-gold">💾 Spara</button>' +
+        '</div>' +
+        '</form>' +
+        '</div>' +
+        '</div>';
+    
+    modal.style.display = 'flex';
+}
+
+function closeEditGroupModal() {
+    var modal = document.getElementById('editGroupModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function saveGroupEdits(partyId) {
+    var nameInput = document.getElementById('groupName');
+    var descInput = document.getElementById('groupDescription');
+    
+    if (!nameInput) return;
+    
+    var name = nameInput.value.trim();
+    if (!name) {
+        showToast('Gruppnamn krävs', 'error');
+        return;
+    }
+    
+    var updates = {
+        name: name,
+        description: descInput ? descInput.value.trim() : ''
+    };
+    
+    PartyService.updateParty(partyId, updates).then(function() {
+        showToast('Grupp uppdaterad!', 'success');
+        closeEditGroupModal();
+        viewParty(partyId); // Refresh the party view
+    }).catch(function(err) {
+        showToast('Fel: ' + err.message, 'error');
+    });
+}
+
+// Delete Group
+function confirmDeleteGroup(partyId, groupName) {
+    // Use escapeHtml for consistent escaping
+    var safeName = escapeHtml(groupName);
+    
+    if (confirm('Är du säker på att du vill radera gruppen "' + safeName + '"? Detta kan inte ångras.')) {
+        PartyService.deleteParty(partyId).then(function() {
+            showToast('Grupp raderad', 'success');
+            // Navigate back to groups list
+            document.getElementById('groupsBtn').click();
+        }).catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
+    }
+}
+
 function sendChatMessage(partyId) {
     var input = document.getElementById('chatInput');
     if (!input) return;
@@ -2275,6 +2434,49 @@ function setAttendance(partyId, status) {
         });
 }
 
+function addParticipantToSession(partyId) {
+    var select = document.getElementById('addParticipantSelect');
+    if (!select || !select.value) {
+        showToast('Välj en medlem först', 'error');
+        return;
+    }
+    
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    var memberId = select.value;
+    
+    // Get member info and add as "maybe" by default
+    db.collection('users').doc(memberId).get()
+        .then(function(doc) {
+            var memberName = 'Okänd';
+            if (doc.exists) {
+                var userData = doc.data();
+                memberName = userData.displayName || userData.email.split('@')[0] || 'Okänd';
+            }
+            
+            var attendeeData = {};
+            attendeeData['sessionAttendees.' + memberId] = {
+                status: 'maybe',
+                name: memberName,
+                addedBy: user.uid,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            return db.collection('parties').doc(partyId).update(attendeeData);
+        })
+        .then(function() {
+            showToast('Deltagare tillagd!', 'success');
+            viewParty(partyId);
+        })
+        .catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
+}
+
 function savePartyNotes(partyId) {
     var notes = document.getElementById('partyNotes');
     if (!notes) return;
@@ -2334,5 +2536,180 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ Init complete');
 });
+
+// === Character Portrait Functions ===
+
+function openIconBrowser() {
+    var modal = document.createElement('div');
+    modal.id = 'iconBrowserModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    
+    // List of available icons
+    var icons = ['Alv.gif', 'Anka.gif', 'Book.gif', 'Brew.gif', 'Campfire.gif', 'CombatAction.gif', 
+                 'Dice.gif', 'Dvarg.gif', 'Enemy.gif', 'Key.gif', 'Magic.gif', 'Manniska.gif', 
+                 'Map.gif', 'NewCharacter.gif', 'Quill.gif', 'Scroll.gif', 'Treasure.gif', 'Varg.gif'];
+    
+    var html = '<div class="modal-content" style="max-width: 600px;">' +
+        '<div class="modal-header">' +
+        '<h2>🖼️ Välj Ikon</h2>' +
+        '<button class="modal-close" onclick="closeIconBrowser()">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<div class="icon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; max-height: 400px; overflow-y: auto; padding: 0.5rem;">';
+    
+    icons.forEach(function(iconFile) {
+        html += '<div class="icon-option" onclick="selectIcon(\'' + iconFile + '\')" style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 2px solid var(--border-panel); border-radius: var(--radius-md); cursor: pointer; padding: 0.5rem; transition: all 0.2s;">' +
+            '<img src="icons/' + iconFile + '" style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="' + iconFile + '" />' +
+            '</div>';
+    });
+    
+    html += '</div></div>' +
+        '<div class="modal-footer">' +
+        '<button class="btn btn-outline" onclick="closeIconBrowser()">Stäng</button>' +
+        '</div>' +
+        '</div>';
+    
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+}
+
+function closeIconBrowser() {
+    var modal = document.getElementById('iconBrowserModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function selectIcon(iconFile) {
+    if (!currentCharacter) return;
+    
+    // Store icon filename in character
+    CharacterService.updateCharacter(currentCharacter.id, {
+        portraitIcon: iconFile,
+        portraitType: 'icon'
+    }).then(function() {
+        currentCharacter.portraitIcon = iconFile;
+        showToast('Porträtt uppdaterat!', 'success');
+        closeIconBrowser();
+        // Refresh character sheet to show new icon
+        viewCharacter(currentCharacter.id);
+    }).catch(function(err) {
+        console.error('Error updating portrait:', err);
+        showToast('Kunde inte uppdatera porträtt', 'error');
+    });
+}
+
+function triggerPortraitUpload() {
+    var input = document.getElementById('portraitUpload');
+    if (input) {
+        input.click();
+    }
+}
+
+function handlePortraitUpload(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showToast('Vänligen välj en bildfil', 'error');
+        return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Bilden är för stor (max 5MB)', 'error');
+        return;
+    }
+    
+    if (!currentCharacter) {
+        showToast('Ingen karaktär vald', 'error');
+        return;
+    }
+    
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    showToast('Laddar upp...', 'info');
+    
+    // Compress and upload
+    compressImage(file, {
+        maxWidth: 200,
+        maxHeight: 200,
+        quality: 0.8
+    }).then(function(blob) {
+        // Upload to Firebase Storage
+        var storageRef = firebase.storage().ref();
+        var portraitRef = storageRef.child('portraits/' + user.uid + '/' + currentCharacter.id + '.jpg');
+        
+        return portraitRef.put(blob).then(function(snapshot) {
+            return snapshot.ref.getDownloadURL();
+        });
+    }).then(function(url) {
+        // Update character document
+        return CharacterService.updateCharacter(currentCharacter.id, {
+            portraitUrl: url,
+            portraitType: 'custom'
+        }).then(function() {
+            currentCharacter.portraitUrl = url;
+            showToast('Porträtt uppdaterat!', 'success');
+            // Refresh character sheet
+            viewCharacter(currentCharacter.id);
+        });
+    }).catch(function(err) {
+        console.error('Error uploading portrait:', err);
+        showToast('Kunde inte ladda upp: ' + err.message, 'error');
+    });
+}
+
+function compressImage(file, options) {
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var width = img.width;
+                var height = img.height;
+                
+                // Scale down if needed
+                if (width > options.maxWidth) {
+                    height = (height * options.maxWidth) / width;
+                    width = options.maxWidth;
+                }
+                if (height > options.maxHeight) {
+                    width = (width * options.maxHeight) / height;
+                    height = options.maxHeight;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(function(blob) {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Failed to compress image'));
+                    }
+                }, 'image/jpeg', options.quality);
+            };
+            img.onerror = function() {
+                reject(new Error('Failed to load image'));
+            };
+            img.src = e.target.result;
+        };
+        reader.onerror = function() {
+            reject(new Error('Failed to read file'));
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 console.log('✅ app.js finished');
