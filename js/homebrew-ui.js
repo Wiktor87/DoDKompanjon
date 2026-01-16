@@ -1190,8 +1190,6 @@ var HomebrewUI = {
         
         this.currentSlide = Math.max(0, Math.min(maxSlide, this.currentSlide + direction));
         
-        // Safety check before accessing cards[0]
-        if (cards.length === 0) return;
         var cardWidth = cards[0].offsetWidth + this.CARD_GAP;
         track.style.transform = 'translateX(-' + (this.currentSlide * cardWidth) + 'px)';
         
