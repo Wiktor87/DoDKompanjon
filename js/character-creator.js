@@ -389,6 +389,8 @@ function createCharacter() {
         portraitType: creatorData.portraitType,
         portraitUrl: creatorData.portraitUrl,
         backgroundImage: null
+        portraitUrl:  creatorData.portraitUrl || getDefaultIconForKin(creatorData.kin),
+        portraitType: creatorData. portraitType || 'icon',
     };
     
     CharacterService.createCharacter(charData).then(function() {
