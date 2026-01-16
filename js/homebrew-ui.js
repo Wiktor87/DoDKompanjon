@@ -129,8 +129,18 @@ var HomebrewUI = {
                         'placeholder="Sök bland ' + totalCount + ' homebrew-skapelser...">' +
                 '</div>' +
             '</div>' +
-            '<div class="homebrew-categories">' +
-                this.getCategoryTabsHTML() +
+            '<div class="category-carousel">' +
+                '<button class="carousel-arrow left" onclick="HomebrewUI.scrollCategories(-1)" id="categoryCarouselLeft">' +
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
+                '</button>' +
+                '<div class="category-buttons-container">' +
+                    '<div class="category-buttons-track">' +
+                        this.getCategoryTabsHTML() +
+                    '</div>' +
+                '</div>' +
+                '<button class="carousel-arrow right" onclick="HomebrewUI.scrollCategories(1)" id="categoryCarouselRight">' +
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+                '</button>' +
             '</div>' +
             '<div class="homebrew-filter-bar">' +
                 '<select class="homebrew-sort-select" id="homebrewSort">' +
@@ -139,17 +149,7 @@ var HomebrewUI = {
                     '<option value="rating">Högst betyg</option>' +
                 '</select>' +
             '</div>' +
-            '<div class="homebrew-carousel">' +
-                '<button class="carousel-arrow left" onclick="HomebrewUI.scrollHomebrew(-1)" id="homebrewCarouselLeft">' +
-                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
-                '</button>' +
-                '<div class="homebrew-cards-container">' +
-                    '<div class="homebrew-cards-track" id="homebrewGrid"></div>' +
-                '</div>' +
-                '<button class="carousel-arrow right" onclick="HomebrewUI.scrollHomebrew(1)" id="homebrewCarouselRight">' +
-                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
-                '</button>' +
-            '</div>' +
+            '<div class="homebrew-items-grid" id="homebrewGrid"></div>' +
         '</div>';
     },
     
@@ -1177,37 +1177,46 @@ var HomebrewUI = {
         }
     },
     
-    // Scroll homebrew carousel
-    scrollHomebrew: function(direction) {
-        var track = document.querySelector('.homebrew-cards-track');
+    // Scroll category carousel
+    scrollCategories: function(direction) {
+        var track = document.querySelector('.category-buttons-track');
         if (!track) return;
         
-        var cards = track.children;
-        if (cards.length === 0) return;
+        var buttons = track.children;
+        if (buttons.length === 0) return;
         
-        this.updateCardsPerView();
-        var maxSlide = Math.max(0, cards.length - this.cardsPerView);
+        var container = document.querySelector('.category-buttons-container');
+        var containerWidth = container.offsetWidth;
+        var trackWidth = track.scrollWidth;
         
-        this.currentSlide = Math.max(0, Math.min(maxSlide, this.currentSlide + direction));
+        // Calculate scroll amount (1/3 of container width)
+        var scrollAmount = containerWidth / 3;
+        var currentScroll = track.scrollLeft || 0;
+        var newScroll = currentScroll + (direction * scrollAmount);
         
-        var cardWidth = cards[0].offsetWidth + this.CARD_GAP;
-        track.style.transform = 'translateX(-' + (this.currentSlide * cardWidth) + 'px)';
+        // Clamp to valid range
+        newScroll = Math.max(0, Math.min(trackWidth - containerWidth, newScroll));
+        
+        track.scrollLeft = newScroll;
         
         // Update arrow states
-        var leftArrow = document.getElementById('homebrewCarouselLeft');
-        var rightArrow = document.getElementById('homebrewCarouselRight');
-        
-        if (leftArrow) {
-            leftArrow.disabled = this.currentSlide === 0;
-            leftArrow.style.opacity = this.currentSlide === 0 ? '0.3' : '1';
-            leftArrow.style.cursor = this.currentSlide === 0 ? 'not-allowed' : 'pointer';
-        }
-        
-        if (rightArrow) {
-            rightArrow.disabled = this.currentSlide >= maxSlide;
-            rightArrow.style.opacity = this.currentSlide >= maxSlide ? '0.3' : '1';
-            rightArrow.style.cursor = this.currentSlide >= maxSlide ? 'not-allowed' : 'pointer';
-        }
+        setTimeout(function() {
+            var leftArrow = document.getElementById('categoryCarouselLeft');
+            var rightArrow = document.getElementById('categoryCarouselRight');
+            
+            if (leftArrow) {
+                leftArrow.disabled = newScroll <= 0;
+                leftArrow.style.opacity = newScroll <= 0 ? '0.3' : '1';
+                leftArrow.style.cursor = newScroll <= 0 ? 'not-allowed' : 'pointer';
+            }
+            
+            if (rightArrow) {
+                var atEnd = newScroll >= (trackWidth - containerWidth - 5); // 5px tolerance
+                rightArrow.disabled = atEnd;
+                rightArrow.style.opacity = atEnd ? '0.3' : '1';
+                rightArrow.style.cursor = atEnd ? 'not-allowed' : 'pointer';
+            }
+        }, 50);
     }
 };
 

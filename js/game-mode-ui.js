@@ -1236,9 +1236,10 @@ var GameModeUI = {
         var kp = char.currentKP !== undefined ? char.currentKP : maxKp;
         var vp = char.currentVP !== undefined ? char.currentVP : maxVp;
         
-        var modalHTML = '<div class="gm-modal-content golden-frame" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">' +
+        var modalHTML = '<div class="gm-modal-content golden-frame" style="width: 90vw; max-width: 1200px; height: 85vh; max-height: 900px; overflow: hidden; display: flex; flex-direction: column;">' +
             '<span class="gm-frame-bl"></span><span class="gm-frame-br"></span>' +
             '<button class="gm-modal-close" onclick="GameModeUI.closeModal(\'expandedCharModalOverlay\')">✕</button>' +
+            '<div style="height: calc(100% - 60px); overflow-y: auto; overflow-x: hidden; padding-right: 1rem; scrollbar-width: thin; scrollbar-color: #d4af37 #1a1d24;">' +
             
             // Header
             '<div style="text-align: center; margin-bottom: 2rem;">' +
@@ -1482,6 +1483,31 @@ var GameModeUI = {
             '</div>' +
             '</div></div>';
         
+        // Spells/Magic (if available)
+        if (char.spells && char.spells.length > 0) {
+            modalHTML += '<div style="margin-bottom: 2rem;">' +
+                '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">✨ Besvärjelser</h3>' +
+                '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+            
+            char.spells.forEach(function(spell) {
+                modalHTML += '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--gold-primary);">' +
+                    '<div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--gold-primary);">' + (spell.name || spell) + '</div>' +
+                    (spell.description ? '<div style="font-size: 0.875rem; color: var(--text-muted);">' + spell.description + '</div>' : '') +
+                    '</div>';
+            });
+            
+            modalHTML += '</div></div>';
+        }
+        
+        // Background/History
+        if (char.background || char.history) {
+            modalHTML += '<div style="margin-bottom: 2rem;">' +
+                '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">📖 Bakgrund</h3>' +
+                '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; white-space: pre-wrap; font-family: var(--font-body); line-height: 1.6;">' +
+                (char.background || char.history) +
+                '</div></div>';
+        }
+        
         // Notes
         if (char.notes) {
             modalHTML += '<div style="margin-bottom: 1rem;">' +
@@ -1491,7 +1517,7 @@ var GameModeUI = {
                 '</div></div>';
         }
         
-        modalHTML += '</div>';
+        modalHTML += '</div></div>'; // Close inner content div and modal content
         
         overlay.innerHTML = modalHTML;
         document.body.appendChild(overlay);
