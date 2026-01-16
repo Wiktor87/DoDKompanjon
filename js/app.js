@@ -484,6 +484,8 @@ function viewCharacter(id) {
         container.innerHTML = renderFullCharacterSheet(char);
         // Setup listeners for kin/profession/age changes
         setupKinChangeListener();
+        // Setup delete button listener
+        setupDeleteCharacterListener();
         // Apply background image if set
         applyCharacterBackground(char.backgroundImage);
     }).catch(function(err) {
@@ -718,7 +720,7 @@ function renderFullCharacterSheet(char) {
     html += '<div class="danger-zone" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-panel);">';
     html += '<h4 style="margin-bottom: 1rem; color: var(--brand-red);">⚠️ Farlig Zon</h4>';
     html += '<p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">När du raderar en karaktär kan åtgärden inte ångras. All data kommer att tas bort permanent.</p>';
-    html += '<button class="btn btn-outline" style="border-color: var(--brand-red); color: var(--brand-red);" onclick="confirmDeleteCharacter(\'' + char.id + '\', ' + JSON.stringify(char.name) + ')">🗑️ Radera Karaktär</button>';
+    html += '<button class="btn btn-outline btn-delete-char" style="border-color: var(--brand-red); color: var(--brand-red);" data-char-id="' + escapeHtml(char.id) + '" data-char-name="' + escapeHtml(char.name) + '">🗑️ Radera Karaktär</button>';
     html += '</div>';
     
     html += '</div></div>';
@@ -1060,6 +1062,17 @@ function setupKinChangeListener() {
     var ageSelect = document.querySelector('[data-field="ageCategory"]');
     if (ageSelect) {
         ageSelect.addEventListener('change', updateCharacterSubtitle);
+    }
+}
+
+function setupDeleteCharacterListener() {
+    var deleteBtn = document.querySelector('.btn-delete-char');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            var charId = this.getAttribute('data-char-id');
+            var charName = this.getAttribute('data-char-name');
+            confirmDeleteCharacter(charId, charName);
+        });
     }
 }
 
@@ -2590,25 +2603,36 @@ function closeIconBrowser() {
 }
 
 function selectIcon(iconFile) {
-    if (!currentCharacter) return;
+    // Add null check
+    if (!currentCharacter || !currentCharacter.id) {
+        showToast('Ingen karaktär vald', 'error');
+        closeIconBrowser();
+        return;
+    }
     
     // Build full icon path using shared utility
     var iconPath = normalizeIconPath(iconFile);
+    
+    // Show loading state
+    showToast('Sparar porträtt...', 'info');
     
     // Update character in Firestore
     CharacterService.updateCharacter(currentCharacter.id, {
         portraitUrl: iconPath,
         portraitType: 'icon'
     }).then(function() {
+        // Update local state
         currentCharacter.portraitUrl = iconPath;
         currentCharacter.portraitType = 'icon';
+        
         showToast('Porträtt uppdaterat!', 'success');
         closeIconBrowser();
-        // Refresh character sheet to show new icon
+        
+        // Force refresh the character sheet to show new icon
         viewCharacter(currentCharacter.id);
     }).catch(function(err) {
         console.error('Error updating portrait:', err);
-        showToast('Kunde inte uppdatera porträtt', 'error');
+        showToast('Kunde inte spara porträtt: ' + err.message, 'error');
     });
 }
 
@@ -2647,7 +2671,7 @@ function handlePortraitUpload(event) {
         return;
     }
     
-    if (!currentCharacter) {
+    if (!currentCharacter || !currentCharacter.id) {
         showToast('Ingen karaktär vald', 'error');
         return;
     }
