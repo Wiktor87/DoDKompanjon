@@ -2619,6 +2619,12 @@ function triggerPortraitUpload() {
     }
 }
 
+// Portrait upload constants
+var PORTRAIT_MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+var PORTRAIT_MAX_WIDTH = 150;
+var PORTRAIT_MAX_HEIGHT = 150;
+var PORTRAIT_QUALITY = 0.7;
+
 function handlePortraitUpload(event) {
     var file = event.target.files[0];
     if (!file) return;
@@ -2630,7 +2636,7 @@ function handlePortraitUpload(event) {
     }
     
     // Validate file size (max 2MB before compression)
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > PORTRAIT_MAX_FILE_SIZE) {
         showToast('Bilden är för stor. Max 2MB.', 'error');
         return;
     }
@@ -2640,33 +2646,31 @@ function handlePortraitUpload(event) {
         return;
     }
     
-    try {
-        showToast('Bearbetar bild...', 'info');
-        
-        // Compress and convert to Base64
-        compressAndConvertToBase64(file, {
-            maxWidth: 150,
-            maxHeight: 150,
-            quality: 0.7
-        }).then(function(base64Image) {
-            // Save Base64 directly to Firestore (bypasses CORS)
-            return CharacterService.updateCharacter(currentCharacter.id, {
-                portraitUrl: base64Image,
-                portraitType: 'custom'
-            });
-        }).then(function() {
-            currentCharacter.portraitUrl = base64Image;
-            showToast('Porträtt uppladdat!', 'success');
-            // Refresh character sheet to show new portrait
-            viewCharacter(currentCharacter.id);
-        }).catch(function(err) {
-            console.error('Error uploading portrait:', err);
-            showToast('Kunde inte ladda upp bilden. Försök igen.', 'error');
+    showToast('Bearbetar bild...', 'info');
+    
+    var base64Image;
+    
+    // Compress and convert to Base64
+    compressAndConvertToBase64(file, {
+        maxWidth: PORTRAIT_MAX_WIDTH,
+        maxHeight: PORTRAIT_MAX_HEIGHT,
+        quality: PORTRAIT_QUALITY
+    }).then(function(result) {
+        base64Image = result;
+        // Save Base64 directly to Firestore (bypasses CORS)
+        return CharacterService.updateCharacter(currentCharacter.id, {
+            portraitUrl: base64Image,
+            portraitType: 'custom'
         });
-    } catch (error) {
-        console.error('Error uploading portrait:', error);
+    }).then(function() {
+        currentCharacter.portraitUrl = base64Image;
+        showToast('Porträtt uppladdat!', 'success');
+        // Refresh character sheet to show new portrait
+        viewCharacter(currentCharacter.id);
+    }).catch(function(err) {
+        console.error('Error uploading portrait:', err);
         showToast('Kunde inte ladda upp bilden. Försök igen.', 'error');
-    }
+    });
 }
 
 function compressAndConvertToBase64(file, options) {
@@ -2772,11 +2776,14 @@ function compressImage(file, options) {
 
 // Delete Character Function
 function confirmDeleteCharacter(characterId, characterName) {
-    var confirmed = confirm('Är du säker på att du vill radera "' + characterName + '"? Detta kan inte ångras.');
+    // Sanitize character name for display in confirm dialogs
+    var safeName = String(characterName).replace(/[<>"']/g, '');
+    
+    var confirmed = confirm('Är du säker på att du vill radera "' + safeName + '"? Detta kan inte ångras.');
     
     if (confirmed) {
         // Additional safety confirmation
-        var doubleConfirm = confirm('Sista varningen! Radera "' + characterName + '" permanent?');
+        var doubleConfirm = confirm('Sista varningen! Radera "' + safeName + '" permanent?');
         
         if (doubleConfirm) {
             showToast('Raderar karaktär...', 'info');
