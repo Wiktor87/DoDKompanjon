@@ -8,7 +8,9 @@ var creatorData = {
     attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10, KAR: 10 },
     kinAbility: '',
     heroicAbility: '',
-    equipment: []
+    equipment: [],
+    portraitType: 'icon',
+    portraitUrl: 'icons/NewCharacter.gif'
 };
 
 // Skills with attributes (from JSX specifications)
@@ -81,7 +83,8 @@ function showCharacterCreator() {
     creatorData = {
         step: 1, name: '', kin: null, profession: null, age: null,
         attributes: { STY: 10, FYS: 10, SMI: 10, INT: 10, PSY: 10, KAR: 10 },
-        kinAbility: '', heroicAbility: '', equipment: []
+        kinAbility: '', heroicAbility: '', equipment: [],
+        portraitType: 'icon', portraitUrl: 'icons/NewCharacter.gif'
     };
     renderCreatorStep();
 }
@@ -97,14 +100,15 @@ function renderCreatorStep() {
         case 3: html = renderStep3Profession(); break;
         case 4: html = renderStep4Age(); break;
         case 5: html = renderStep5Attributes(); break;
-        case 6: html = renderStep6Summary(); break;
+        case 6: html = renderStep6Portrait(); break;
+        case 7: html = renderStep7Summary(); break;
     }
     container.innerHTML = html;
     updateCreatorProgress();
 }
 
 function updateCreatorProgress() {
-    for (var i = 1; i <= 6; i++) {
+    for (var i = 1; i <= 7; i++) {
         var dot = document.getElementById('step' + i);
         if (dot) {
             dot.classList.remove('active', 'completed');
@@ -176,7 +180,46 @@ function renderStep5Attributes() {
     return html;
 }
 
-function renderStep6Summary() {
+function renderStep6Portrait() {
+    var availableIcons = [
+        'icons/NewCharacter.gif',
+        'icons/Manniska.gif',
+        'icons/Alv.gif',
+        'icons/Dvarg.gif',
+        'icons/Anka.gif',
+        'icons/Varg.gif',
+        'icons/CombatAction.gif',
+        'icons/Magic.gif',
+        'icons/Scroll.gif',
+        'icons/Enemy.gif'
+    ];
+    
+    var html = '<div class="creator-step"><h2>Välj porträtt</h2>';
+    html += '<div class="portrait-selector">';
+    html += '<div class="current-portrait">';
+    html += '<img src="' + creatorData.portraitUrl + '" alt="Current portrait" style="width: 128px; height: 128px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-gold);">';
+    html += '</div>';
+    html += '<div class="portrait-options">';
+    html += '<h3>Bläddra bland ikoner</h3>';
+    html += '<div class="icon-grid">';
+    
+    availableIcons.forEach(function(icon) {
+        var selected = creatorData.portraitUrl === icon ? ' selected' : '';
+        html += '<div class="icon-option' + selected + '" onclick="selectIcon(\'' + icon + '\')">';
+        html += '<img src="' + icon + '" alt="Icon" style="width: 64px; height: 64px;">';
+        html += '</div>';
+    });
+    
+    html += '</div>';
+    html += '<p class="form-help-text" style="margin-top: 1rem;">Custom upload kommer snart!</p>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>';
+    html += '<button class="btn btn-gold" onclick="nextStep()">Nästa →</button></div></div>';
+    return html;
+}
+
+function renderStep7Summary() {
     var html = '<div class="creator-step"><h2>Sammanfattning</h2>' +
         '<div class="summary-card">' +
         '<p><strong>Namn:</strong> ' + creatorData.name + '</p>' +
@@ -192,6 +235,12 @@ function renderStep6Summary() {
         '<div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>' +
         '<button class="btn btn-gold" onclick="createCharacter()">✨ Skapa karaktär</button></div></div>';
     return html;
+}
+
+function selectIcon(iconPath) {
+    creatorData.portraitType = 'icon';
+    creatorData.portraitUrl = iconPath;
+    renderCreatorStep();
 }
 
 function selectKin(kin) {
@@ -312,7 +361,10 @@ function createCharacter() {
         notes: '',
         playerName: '',
         weakness: '',
-        memento: ''
+        memento: '',
+        portraitType: creatorData.portraitType,
+        portraitUrl: creatorData.portraitUrl,
+        backgroundImage: null
     };
     
     CharacterService.createCharacter(charData).then(function() {

@@ -11,37 +11,43 @@ var HomebrewService = {
         monsters: { 
             label: 'Monster & Varelser', 
             // icon: '🐉',
-			icon: '<img src="icons/Enemy.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
-            fields: ['name', 'hp', 'armor', 'movement', 'skills', 'attacks', 'abilities', 'tags', 'description']
+			icon: '<img src="icons/Enemy.gif" height="32" width="32" class="custom-icon-img" alt="Monsters">',
+            fields: ['name', 'attributes', 'currentKP', 'maxKP', 'currentVP', 'maxVP', 'equipment', 'abilities', 'weapons', 'armor', 'skills', 'movement', 'size', 'description']
         },
         kin: { 
             label: 'Släkten', 
             // icon: '👥',
-			icon: '<img src="icons/NewCharacter.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
+			icon: '<img src="icons/NewCharacter.gif" height="32" width="32" class="custom-icon-img" alt="Kin">',
             fields: ['name', 'ability', 'statModifiers', 'description']
         },
         professions: { 
             label: 'Yrken', 
             // icon: '🎭',
-			icon: '<img src="icons/Quill.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
+			icon: '<img src="icons/Quill.gif" height="32" width="32" class="custom-icon-img" alt="Professions">',
             fields: ['name', 'skills', 'abilities', 'equipment', 'description']
         },
         spells: { 
             label: 'Besvärjelser', 
             // icon: '✨',
-			icon: '<img src="icons/Scroll.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
+			icon: '<img src="icons/Scroll.gif" height="32" width="32" class="custom-icon-img" alt="Spells">',
             fields: ['name', 'school', 'wp', 'range', 'duration', 'effect', 'description']
         },
         items: { 
             label: 'Magiska Föremål', 
             // icon: '💎',
-			icon: '<img src="icons/Magic.gif" height="32" width="32" class="custom-icon-img" alt="Abilities">',
+			icon: '<img src="icons/Magic.gif" height="32" width="32" class="custom-icon-img" alt="Magic Items">',
             fields: ['name', 'itemType', 'rarity', 'effect', 'value', 'description']
+        },
+        equipment: {
+            label: 'Utrustning',
+            // icon: '⚔️',
+            icon: '<img src="icons/Treasure.gif" height="32" width="32" class="custom-icon-img" alt="Equipment">',
+            fields: ['name', 'equipmentType', 'weight', 'cost', 'description']
         }
     },
 
     // Create a new homebrew item
-    createHomebrew: function(type, data, visibility, groupId) {
+    createHomebrew: function(type, data, visibility, groupId, availableForCharacters) {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
@@ -56,6 +62,7 @@ var HomebrewService = {
             downloads: 0,
             visibility: visibility || 'private',
             groupId: groupId || null,
+            availableForCharacters: availableForCharacters || false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             data: data
@@ -364,6 +371,19 @@ var HomebrewService = {
         
         return query.get().then(function(snapshot) {
             return snapshot.size;
+        });
+    },
+    
+    // Get available homebrew for character creator (from user's collection)
+    getAvailableForCharacters: function() {
+        var user = getCurrentUser();
+        if (!user) return Promise.resolve([]);
+        
+        return this.getSavedHomebrew().then(function(items) {
+            // Filter for items marked as available for characters
+            return items.filter(function(item) {
+                return item.availableForCharacters === true;
+            });
         });
     }
 };

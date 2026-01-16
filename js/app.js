@@ -91,6 +91,7 @@ function showSection(sectionId) {
     
     if (sectionId === 'characters') loadCharactersList();
     if (sectionId === 'parties') loadPartiesList();
+    if (sectionId === 'upcoming-sessions') loadUpcomingSessions();
     if (sectionId === 'homebrew') {
         if (typeof HomebrewUI !== 'undefined') {
             HomebrewUI.init();
@@ -470,6 +471,8 @@ function viewCharacter(id) {
         container.innerHTML = renderFullCharacterSheet(char);
         // Setup listeners for kin/profession/age changes
         setupKinChangeListener();
+        // Apply background image if set
+        applyCharacterBackground(char.backgroundImage);
     }).catch(function(err) {
         console.error('Failed to load character:', err);
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
@@ -479,6 +482,47 @@ function viewCharacter(id) {
 function closeCharacterSheet() {
     showSection('characters');
     currentCharacter = null;
+    removeCharacterBackground();
+}
+
+function applyCharacterBackground(backgroundImage) {
+    // Remove any existing background
+    removeCharacterBackground();
+    
+    if (backgroundImage && backgroundImage !== 'none') {
+        var bgDiv = document.createElement('div');
+        bgDiv.className = 'character-page-background';
+        bgDiv.id = 'charBackground';
+        bgDiv.style.backgroundImage = 'url(charbgs/' + backgroundImage + ')';
+        document.body.appendChild(bgDiv);
+    }
+}
+
+function removeCharacterBackground() {
+    var existingBg = document.getElementById('charBackground');
+    if (existingBg) {
+        existingBg.remove();
+    }
+}
+
+function selectCharacterBackground(backgroundImage) {
+    if (!currentCharacter) return;
+    
+    // Update character in database
+    CharacterService.updateCharacter(currentCharacter.id, {
+        backgroundImage: backgroundImage
+    }).then(function() {
+        currentCharacter.backgroundImage = backgroundImage;
+        applyCharacterBackground(backgroundImage);
+        if (typeof showToast !== 'undefined') {
+            showToast('Bakgrund uppdaterad!', 'success');
+        }
+    }).catch(function(err) {
+        console.error('Error updating background:', err);
+        if (typeof showToast !== 'undefined') {
+            showToast('Kunde inte uppdatera bakgrund', 'error');
+        }
+    });
 }
 
 function renderFullCharacterSheet(char) {
@@ -572,6 +616,7 @@ function renderFullCharacterSheet(char) {
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'combat\')">Strid</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'equipment\')">Utrustning</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'notes\')">Anteckningar</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'settings\')">Inställningar</button>';
     html += '</div>';
     
     // Main layout - Content + Sidebar
@@ -608,6 +653,29 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Anteckningar</h3></div>';
     html += '<div class="sheet-panel-v2-content">';
     html += '<textarea class="bio-textarea" data-field="notes" placeholder="Dina anteckningar..." style="width:100%;min-height:300px;">' + (char.notes || '') + '</textarea>';
+    html += '</div></div>';
+    html += '</div>';
+    
+    // Tab content: Settings
+    html += '<div class="sheet-tab-content-v2" id="tab-settings-v2" style="display: none;">';
+    html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Inställningar</h3></div>';
+    html += '<div class="sheet-panel-v2-content">';
+    html += '<div class="background-selector">';
+    html += '<label>Bakgrundsbild</label>';
+    html += '<div class="background-options">';
+    
+    // None option
+    var noneSelected = (!char.backgroundImage || char.backgroundImage === 'none') ? ' selected' : '';
+    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')">Ingen</div>';
+    
+    // Note: In a real implementation, you would dynamically scan the charbgs folder
+    // For now, we'll add a note that backgrounds can be added to the charbgs folder
+    html += '<div style="grid-column: 1/-1; text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem;">';
+    html += 'Lägg till bilder i mappen /charbgs för att använda dem som bakgrund';
+    html += '</div>';
+    
+    html += '</div>'; // Close background-options
+    html += '</div>'; // Close background-selector
     html += '</div></div>';
     html += '</div>';
     
@@ -1290,6 +1358,69 @@ function renderNewGroupCard() {
     var html = '<div class="fantasy-create-card" style="width: 300px; height: 155px;" onclick="openCreateParty()">';
     html += '<div class="fantasy-create-plus">+</div>';
     html += '<div class="fantasy-create-text">Skapa ny grupp</div>';
+    html += '</div>';
+    return html;
+}
+
+function loadUpcomingSessions() {
+    console.log('📅 loadUpcomingSessions');
+    var container = document.getElementById('upcomingSessionsGrid');
+    var countEl = document.getElementById('sessionsCount');
+    if (!container) return;
+    
+    if (typeof PartyService === 'undefined') {
+        container.innerHTML = '<div class="empty-state"><h3>Laddar...</h3></div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getUpcomingSessions().then(function(sessions) {
+        if (countEl) countEl.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 'er' : '') + ' planerade';
+        
+        if (sessions.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><h3>Inga kommande sessioner</h3><p>Planera en session för din grupp för att se den här.</p></div>';
+        } else {
+            var html = sessions.map(renderSessionCard).join('');
+            container.innerHTML = html;
+        }
+    }).catch(function(err) {
+        console.error('Error loading sessions:', err);
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
+    });
+}
+
+function renderSessionCard(session) {
+    var html = '<div class="session-card" onclick="viewParty(\'' + session.partyId + '\')">';
+    
+    html += '<div class="session-date">📅 ' + session.date + '</div>';
+    html += '<div class="session-party-name">' + session.partyName + '</div>';
+    
+    if (session.location) {
+        html += '<div class="session-location">📍 ' + session.location + '</div>';
+    }
+    
+    if (session.attendees && session.attendees.length > 0) {
+        html += '<div class="session-attendees">';
+        html += '<div class="session-attendees-title">Deltagare</div>';
+        
+        var attending = session.attendees.filter(function(a) { return a.status === 'attending'; });
+        var maybe = session.attendees.filter(function(a) { return a.status === 'maybe'; });
+        var notAttending = session.attendees.filter(function(a) { return a.status === 'not_attending'; });
+        
+        if (attending.length > 0) {
+            html += '<span class="attendee-status attending">✓ ' + attending.length + ' deltar</span>';
+        }
+        if (maybe.length > 0) {
+            html += '<span class="attendee-status maybe">? ' + maybe.length + ' kanske</span>';
+        }
+        if (notAttending.length > 0) {
+            html += '<span class="attendee-status not-attending">✗ ' + notAttending.length + ' deltar inte</span>';
+        }
+        
+        html += '</div>';
+    }
+    
     html += '</div>';
     return html;
 }
