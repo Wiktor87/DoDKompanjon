@@ -1564,9 +1564,12 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
     
     // Admin actions for owner
     if (isOwner) {
+        var escapedName = escapeHtml(party.name);
+        var escapedDesc = escapeHtml(party.description || '');
+        var escapedId = escapeHtml(party.id);
         html += '<div class="group-admin-actions" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">' +
-            '<button class="btn btn-outline btn-sm" onclick="openEditGroupModal(\'' + party.id + '\', \'' + escapeHtml(party.name) + '\', \'' + escapeHtml(party.description || '') + '\')">✏️ Redigera grupp</button>' +
-            '<button class="btn btn-outline btn-sm" style="color: var(--red-hp); border-color: var(--red-hp);" onclick="confirmDeleteGroup(\'' + party.id + '\', \'' + escapeHtml(party.name) + '\')">🗑️ Radera grupp</button>' +
+            '<button class="btn btn-outline btn-sm" onclick="openEditGroupModal(\'' + escapedId + '\', \'' + escapedName + '\', \'' + escapedDesc + '\')">✏️ Redigera grupp</button>' +
+            '<button class="btn btn-outline btn-sm" style="color: var(--red-hp); border-color: var(--red-hp);" onclick="confirmDeleteGroup(\'' + escapedId + '\', \'' + escapedName + '\')">🗑️ Radera grupp</button>' +
             '</div>';
     }
     
@@ -1656,9 +1659,33 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
             
             html += '</div></div>';
             
+            // Admin panel for adding participants (owner only)
+            if (isOwner && party.memberIds && party.memberIds.length > 0) {
+                html += '<div class="session-admin-panel" style="border-top: 1px solid var(--border-default); padding-top: 1rem; margin-top: 1rem;">' +
+                    '<h4 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">⚙️ Hantera deltagare</h4>' +
+                    '<div class="add-participant" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">' +
+                    '<select id="addParticipantSelect" class="creator-input" style="flex: 1;">' +
+                    '<option value="">Välj medlem...</option>';
+                
+                // List all group members who haven't responded yet
+                party.memberIds.forEach(function(memberId) {
+                    if (!attendees[memberId]) {
+                        // Get member name (would need to be passed in membersList)
+                        var escapedId = escapeHtml(memberId);
+                        html += '<option value="' + escapedId + '">Medlem ' + escapedId.substring(0, 8) + '</option>';
+                    }
+                });
+                
+                html += '</select>' +
+                    '<button class="btn btn-gold btn-sm" onclick="addParticipantToSession(\'' + party.id + '\')">+ Lägg till</button>' +
+                    '</div>' +
+                    '<p style="font-size: 0.75rem; color: var(--text-muted);">Lägg till gruppmedlemmar i sessionen</p>' +
+                    '</div>';
+            }
+            
             // RSVP for current user
             if (currentUserId) {
-                html += '<div class="session-rsvp" style="border-top: 1px solid var(--border-default); padding-top: 1rem;">' +
+                html += '<div class="session-rsvp" style="border-top: 1px solid var(--border-default); padding-top: 1rem; margin-top: 1rem;">' +
                     '<div style="margin-bottom: 0.75rem; font-weight: 600; color: var(--text-secondary);">Kommer du?</div>' +
                     '<div class="session-rsvp-buttons">' +
                     '<button class="rsvp-btn attending' + (currentUserStatus === 'attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'attending\')">✓ Ja</button>' +
@@ -2200,14 +2227,14 @@ function openEditGroupModal(partyId, currentName, currentDescription) {
         '<button class="modal-close" onclick="closeEditGroupModal()">✕</button>' +
         '</div>' +
         '<div class="modal-body">' +
-        '<form id="editGroupForm" onsubmit="saveGroupEdits(\'' + partyId + '\'); return false;">' +
+        '<form id="editGroupForm" onsubmit="saveGroupEdits(\'' + escapeHtml(partyId) + '\'); return false;">' +
         '<div class="form-group">' +
         '<label for="groupName">Gruppnamn</label>' +
-        '<input type="text" id="groupName" class="creator-input" required value="' + currentName + '">' +
+        '<input type="text" id="groupName" class="creator-input" required value="' + escapeHtml(currentName) + '">' +
         '</div>' +
         '<div class="form-group">' +
         '<label for="groupDescription">Beskrivning (valfritt)</label>' +
-        '<textarea id="groupDescription" class="creator-input" rows="3">' + currentDescription + '</textarea>' +
+        '<textarea id="groupDescription" class="creator-input" rows="3">' + escapeHtml(currentDescription) + '</textarea>' +
         '</div>' +
         '<div class="modal-footer">' +
         '<button type="button" class="btn btn-outline" onclick="closeEditGroupModal()">Avbryt</button>' +
@@ -2255,7 +2282,10 @@ function saveGroupEdits(partyId) {
 
 // Delete Group
 function confirmDeleteGroup(partyId, groupName) {
-    if (confirm('Är du säker på att du vill radera gruppen "' + groupName + '"? Detta kan inte ångras.')) {
+    // Use escapeHtml for consistent escaping
+    var safeName = escapeHtml(groupName);
+    
+    if (confirm('Är du säker på att du vill radera gruppen "' + safeName + '"? Detta kan inte ångras.')) {
         PartyService.deleteParty(partyId).then(function() {
             showToast('Grupp raderad', 'success');
             // Navigate back to groups list
@@ -2397,6 +2427,49 @@ function setAttendance(partyId, status) {
             var statusText = status === 'attending' ? 'Kommer' : (status === 'maybe' ? 'Kanske' : 'Kommer ej');
             showToast('RSVP uppdaterad: ' + statusText, 'success');
             // Reload party view to show updated attendance
+            viewParty(partyId);
+        })
+        .catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
+}
+
+function addParticipantToSession(partyId) {
+    var select = document.getElementById('addParticipantSelect');
+    if (!select || !select.value) {
+        showToast('Välj en medlem först', 'error');
+        return;
+    }
+    
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    var memberId = select.value;
+    
+    // Get member info and add as "maybe" by default
+    db.collection('users').doc(memberId).get()
+        .then(function(doc) {
+            var memberName = 'Okänd';
+            if (doc.exists) {
+                var userData = doc.data();
+                memberName = userData.displayName || userData.email.split('@')[0] || 'Okänd';
+            }
+            
+            var attendeeData = {};
+            attendeeData['sessionAttendees.' + memberId] = {
+                status: 'maybe',
+                name: memberName,
+                addedBy: user.uid,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            return db.collection('parties').doc(partyId).update(attendeeData);
+        })
+        .then(function() {
+            showToast('Deltagare tillagd!', 'success');
             viewParty(partyId);
         })
         .catch(function(err) {

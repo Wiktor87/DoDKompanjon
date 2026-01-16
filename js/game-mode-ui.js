@@ -1489,10 +1489,13 @@ var GameModeUI = {
                 '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">✨ Besvärjelser</h3>' +
                 '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
             
+            var self = this;
             char.spells.forEach(function(spell) {
+                var spellName = self.escapeHtml(spell.name || spell);
+                var spellDesc = spell.description ? self.escapeHtml(spell.description) : '';
                 modalHTML += '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--gold-primary);">' +
-                    '<div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--gold-primary);">' + (spell.name || spell) + '</div>' +
-                    (spell.description ? '<div style="font-size: 0.875rem; color: var(--text-muted);">' + spell.description + '</div>' : '') +
+                    '<div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--gold-primary);">' + spellName + '</div>' +
+                    (spell.description ? '<div style="font-size: 0.875rem; color: var(--text-muted);">' + spellDesc + '</div>' : '') +
                     '</div>';
             });
             
@@ -1504,7 +1507,7 @@ var GameModeUI = {
             modalHTML += '<div style="margin-bottom: 2rem;">' +
                 '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">📖 Bakgrund</h3>' +
                 '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; white-space: pre-wrap; font-family: var(--font-body); line-height: 1.6;">' +
-                (char.background || char.history) +
+                this.escapeHtml(char.background || char.history) +
                 '</div></div>';
         }
         
@@ -1513,11 +1516,12 @@ var GameModeUI = {
             modalHTML += '<div style="margin-bottom: 1rem;">' +
                 '<h3 style="margin-bottom: 1rem; color: var(--gold-primary);">📝 Anteckningar</h3>' +
                 '<div style="padding: 1rem; background: var(--card-bg); border-radius: 8px; white-space: pre-wrap; font-family: var(--font-body); line-height: 1.6;">' +
-                char.notes +
+                this.escapeHtml(char.notes) +
                 '</div></div>';
         }
         
-        modalHTML += '</div></div>'; // Close inner content div and modal content
+        modalHTML += '</div>'; // Close scrollable content div
+        modalHTML += '</div>'; // Close modal content
         
         overlay.innerHTML = modalHTML;
         document.body.appendChild(overlay);
