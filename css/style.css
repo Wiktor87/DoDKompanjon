@@ -2417,9 +2417,60 @@ body.app-active::before {
 
 /* Homebrew Grid */
 .homebrew-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
     gap: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+/* Homebrew Carousel */
+.homebrew-carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1.5rem;
+}
+
+.homebrew-cards-container {
+    overflow: hidden; /* Hide scrollbar */
+    flex: 1;
+}
+
+.homebrew-cards-track {
+    display: flex;
+    gap: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.carousel-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: #d4af37;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+    background: rgba(212, 175, 55, 0.3);
+    transform: scale(1.1);
+}
+
+.carousel-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.carousel-arrow svg {
+    width: 20px;
+    height: 20px;
 }
 
 /* Homebrew Card */
