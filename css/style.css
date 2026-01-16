@@ -129,6 +129,10 @@ body.app-active::before {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .btn-start-game-mode:hover {
@@ -137,11 +141,6 @@ body.app-active::before {
         0 8px 25px rgba(220, 38, 38, 0.5),
         0 0 50px rgba(220, 38, 38, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.btn-start-game-mode::before {
-    content: '⚔️';
-    margin-right: 10px;
 }
 
 /* Sessions Calendar */
@@ -2416,10 +2415,147 @@ body.app-active::before {
 }
 
 /* Homebrew Grid */
+/* Homebrew cards flex container (used in carousel) */
 .homebrew-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
     gap: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+/* Homebrew Carousel */
+.homebrew-carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1.5rem;
+}
+
+.homebrew-cards-container {
+    overflow: hidden; /* Hide scrollbar */
+    flex: 1;
+}
+
+.homebrew-cards-track {
+    display: flex;
+    gap: 1.5rem; /* 24px gap used in carousel scroll calculation */
+    transition: transform 0.3s ease;
+}
+
+.carousel-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: #d4af37;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+    background: rgba(212, 175, 55, 0.3);
+    transform: scale(1.1);
+}
+
+.carousel-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.carousel-arrow svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Homebrew card action buttons */
+.homebrew-card-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.homebrew-btn-edit {
+    background: rgba(212,175,55,0.2);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #d4af37;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.homebrew-btn-edit:hover {
+    background: rgba(212,175,55,0.3);
+}
+
+.homebrew-btn-delete {
+    background: rgba(220,38,38,0.2);
+    border: 1px solid rgba(220,38,38,0.4);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #dc2626;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.homebrew-btn-delete:hover {
+    background: rgba(220,38,38,0.3);
+}
+
+/* Session RSVP buttons */
+.session-rsvp-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rsvp-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.rsvp-btn.attending {
+    border-color: rgba(34,197,94,0.5);
+    color: #22c55e;
+}
+
+.rsvp-btn.attending.active,
+.rsvp-btn.attending:hover {
+    background: rgba(34,197,94,0.2);
+}
+
+.rsvp-btn.maybe {
+    border-color: rgba(250,204,21,0.5);
+    color: #facc15;
+}
+
+.rsvp-btn.maybe.active,
+.rsvp-btn.maybe:hover {
+    background: rgba(250,204,21,0.2);
+}
+
+.rsvp-btn.not-attending {
+    border-color: rgba(239,68,68,0.5);
+    color: #ef4444;
+}
+
+.rsvp-btn.not-attending.active,
+.rsvp-btn.not-attending:hover {
+    background: rgba(239,68,68,0.2);
 }
 
 /* Homebrew Card */

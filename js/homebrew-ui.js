@@ -5,12 +5,22 @@ var HomebrewUI = {
     currentSort: 'newest',
     searchTerm: '',
     homebrewItems: [],
+    currentSlide: 0,
+    cardsPerView: 4, // Default, will be adjusted based on screen width
+    CARD_GAP: 24, // Gap between cards in pixels (1.5rem = 24px, matches CSS)
     
     // Initialize homebrew section
     init: function() {
         console.log('🎨 HomebrewUI initializing...');
         this.renderBrowseView();
         this.attachEventListeners();
+        this.updateCardsPerView();
+        
+        // Add window resize listener for responsive carousel
+        var self = this;
+        window.addEventListener('resize', function() {
+            self.updateCardsPerView();
+        });
     },
     
     // Attach event listeners
@@ -129,7 +139,17 @@ var HomebrewUI = {
                     '<option value="rating">Högst betyg</option>' +
                 '</select>' +
             '</div>' +
-            '<div class="homebrew-grid" id="homebrewGrid"></div>' +
+            '<div class="homebrew-carousel">' +
+                '<button class="carousel-arrow left" onclick="HomebrewUI.scrollHomebrew(-1)" id="homebrewCarouselLeft">' +
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
+                '</button>' +
+                '<div class="homebrew-cards-container">' +
+                    '<div class="homebrew-cards-track" id="homebrewGrid"></div>' +
+                '</div>' +
+                '<button class="carousel-arrow right" onclick="HomebrewUI.scrollHomebrew(1)" id="homebrewCarouselRight">' +
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+                '</button>' +
+            '</div>' +
         '</div>';
     },
     
@@ -203,6 +223,10 @@ var HomebrewUI = {
         var description = this.escapeHtml(item.description);
         var truncatedDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
         
+        // Check if current user is owner
+        var currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+        var isOwner = currentUser && item.authorId === currentUser.uid;
+        
         // Type colors matching JSX mockup
         var typeColorMap = {
             'monster': 'monster',
@@ -220,8 +244,19 @@ var HomebrewUI = {
         html += '<svg class="decorative-corner-svg bottom-left" viewBox="0 0 25 25" style="width: 20px; height: 20px;"><path d="M0 0 L3 0 L3 22 L25 22 L25 25 L0 25 Z" fill="#d4af37" /></svg>';
         html += '<svg class="decorative-corner-svg bottom-right" viewBox="0 0 25 25" style="width: 20px; height: 20px;"><path d="M22 0 L25 0 L25 25 L0 25 L0 22 L22 22 Z" fill="#d4af37" /></svg>';
         
-        // Type badge
+        // Card header with type badge and action buttons
+        html += '<div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
         html += '<div class="fantasy-homebrew-type-badge ' + typeClass + '">' + category.label + '</div>';
+        
+        // Owner action buttons
+        if (isOwner) {
+            html += '<div class="homebrew-card-actions">' +
+                '<button class="homebrew-btn-edit" onclick="event.stopPropagation();HomebrewUI.editHomebrew(\'' + item.id + '\')">✏️</button>' +
+                '<button class="homebrew-btn-delete" onclick="event.stopPropagation();HomebrewUI.deleteHomebrew(\'' + item.id + '\')">🗑️</button>' +
+                '</div>';
+        }
+        
+        html += '</div>';
         
         // Title
         html += '<h3 class="fantasy-homebrew-title">' + this.escapeHtml(item.name) + '</h3>';
@@ -1126,6 +1161,53 @@ var HomebrewUI = {
         var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         var months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
         return months[date.getMonth()] + ' ' + date.getFullYear();
+    },
+    
+    // Update cards per view based on screen width
+    updateCardsPerView: function() {
+        var width = window.innerWidth;
+        if (width < 768) {
+            this.cardsPerView = 1;
+        } else if (width < 1024) {
+            this.cardsPerView = 2;
+        } else if (width < 1400) {
+            this.cardsPerView = 3;
+        } else {
+            this.cardsPerView = 4;
+        }
+    },
+    
+    // Scroll homebrew carousel
+    scrollHomebrew: function(direction) {
+        var track = document.querySelector('.homebrew-cards-track');
+        if (!track) return;
+        
+        var cards = track.children;
+        if (cards.length === 0) return;
+        
+        this.updateCardsPerView();
+        var maxSlide = Math.max(0, cards.length - this.cardsPerView);
+        
+        this.currentSlide = Math.max(0, Math.min(maxSlide, this.currentSlide + direction));
+        
+        var cardWidth = cards[0].offsetWidth + this.CARD_GAP;
+        track.style.transform = 'translateX(-' + (this.currentSlide * cardWidth) + 'px)';
+        
+        // Update arrow states
+        var leftArrow = document.getElementById('homebrewCarouselLeft');
+        var rightArrow = document.getElementById('homebrewCarouselRight');
+        
+        if (leftArrow) {
+            leftArrow.disabled = this.currentSlide === 0;
+            leftArrow.style.opacity = this.currentSlide === 0 ? '0.3' : '1';
+            leftArrow.style.cursor = this.currentSlide === 0 ? 'not-allowed' : 'pointer';
+        }
+        
+        if (rightArrow) {
+            rightArrow.disabled = this.currentSlide >= maxSlide;
+            rightArrow.style.opacity = this.currentSlide >= maxSlide ? '0.3' : '1';
+            rightArrow.style.cursor = this.currentSlide >= maxSlide ? 'not-allowed' : 'pointer';
+        }
     }
 };
 

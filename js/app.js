@@ -1536,21 +1536,91 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
     
     // Next Session section
     if (party.nextSession || isOwner) {
-        html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
-            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">' +
-            '<h3 style="margin: 0; font-size: 1rem;">📅 Nästa Session</h3>';
+        html += '<div class="session-info-card" style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1.5rem;">' +
+            '<div class="session-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">' +
+            '<h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">📅 Nästa Session</h3>';
         
         if (isOwner) {
-            html += '<button class="btn btn-gold btn-xs" onclick="openSessionScheduler(\'' + party.id + '\')">⚙️ Schemalägg</button>';
+            html += '<button class="btn btn-gold btn-xs" onclick="openSessionScheduler(\'' + party.id + '\')">✏️ Redigera</button>';
         }
         
         html += '</div>';
         
         if (party.nextSession) {
-            html += '<div class="next-session-badge" style="margin-top: 0.75rem;">' +
-                '<div class="badge-label">Nästa session</div>' +
-                '<div class="badge-value">' + party.nextSession + '</div>' +
+            html += '<div class="session-details" style="margin-bottom: 1rem;">' +
+                '<div class="session-row" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">' +
+                '<span class="icon" style="font-size: 1.25rem;">🗓️</span>' +
+                '<span class="label" style="font-weight: 600; color: var(--text-secondary);">Datum:</span>' +
+                '<span class="value" style="color: var(--text-primary);">' + party.nextSession + '</span>' +
                 '</div>';
+            
+            // Location (if provided)
+            if (party.nextSessionLocation) {
+                html += '<div class="session-row" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">' +
+                    '<span class="icon" style="font-size: 1.25rem;">📍</span>' +
+                    '<span class="label" style="font-weight: 600; color: var(--text-secondary);">Plats:</span>' +
+                    '<span class="value" style="color: var(--text-primary);">' + party.nextSessionLocation + '</span>' +
+                    '</div>';
+            }
+            
+            html += '</div>';
+            
+            // Participants
+            var attendees = party.sessionAttendees || {};
+            var user = getCurrentUser();
+            var currentUserId = user ? user.uid : null;
+            var currentUserStatus = currentUserId && attendees[currentUserId] ? attendees[currentUserId].status : null;
+            
+            html += '<div class="session-participants" style="margin-bottom: 1rem;">' +
+                '<div class="label" style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-secondary);">Deltagare:</div>' +
+                '<div class="participant-list" style="display: flex; flex-direction: column; gap: 0.5rem;">';
+            
+            var hasParticipants = false;
+            Object.keys(attendees).forEach(function(userId) {
+                hasParticipants = true;
+                var attendee = attendees[userId];
+                var statusIcon = '';
+                var statusClass = '';
+                var statusText = '';
+                
+                if (attendee.status === 'attending') {
+                    statusIcon = '✓';
+                    statusClass = 'attending';
+                    statusText = 'Kommer';
+                } else if (attendee.status === 'maybe') {
+                    statusIcon = '?';
+                    statusClass = 'maybe';
+                    statusText = 'Kanske';
+                } else if (attendee.status === 'not_attending') {
+                    statusIcon = '✗';
+                    statusClass = 'not-attending';
+                    statusText = 'Kommer ej';
+                }
+                
+                html += '<div class="participant ' + statusClass + '" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-sm);">' +
+                    '<div class="participant-avatar" style="width: 32px; height: 32px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">👤</div>' +
+                    '<span class="participant-name" style="flex: 1; font-weight: 500;">' + (attendee.name || 'Okänd') + '</span>' +
+                    '<span class="status ' + statusClass + '" style="font-size: 0.875rem; padding: 0.25rem 0.5rem; border-radius: 4px;">' + statusIcon + ' ' + statusText + '</span>' +
+                    '</div>';
+            });
+            
+            if (!hasParticipants) {
+                html += '<p style="color: var(--text-muted); font-size: 0.875rem;">Inga svar ännu</p>';
+            }
+            
+            html += '</div></div>';
+            
+            // RSVP for current user
+            if (currentUserId) {
+                html += '<div class="session-rsvp" style="border-top: 1px solid var(--border-default); padding-top: 1rem;">' +
+                    '<div style="margin-bottom: 0.75rem; font-weight: 600; color: var(--text-secondary);">Kommer du?</div>' +
+                    '<div class="session-rsvp-buttons">' +
+                    '<button class="rsvp-btn attending' + (currentUserStatus === 'attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'attending\')">✓ Ja</button>' +
+                    '<button class="rsvp-btn maybe' + (currentUserStatus === 'maybe' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'maybe\')">? Kanske</button>' +
+                    '<button class="rsvp-btn not-attending' + (currentUserStatus === 'not_attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'not_attending\')">✗ Nej</button>' +
+                    '</div>' +
+                    '</div>';
+            }
         } else {
             html += '<p style="color: var(--text-muted); margin-top: 0.5rem;">Ingen session schemalagd ännu</p>';
         }
@@ -1596,8 +1666,10 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
     // Game Mode button (only for owner)
     if (isOwner && partyChars.length > 0) {
         html += '<div style="margin-bottom: 2rem; text-align: center;">' +
-            '<button class="btn btn-gold game-mode-btn" onclick="GameModeUI.init(\'' + party.id + '\')" style="font-size: 1.125rem; padding: 1rem 2rem;">' +
-            '🎮 Starta Spelläge' +
+            '<button class="btn-start-game-mode" onclick="GameModeUI.init(\'' + party.id + '\')">' +
+            '<span class="btn-icon">⚔️</span>' +
+            '<span class="btn-text">Starta Spelläge</span>' +
+            '<span class="btn-icon">⚔️</span>' +
             '</button>' +
             '</div>';
     }
@@ -2111,6 +2183,10 @@ function openSessionScheduler(partyId) {
         '<label for="sessionTime">Tid</label>' +
         '<input type="time" id="sessionTime" class="creator-input" required value="' + timeStr + '">' +
         '</div>' +
+        '<div class="form-group">' +
+        '<label for="sessionLocation">Plats</label>' +
+        '<input type="text" id="sessionLocation" class="creator-input" placeholder="t.ex. Eriks lägenhet">' +
+        '</div>' +
         '<div class="modal-footer">' +
         '<button type="button" class="btn btn-outline" onclick="closeSessionScheduler()">Avbryt</button>' +
         '<button type="submit" class="btn btn-gold">Spara</button>' +
@@ -2132,11 +2208,13 @@ function closeSessionScheduler() {
 function saveSession(partyId) {
     var dateInput = document.getElementById('sessionDate');
     var timeInput = document.getElementById('sessionTime');
+    var locationInput = document.getElementById('sessionLocation');
     
     if (!dateInput || !timeInput) return;
     
     var dateValue = dateInput.value;
     var timeValue = timeInput.value;
+    var locationValue = locationInput ? locationInput.value : '';
     
     if (!dateValue || !timeValue) {
         showToast('Fyll i både datum och tid', 'error');
@@ -2158,12 +2236,38 @@ function saveSession(partyId) {
     
     var formattedDate = dayName + ' ' + day + ' ' + month + ', ' + hours + ':' + minutes;
     
-    // Save to party
-    PartyService.setNextSession(partyId, formattedDate, firebase.firestore.Timestamp.fromDate(dateTime))
+    // Use PartyService for consistency
+    PartyService.setNextSession(partyId, formattedDate, firebase.firestore.Timestamp.fromDate(dateTime), locationValue)
         .then(function() {
             showToast('Session schemalagd!', 'success');
             closeSessionScheduler();
             // Reload party view to show new session
+            viewParty(partyId);
+        })
+        .catch(function(err) {
+            showToast('Fel: ' + err.message, 'error');
+        });
+}
+
+function setAttendance(partyId, status) {
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    var attendeeData = {};
+    attendeeData['sessionAttendees.' + user.uid] = {
+        status: status,
+        name: user.displayName || user.email.split('@')[0],
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    db.collection('parties').doc(partyId).update(attendeeData)
+        .then(function() {
+            var statusText = status === 'attending' ? 'Kommer' : (status === 'maybe' ? 'Kanske' : 'Kommer ej');
+            showToast('RSVP uppdaterad: ' + statusText, 'success');
+            // Reload party view to show updated attendance
             viewParty(partyId);
         })
         .catch(function(err) {

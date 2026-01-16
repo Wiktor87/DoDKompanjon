@@ -186,6 +186,43 @@ function setupNavigationHandlers() {
     });
     
     console.log('Navigation handlers set up for ' + navTabs.length + ' tabs');
+    
+    // Setup dropdown item handlers
+    var dropdownItems = document.querySelectorAll('.nav-dropdown-item');
+    dropdownItems.forEach(function(item) {
+        // Skip items that already have onclick (like "Skapa Grupp")
+        if (item.onclick) return;
+        
+        item.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var section = this.getAttribute('data-section');
+            
+            if (!section) {
+                console.warn('Dropdown item missing data-section attribute');
+                return;
+            }
+            
+            // Check if user is logged in (dropdown items require auth)
+            if (!currentUser) {
+                if (typeof showAuthModal === 'function') {
+                    showAuthModal('login');
+                } else {
+                    console.error('showAuthModal function not available');
+                }
+                return;
+            }
+            
+            // Navigate to section
+            if (typeof showSection === 'function') {
+                showSection(section);
+            } else {
+                console.error('showSection function not available');
+            }
+        };
+    });
+    
+    console.log('Dropdown handlers set up for ' + dropdownItems.length + ' items');
 }
 
 // Login form
