@@ -2625,8 +2625,8 @@ function triggerPortraitUpload() {
 }
 
 // Portrait upload constants
-var PORTRAIT_MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-var PORTRAIT_MAX_FILE_SIZE_MB = 2; // For error messages
+var PORTRAIT_MAX_FILE_SIZE_MB = 2; // Max file size in MB
+var PORTRAIT_MAX_FILE_SIZE = PORTRAIT_MAX_FILE_SIZE_MB * 1024 * 1024; // Convert to bytes
 var PORTRAIT_MAX_WIDTH = 150;
 var PORTRAIT_MAX_HEIGHT = 150;
 var PORTRAIT_QUALITY = 0.7;
@@ -2782,13 +2782,15 @@ function compressImage(file, options) {
 
 // Delete Character Function
 function confirmDeleteCharacter(characterId, characterName) {
-    // confirm() displays plain text, no HTML/JS escaping needed
-    // characterName is already safely passed via JSON.stringify in onclick
-    var confirmed = confirm('Är du säker på att du vill radera "' + characterName + '"? Detta kan inte ångras.');
+    // Sanitize character name for safe display in confirm dialogs
+    // Remove or replace potentially problematic characters
+    var safeName = String(characterName).replace(/[\r\n\t]/g, ' ').substring(0, 100);
+    
+    var confirmed = confirm('Är du säker på att du vill radera "' + safeName + '"? Detta kan inte ångras.');
     
     if (confirmed) {
         // Additional safety confirmation
-        var doubleConfirm = confirm('Sista varningen! Radera "' + characterName + '" permanent?');
+        var doubleConfirm = confirm('Sista varningen! Radera "' + safeName + '" permanent?');
         
         if (doubleConfirm) {
             showToast('Raderar karaktär...', 'info');
