@@ -718,7 +718,7 @@ function renderFullCharacterSheet(char) {
     html += '<div class="danger-zone" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-panel);">';
     html += '<h4 style="margin-bottom: 1rem; color: var(--brand-red);">⚠️ Farlig Zon</h4>';
     html += '<p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">När du raderar en karaktär kan åtgärden inte ångras. All data kommer att tas bort permanent.</p>';
-    html += '<button class="btn btn-outline" style="border-color: var(--brand-red); color: var(--brand-red);" onclick="confirmDeleteCharacter(\'' + char.id + '\', \'' + escapeHtml(char.name) + '\')">🗑️ Radera Karaktär</button>';
+    html += '<button class="btn btn-outline" style="border-color: var(--brand-red); color: var(--brand-red);" onclick="confirmDeleteCharacter(\'' + char.id + '\', ' + JSON.stringify(char.name) + ')">🗑️ Radera Karaktär</button>';
     html += '</div>';
     
     html += '</div></div>';
@@ -2782,14 +2782,13 @@ function compressImage(file, options) {
 
 // Delete Character Function
 function confirmDeleteCharacter(characterId, characterName) {
-    // Use existing escapeHtml function for proper sanitization
-    var safeName = escapeHtml(characterName);
-    
-    var confirmed = confirm('Är du säker på att du vill radera "' + safeName + '"? Detta kan inte ångras.');
+    // confirm() displays plain text, no HTML/JS escaping needed
+    // characterName is already safely passed via JSON.stringify in onclick
+    var confirmed = confirm('Är du säker på att du vill radera "' + characterName + '"? Detta kan inte ångras.');
     
     if (confirmed) {
         // Additional safety confirmation
-        var doubleConfirm = confirm('Sista varningen! Radera "' + safeName + '" permanent?');
+        var doubleConfirm = confirm('Sista varningen! Radera "' + characterName + '" permanent?');
         
         if (doubleConfirm) {
             showToast('Raderar karaktär...', 'info');
