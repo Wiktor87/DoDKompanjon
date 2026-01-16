@@ -307,7 +307,7 @@ function nextStep() {
             return;
         }
     }
-    if (creatorData.step < 6) {
+    if (creatorData.step < 7) {
         creatorData.step++;
         renderCreatorStep();
     }
