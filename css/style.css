@@ -2621,6 +2621,55 @@ body.app-active::before {
     margin-top: 2rem;
 }
 
+/* Form row for side-by-side inputs */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Checkbox label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--homebrew-text-primary);
+    font-weight: 600;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.form-help-text {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--homebrew-text-secondary);
+    font-style: italic;
+}
+
+/* Collection action button */
+.collection-action-btn {
+    background: var(--homebrew-bg-input);
+    border: 1px solid var(--homebrew-border-default);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    color: var(--homebrew-text-primary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 0.5rem;
+}
+
+.collection-action-btn:hover {
+    border-color: var(--homebrew-gold-primary);
+    color: var(--homebrew-gold-primary);
+}
+
 /* Author Profile Modal */
 .homebrew-modal {
     position: fixed;

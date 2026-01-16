@@ -58,6 +58,12 @@ var HomebrewUI = {
                 var homebrewId = e.target.getAttribute('data-delete-homebrew');
                 self.deleteHomebrew(homebrewId);
             }
+            
+            // Edit homebrew
+            if (e.target.matches('[data-edit-homebrew]')) {
+                var homebrewId = e.target.getAttribute('data-edit-homebrew');
+                self.editHomebrew(homebrewId);
+            }
         });
         
         // Search input
@@ -346,9 +352,14 @@ var HomebrewUI = {
     // Get collection item HTML
     getCollectionItemHTML: function(item, isOwner) {
         var category = HomebrewService.CATEGORIES[item.type] || { label: item.type, icon: '📜' };
-        var actions = isOwner ?
-            '<button class="collection-action-btn" data-delete-homebrew="' + item.id + '">🗑️ Ta bort</button>' :
-            '<button class="collection-action-btn">Använd på karaktär</button>';
+        var actions = '';
+        
+        if (isOwner) {
+            actions = '<button class="collection-action-btn" data-edit-homebrew="' + item.id + '">✏️ Redigera</button>' +
+                '<button class="collection-action-btn" data-delete-homebrew="' + item.id + '">🗑️ Ta bort</button>';
+        } else {
+            actions = '<button class="collection-action-btn">Använd på karaktär</button>';
+        }
         
         return '<div class="collection-item">' +
             '<div class="collection-item-icon">' + category.icon + '</div>' +
@@ -402,62 +413,81 @@ var HomebrewUI = {
     },
     
     // Show create form for specific type
-    showCreateForm: function(type) {
+    showCreateForm: function(type, existingData) {
         var container = document.getElementById('homebrewContent');
         if (!container) return;
         
         var category = HomebrewService.CATEGORIES[type];
-        container.innerHTML = this.getCreateFormHTML(type, category);
+        var isEdit = !!existingData;
+        container.innerHTML = this.getCreateFormHTML(type, category, isEdit, existingData);
         
         // Attach form submit
         var form = document.getElementById('homebrewCreateForm');
         if (form) {
-            form.addEventListener('submit', this.handleFormSubmit.bind(this, type));
+            if (isEdit) {
+                form.addEventListener('submit', this.handleEditSubmit.bind(this, existingData.id, type));
+            } else {
+                form.addEventListener('submit', this.handleFormSubmit.bind(this, type));
+            }
         }
     },
     
     // Get create form HTML
-    getCreateFormHTML: function(type, category) {
+    getCreateFormHTML: function(type, category, isEdit, existingData) {
+        existingData = existingData || {};
+        var buttonText = isEdit ? 'Spara ändringar' : 'Skapa homebrew';
+        var headerText = isEdit ? 'Redigera ' + category.label : 'Skapa ' + category.label;
+        
         return '<div class="homebrew-create-form">' +
             '<div class="form-header">' +
                 '<button class="btn-back" data-homebrew-view="create">← Tillbaka</button>' +
-                '<h2>' + category.icon + ' Skapa ' + category.label + '</h2>' +
+                '<h2>' + category.icon + ' ' + headerText + '</h2>' +
             '</div>' +
             '<form id="homebrewCreateForm">' +
-                this.getFormFieldsHTML(type) +
+                this.getFormFieldsHTML(type, existingData) +
                 '<div class="form-visibility">' +
                     '<h3>Synlighet</h3>' +
                     '<div class="visibility-options">' +
-                        '<label class="visibility-option active">' +
-                            '<input type="radio" name="visibility" value="private" checked>' +
+                        '<label class="visibility-option ' + ((!existingData.visibility || existingData.visibility === 'private') ? 'active' : '') + '">' +
+                            '<input type="radio" name="visibility" value="private" ' + ((!existingData.visibility || existingData.visibility === 'private') ? 'checked' : '') + '>' +
                             '<span>🔒 Privat</span>' +
                         '</label>' +
-                        '<label class="visibility-option">' +
-                            '<input type="radio" name="visibility" value="group">' +
+                        '<label class="visibility-option ' + (existingData.visibility === 'group' ? 'active' : '') + '">' +
+                            '<input type="radio" name="visibility" value="group" ' + (existingData.visibility === 'group' ? 'checked' : '') + '>' +
                             '<span>👥 Grupp</span>' +
                         '</label>' +
-                        '<label class="visibility-option">' +
-                            '<input type="radio" name="visibility" value="public">' +
+                        '<label class="visibility-option ' + (existingData.visibility === 'public' ? 'active' : '') + '">' +
+                            '<input type="radio" name="visibility" value="public" ' + (existingData.visibility === 'public' ? 'checked' : '') + '>' +
                             '<span>🌍 Publik</span>' +
                         '</label>' +
                     '</div>' +
                 '</div>' +
+                '<div class="form-group">' +
+                    '<label class="checkbox-label">' +
+                        '<input type="checkbox" name="availableForCharacters" ' + (existingData.availableForCharacters ? 'checked' : '') + '>' +
+                        '<span>Tillgänglig för karaktärer?</span>' +
+                    '</label>' +
+                    '<p class="form-help-text">När aktiverat kommer detta att vara tillgängligt i karaktärsskaparen (kräver att det finns i "Min Samling")</p>' +
+                '</div>' +
                 '<div class="form-actions">' +
-                    '<button type="submit" class="btn btn-gold">Skapa homebrew</button>' +
+                    '<button type="submit" class="btn btn-gold">' + buttonText + '</button>' +
                 '</div>' +
             '</form>' +
         '</div>';
     },
     
     // Get form fields HTML based on type
-    getFormFieldsHTML: function(type) {
+    getFormFieldsHTML: function(type, existingData) {
+        existingData = existingData || {};
+        var data = existingData.data || {};
+        
         var commonFields = '<div class="form-group">' +
             '<label>Namn *</label>' +
-            '<input type="text" name="name" class="form-input" required>' +
+            '<input type="text" name="name" class="form-input" value="' + this.escapeHtml(data.name || '') + '" required>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>Beskrivning *</label>' +
-            '<textarea name="description" class="form-textarea" rows="4" required></textarea>' +
+            '<textarea name="description" class="form-textarea" rows="4" required>' + this.escapeHtml(data.description || '') + '</textarea>' +
         '</div>';
         
         var specificFields = '';
@@ -465,54 +495,117 @@ var HomebrewUI = {
         if (type === 'abilities') {
             specificFields = '<div class="form-group">' +
                 '<label>Krav</label>' +
-                '<input type="text" name="requirement" class="form-input" placeholder="t.ex. Smyga 14">' +
+                '<input type="text" name="requirement" class="form-input" placeholder="t.ex. Smyga 14" value="' + this.escapeHtml(data.requirement || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>VV-kostnad</label>' +
-                '<input type="number" name="wp" class="form-input" min="0">' +
+                '<input type="number" name="wp" class="form-input" min="0" value="' + (data.wp || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Typ</label>' +
                 '<select name="abilityType" class="form-select">' +
-                    '<option value="action">Handling</option>' +
-                    '<option value="reaction">Reaktion</option>' +
-                    '<option value="passive">Passiv</option>' +
+                    '<option value="action"' + (data.abilityType === 'action' ? ' selected' : '') + '>Handling</option>' +
+                    '<option value="reaction"' + (data.abilityType === 'reaction' ? ' selected' : '') + '>Reaktion</option>' +
+                    '<option value="passive"' + (data.abilityType === 'passive' ? ' selected' : '') + '>Passiv</option>' +
                 '</select>' +
+            '</div>';
+        } else if (type === 'monsters') {
+            specificFields = '<h3 style="margin-top: 1.5rem;">Attribut</h3>' +
+            '<div class="form-row">' +
+                '<div class="form-group"><label>STY</label><input type="number" name="attributes_STY" class="form-input" value="' + ((data.attributes && data.attributes.STY) || '10') + '"></div>' +
+                '<div class="form-group"><label>FYS</label><input type="number" name="attributes_FYS" class="form-input" value="' + ((data.attributes && data.attributes.FYS) || '10') + '"></div>' +
+                '<div class="form-group"><label>SMI</label><input type="number" name="attributes_SMI" class="form-input" value="' + ((data.attributes && data.attributes.SMI) || '10') + '"></div>' +
+            '</div>' +
+            '<div class="form-row">' +
+                '<div class="form-group"><label>INT</label><input type="number" name="attributes_INT" class="form-input" value="' + ((data.attributes && data.attributes.INT) || '10') + '"></div>' +
+                '<div class="form-group"><label>PSY</label><input type="number" name="attributes_PSY" class="form-input" value="' + ((data.attributes && data.attributes.PSY) || '10') + '"></div>' +
+                '<div class="form-group"><label>KAR</label><input type="number" name="attributes_KAR" class="form-input" value="' + ((data.attributes && data.attributes.KAR) || '10') + '"></div>' +
+            '</div>' +
+            '<h3 style="margin-top: 1.5rem;">Hälsa & Viljekraft</h3>' +
+            '<div class="form-row">' +
+                '<div class="form-group"><label>Max KP</label><input type="number" name="maxKP" class="form-input" value="' + (data.maxKP || '') + '"></div>' +
+                '<div class="form-group"><label>Nuvarande KP</label><input type="number" name="currentKP" class="form-input" value="' + (data.currentKP || data.maxKP || '') + '"></div>' +
+            '</div>' +
+            '<div class="form-row">' +
+                '<div class="form-group"><label>Max VP</label><input type="number" name="maxVP" class="form-input" value="' + (data.maxVP || '') + '"></div>' +
+                '<div class="form-group"><label>Nuvarande VP</label><input type="number" name="currentVP" class="form-input" value="' + (data.currentVP || data.maxVP || '') + '"></div>' +
+            '</div>' +
+            '<h3 style="margin-top: 1.5rem;">Övriga egenskaper</h3>' +
+            '<div class="form-group">' +
+                '<label>Förflyttning</label>' +
+                '<input type="text" name="movement" class="form-input" placeholder="t.ex. 10 meter" value="' + this.escapeHtml(data.movement || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Storlek</label>' +
+                '<input type="text" name="size" class="form-input" placeholder="t.ex. Medel, Stor" value="' + this.escapeHtml(data.size || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Rustning</label>' +
+                '<input type="text" name="armor" class="form-input" placeholder="t.ex. Läder (2)" value="' + this.escapeHtml(data.armor || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Vapen</label>' +
+                '<textarea name="weapons" class="form-textarea" rows="3" placeholder="Lista vapen med skada, ett per rad">' + this.escapeHtml(data.weapons || '') + '</textarea>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Utrustning</label>' +
+                '<textarea name="equipment" class="form-textarea" rows="3" placeholder="Lista utrustning, ett per rad">' + this.escapeHtml(data.equipment || '') + '</textarea>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Förmågor</label>' +
+                '<textarea name="abilities" class="form-textarea" rows="4" placeholder="Lista förmågor">' + this.escapeHtml(data.abilities || '') + '</textarea>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Färdigheter</label>' +
+                '<textarea name="skills" class="form-textarea" rows="3" placeholder="Lista färdigheter med värden">' + this.escapeHtml(data.skills || '') + '</textarea>' +
             '</div>';
         } else if (type === 'spells') {
             specificFields = '<div class="form-group">' +
                 '<label>Skola</label>' +
-                '<input type="text" name="school" class="form-input">' +
+                '<input type="text" name="school" class="form-input" value="' + this.escapeHtml(data.school || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>VV-kostnad</label>' +
-                '<input type="number" name="wp" class="form-input" min="0">' +
+                '<input type="number" name="wp" class="form-input" min="0" value="' + (data.wp || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Räckvidd</label>' +
-                '<input type="text" name="range" class="form-input">' +
+                '<input type="text" name="range" class="form-input" value="' + this.escapeHtml(data.range || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Varaktighet</label>' +
-                '<input type="text" name="duration" class="form-input">' +
+                '<input type="text" name="duration" class="form-input" value="' + this.escapeHtml(data.duration || '') + '">' +
             '</div>';
         } else if (type === 'items') {
             specificFields = '<div class="form-group">' +
                 '<label>Typ</label>' +
-                '<input type="text" name="itemType" class="form-input">' +
+                '<input type="text" name="itemType" class="form-input" value="' + this.escapeHtml(data.itemType || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Sällsynthet</label>' +
                 '<select name="rarity" class="form-select">' +
-                    '<option value="common">Vanlig</option>' +
-                    '<option value="uncommon">Ovanlig</option>' +
-                    '<option value="rare">Sällsynt</option>' +
-                    '<option value="legendary">Legendarisk</option>' +
+                    '<option value="common"' + (data.rarity === 'common' ? ' selected' : '') + '>Vanlig</option>' +
+                    '<option value="uncommon"' + (data.rarity === 'uncommon' ? ' selected' : '') + '>Ovanlig</option>' +
+                    '<option value="rare"' + (data.rarity === 'rare' ? ' selected' : '') + '>Sällsynt</option>' +
+                    '<option value="legendary"' + (data.rarity === 'legendary' ? ' selected' : '') + '>Legendarisk</option>' +
                 '</select>' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Värde</label>' +
-                '<input type="text" name="value" class="form-input">' +
+                '<input type="text" name="value" class="form-input" value="' + this.escapeHtml(data.value || '') + '">' +
+            '</div>';
+        } else if (type === 'equipment') {
+            specificFields = '<div class="form-group">' +
+                '<label>Typ</label>' +
+                '<input type="text" name="equipmentType" class="form-input" placeholder="t.ex. Vapen, Rustning, Verktyg" value="' + this.escapeHtml(data.equipmentType || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Vikt</label>' +
+                '<input type="text" name="weight" class="form-input" placeholder="t.ex. 2 kg" value="' + this.escapeHtml(data.weight || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Kostnad</label>' +
+                '<input type="text" name="cost" class="form-input" placeholder="t.ex. 50 silver" value="' + this.escapeHtml(data.cost || '') + '">' +
             '</div>';
         }
         
@@ -536,14 +629,22 @@ var HomebrewUI = {
         var data = {};
         
         formData.forEach(function(value, key) {
-            if (key !== 'visibility') {
-                data[key] = value;
+            if (key !== 'visibility' && key !== 'availableForCharacters') {
+                // Handle nested attributes for monsters
+                if (key.startsWith('attributes_')) {
+                    if (!data.attributes) data.attributes = {};
+                    var attrName = key.replace('attributes_', '');
+                    data.attributes[attrName] = parseInt(value) || 10;
+                } else {
+                    data[key] = value;
+                }
             }
         });
         
         var visibility = formData.get('visibility');
+        var availableForCharacters = formData.get('availableForCharacters') === 'on';
         
-        HomebrewService.createHomebrew(type, data, visibility).then(function(homebrew) {
+        HomebrewService.createHomebrew(type, data, visibility, null, availableForCharacters).then(function(homebrew) {
             if (typeof showToast !== 'undefined') {
                 showToast('Homebrew skapad!', 'success');
             }
@@ -553,6 +654,57 @@ var HomebrewUI = {
             UserProfileService.updateStats(user.uid, { homebrewCount: 1 });
         }).catch(function(err) {
             console.error('Error creating homebrew:', err);
+            if (typeof showToast !== 'undefined') {
+                showToast('Ett fel uppstod: ' + err.message, 'error');
+            }
+        });
+    },
+    
+    // Handle edit submit
+    handleEditSubmit: function(homebrewId, type, e) {
+        e.preventDefault();
+        var self = this;
+        var user = getCurrentUser();
+        
+        if (!user) {
+            if (typeof showToast !== 'undefined') {
+                showToast('Du måste vara inloggad', 'error');
+            }
+            return;
+        }
+        
+        var formData = new FormData(e.target);
+        var data = {};
+        
+        formData.forEach(function(value, key) {
+            if (key !== 'visibility' && key !== 'availableForCharacters') {
+                // Handle nested attributes for monsters
+                if (key.startsWith('attributes_')) {
+                    if (!data.attributes) data.attributes = {};
+                    var attrName = key.replace('attributes_', '');
+                    data.attributes[attrName] = parseInt(value) || 10;
+                } else {
+                    data[key] = value;
+                }
+            }
+        });
+        
+        var visibility = formData.get('visibility');
+        var availableForCharacters = formData.get('availableForCharacters') === 'on';
+        
+        var updates = {
+            data: data,
+            visibility: visibility,
+            availableForCharacters: availableForCharacters
+        };
+        
+        HomebrewService.updateHomebrew(homebrewId, updates).then(function() {
+            if (typeof showToast !== 'undefined') {
+                showToast('Homebrew uppdaterad!', 'success');
+            }
+            self.switchView('collection');
+        }).catch(function(err) {
+            console.error('Error updating homebrew:', err);
             if (typeof showToast !== 'undefined') {
                 showToast('Ett fel uppstod: ' + err.message, 'error');
             }
@@ -897,6 +1049,20 @@ var HomebrewUI = {
             console.error('Error deleting:', err);
             if (typeof showToast !== 'undefined') {
                 showToast('Ett fel uppstod: ' + err.message, 'error');
+            }
+        });
+    },
+    
+    // Edit homebrew
+    editHomebrew: function(homebrewId) {
+        var self = this;
+        
+        HomebrewService.getHomebrew(homebrewId).then(function(homebrew) {
+            self.showCreateForm(homebrew.type, homebrew);
+        }).catch(function(err) {
+            console.error('Error loading homebrew for editing:', err);
+            if (typeof showToast !== 'undefined') {
+                showToast('Kunde inte ladda homebrew', 'error');
             }
         });
     },
