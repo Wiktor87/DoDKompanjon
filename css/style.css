@@ -2416,6 +2416,7 @@ body.app-active::before {
 }
 
 /* Homebrew Grid */
+/* Homebrew cards flex container (used in carousel) */
 .homebrew-grid {
     display: flex;
     gap: 1.5rem;
@@ -2438,7 +2439,7 @@ body.app-active::before {
 
 .homebrew-cards-track {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.5rem; /* 24px gap used in carousel scroll calculation */
     transition: transform 0.3s ease;
 }
 
@@ -2471,6 +2472,91 @@ body.app-active::before {
 .carousel-arrow svg {
     width: 20px;
     height: 20px;
+}
+
+/* Homebrew card action buttons */
+.homebrew-card-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.homebrew-btn-edit {
+    background: rgba(212,175,55,0.2);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #d4af37;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.homebrew-btn-edit:hover {
+    background: rgba(212,175,55,0.3);
+}
+
+.homebrew-btn-delete {
+    background: rgba(220,38,38,0.2);
+    border: 1px solid rgba(220,38,38,0.4);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #dc2626;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.homebrew-btn-delete:hover {
+    background: rgba(220,38,38,0.3);
+}
+
+/* Session RSVP buttons */
+.session-rsvp-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rsvp-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.rsvp-btn.attending {
+    border-color: rgba(34,197,94,0.5);
+    color: #22c55e;
+}
+
+.rsvp-btn.attending.active,
+.rsvp-btn.attending:hover {
+    background: rgba(34,197,94,0.2);
+}
+
+.rsvp-btn.maybe {
+    border-color: rgba(250,204,21,0.5);
+    color: #facc15;
+}
+
+.rsvp-btn.maybe.active,
+.rsvp-btn.maybe:hover {
+    background: rgba(250,204,21,0.2);
+}
+
+.rsvp-btn.not-attending {
+    border-color: rgba(239,68,68,0.5);
+    color: #ef4444;
+}
+
+.rsvp-btn.not-attending.active,
+.rsvp-btn.not-attending:hover {
+    background: rgba(239,68,68,0.2);
 }
 
 /* Homebrew Card */

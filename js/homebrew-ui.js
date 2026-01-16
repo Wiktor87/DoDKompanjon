@@ -7,6 +7,7 @@ var HomebrewUI = {
     homebrewItems: [],
     currentSlide: 0,
     cardsPerView: 4, // Default, will be adjusted based on screen width
+    CARD_GAP: 24, // Gap between cards in pixels (1.5rem = 24px, matches CSS)
     
     // Initialize homebrew section
     init: function() {
@@ -243,9 +244,9 @@ var HomebrewUI = {
         
         // Owner action buttons
         if (isOwner) {
-            html += '<div class="card-actions" style="display: flex; gap: 4px;">' +
-                '<button class="btn-edit" onclick="event.stopPropagation();HomebrewUI.editHomebrew(\'' + item.id + '\')" style="background: rgba(212,175,55,0.2); border: 1px solid rgba(212,175,55,0.4); border-radius: 4px; padding: 4px 8px; color: #d4af37; font-size: 12px; cursor: pointer;">✏️</button>' +
-                '<button class="btn-delete" onclick="event.stopPropagation();HomebrewUI.deleteHomebrew(\'' + item.id + '\')" style="background: rgba(220,38,38,0.2); border: 1px solid rgba(220,38,38,0.4); border-radius: 4px; padding: 4px 8px; color: #dc2626; font-size: 12px; cursor: pointer;">🗑️</button>' +
+            html += '<div class="homebrew-card-actions">' +
+                '<button class="homebrew-btn-edit" onclick="event.stopPropagation();HomebrewUI.editHomebrew(\'' + item.id + '\')">✏️</button>' +
+                '<button class="homebrew-btn-delete" onclick="event.stopPropagation();HomebrewUI.deleteHomebrew(\'' + item.id + '\')">🗑️</button>' +
                 '</div>';
         }
         
@@ -1183,7 +1184,7 @@ var HomebrewUI = {
         
         this.currentSlide = Math.max(0, Math.min(maxSlide, this.currentSlide + direction));
         
-        var cardWidth = cards[0].offsetWidth + 24; // card + gap (1.5rem = 24px)
+        var cardWidth = cards[0].offsetWidth + this.CARD_GAP;
         track.style.transform = 'translateX(-' + (this.currentSlide * cardWidth) + 'px)';
         
         // Update arrow states

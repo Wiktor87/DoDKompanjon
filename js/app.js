@@ -1614,10 +1614,10 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
             if (currentUserId) {
                 html += '<div class="session-rsvp" style="border-top: 1px solid var(--border-default); padding-top: 1rem;">' +
                     '<div style="margin-bottom: 0.75rem; font-weight: 600; color: var(--text-secondary);">Kommer du?</div>' +
-                    '<div class="rsvp-buttons" style="display: flex; gap: 0.5rem;">' +
-                    '<button class="rsvp-btn attending' + (currentUserStatus === 'attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'attending\')" style="flex: 1; padding: 0.5rem; border: 1px solid; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; background: ' + (currentUserStatus === 'attending' ? 'rgba(34,197,94,0.2)' : 'transparent') + '; border-color: rgba(34,197,94,0.5); color: #22c55e;">✓ Ja</button>' +
-                    '<button class="rsvp-btn maybe' + (currentUserStatus === 'maybe' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'maybe\')" style="flex: 1; padding: 0.5rem; border: 1px solid; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; background: ' + (currentUserStatus === 'maybe' ? 'rgba(250,204,21,0.2)' : 'transparent') + '; border-color: rgba(250,204,21,0.5); color: #facc15;">? Kanske</button>' +
-                    '<button class="rsvp-btn not-attending' + (currentUserStatus === 'not_attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'not_attending\')" style="flex: 1; padding: 0.5rem; border: 1px solid; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; background: ' + (currentUserStatus === 'not_attending' ? 'rgba(239,68,68,0.2)' : 'transparent') + '; border-color: rgba(239,68,68,0.5); color: #ef4444;">✗ Nej</button>' +
+                    '<div class="session-rsvp-buttons">' +
+                    '<button class="rsvp-btn attending' + (currentUserStatus === 'attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'attending\')">✓ Ja</button>' +
+                    '<button class="rsvp-btn maybe' + (currentUserStatus === 'maybe' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'maybe\')">? Kanske</button>' +
+                    '<button class="rsvp-btn not-attending' + (currentUserStatus === 'not_attending' ? ' active' : '') + '" onclick="setAttendance(\'' + party.id + '\', \'not_attending\')">✗ Nej</button>' +
                     '</div>' +
                     '</div>';
             }
