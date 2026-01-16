@@ -91,6 +91,7 @@ function showSection(sectionId) {
     
     if (sectionId === 'characters') loadCharactersList();
     if (sectionId === 'parties') loadPartiesList();
+    if (sectionId === 'upcoming-sessions') loadUpcomingSessions();
     if (sectionId === 'homebrew') {
         if (typeof HomebrewUI !== 'undefined') {
             HomebrewUI.init();
@@ -1290,6 +1291,69 @@ function renderNewGroupCard() {
     var html = '<div class="fantasy-create-card" style="width: 300px; height: 155px;" onclick="openCreateParty()">';
     html += '<div class="fantasy-create-plus">+</div>';
     html += '<div class="fantasy-create-text">Skapa ny grupp</div>';
+    html += '</div>';
+    return html;
+}
+
+function loadUpcomingSessions() {
+    console.log('📅 loadUpcomingSessions');
+    var container = document.getElementById('upcomingSessionsGrid');
+    var countEl = document.getElementById('sessionsCount');
+    if (!container) return;
+    
+    if (typeof PartyService === 'undefined') {
+        container.innerHTML = '<div class="empty-state"><h3>Laddar...</h3></div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>';
+    
+    PartyService.getUpcomingSessions().then(function(sessions) {
+        if (countEl) countEl.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 'er' : '') + ' planerade';
+        
+        if (sessions.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><h3>Inga kommande sessioner</h3><p>Planera en session för din grupp för att se den här.</p></div>';
+        } else {
+            var html = sessions.map(renderSessionCard).join('');
+            container.innerHTML = html;
+        }
+    }).catch(function(err) {
+        console.error('Error loading sessions:', err);
+        container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>' + err.message + '</p></div>';
+    });
+}
+
+function renderSessionCard(session) {
+    var html = '<div class="session-card" onclick="viewParty(\'' + session.partyId + '\')">';
+    
+    html += '<div class="session-date">📅 ' + session.date + '</div>';
+    html += '<div class="session-party-name">' + session.partyName + '</div>';
+    
+    if (session.location) {
+        html += '<div class="session-location">📍 ' + session.location + '</div>';
+    }
+    
+    if (session.attendees && session.attendees.length > 0) {
+        html += '<div class="session-attendees">';
+        html += '<div class="session-attendees-title">Deltagare</div>';
+        
+        var attending = session.attendees.filter(function(a) { return a.status === 'attending'; });
+        var maybe = session.attendees.filter(function(a) { return a.status === 'maybe'; });
+        var notAttending = session.attendees.filter(function(a) { return a.status === 'not_attending'; });
+        
+        if (attending.length > 0) {
+            html += '<span class="attendee-status attending">✓ ' + attending.length + ' deltar</span>';
+        }
+        if (maybe.length > 0) {
+            html += '<span class="attendee-status maybe">? ' + maybe.length + ' kanske</span>';
+        }
+        if (notAttending.length > 0) {
+            html += '<span class="attendee-status not-attending">✗ ' + notAttending.length + ' deltar inte</span>';
+        }
+        
+        html += '</div>';
+    }
+    
     html += '</div>';
     return html;
 }

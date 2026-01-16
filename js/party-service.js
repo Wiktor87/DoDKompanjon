@@ -187,7 +187,7 @@ var PartyService = {
         });
     },
     
-    setNextSession: function(partyId, formattedDate, timestamp) {
+    setNextSession: function(partyId, formattedDate, timestamp, location) {
         if (!partyId) {
             return Promise.reject(new Error('Party ID krävs'));
         }
@@ -200,8 +200,83 @@ var PartyService = {
         return db.collection('parties').doc(partyId).update({
             nextSession: formattedDate,
             nextSessionTimestamp: timestamp,
+            nextSessionLocation: location || '',
             lastSessionNotificationSent: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    },
+    
+    // Update session attendance
+    updateAttendance: function(partyId, userId, status) {
+        if (!partyId || !userId) {
+            return Promise.reject(new Error('Party ID och User ID krävs'));
+        }
+        
+        var user = getCurrentUser();
+        if (!user) {
+            return Promise.reject(new Error('Inte inloggad'));
+        }
+        
+        // Get the party first to update the attendees array
+        return this.getParty(partyId).then(function(party) {
+            var attendees = party.attendees || [];
+            
+            // Find if user already has attendance record
+            var existingIndex = attendees.findIndex(function(a) { return a.userId === userId; });
+            
+            if (existingIndex >= 0) {
+                attendees[existingIndex].status = status;
+                attendees[existingIndex].updatedAt = new Date();
+            } else {
+                attendees.push({
+                    userId: userId,
+                    status: status,
+                    updatedAt: new Date()
+                });
+            }
+            
+            return db.collection('parties').doc(partyId).update({
+                attendees: attendees,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        });
+    },
+    
+    // Get all upcoming sessions across all user's parties
+    getUpcomingSessions: function() {
+        var user = getCurrentUser();
+        if (!user) {
+            return Promise.resolve([]);
+        }
+        
+        return this.getUserParties().then(function(parties) {
+            var sessions = [];
+            var now = Date.now();
+            
+            parties.forEach(function(party) {
+                if (party.nextSessionTimestamp) {
+                    var timestamp = party.nextSessionTimestamp.toMillis ? party.nextSessionTimestamp.toMillis() : party.nextSessionTimestamp;
+                    
+                    // Only include future sessions
+                    if (timestamp > now) {
+                        sessions.push({
+                            partyId: party.id,
+                            partyName: party.name,
+                            date: party.nextSession,
+                            timestamp: timestamp,
+                            location: party.nextSessionLocation || '',
+                            attendees: party.attendees || []
+                        });
+                    }
+                }
+            });
+            
+            // Sort by timestamp (earliest first)
+            sessions.sort(function(a, b) {
+                return a.timestamp - b.timestamp;
+            });
+            
+            return sessions;
         });
     }
 };

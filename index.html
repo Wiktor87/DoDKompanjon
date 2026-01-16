@@ -130,7 +130,14 @@
                 <nav class="app-nav">
                     <button type="button" class="nav-tab active" data-section="home">Översikt</button>
                     <button type="button" class="nav-tab" data-section="characters">Karaktärer</button>
-                    <button type="button" class="nav-tab" data-section="parties">Grupp</button>
+                    <div class="nav-dropdown">
+                        <button type="button" class="nav-tab" data-section="parties">Grupp ▼</button>
+                        <div class="nav-dropdown-menu">
+                            <button type="button" class="nav-dropdown-item" data-section="parties">Alla Grupper</button>
+                            <button type="button" class="nav-dropdown-item" data-section="upcoming-sessions">Kommande Sessioner</button>
+                            <button type="button" class="nav-dropdown-item" onclick="openCreateParty()">Skapa Grupp</button>
+                        </div>
+                    </div>
 					<button type="button" class="nav-tab" data-section="homebrew">Hemmabryggt</button>
                     <button type="button" class="nav-tab" data-section="campaigns">Kampanjer</button>
                     <button type="button" class="nav-tab" data-section="adventures">Äventyr</button>
@@ -236,6 +243,19 @@
                     </div>
                 </div>
                 <div id="partiesGrid" class="characters-grid">
+                    <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
+                </div>
+            </section>
+            
+            <!-- Upcoming Sessions -->
+            <section id="upcoming-sessions" class="section">
+                <div class="section-header-bar">
+                    <div>
+                        <h1>Kommande Sessioner</h1>
+                        <p id="sessionsCount">0 sessioner planerade</p>
+                    </div>
+                </div>
+                <div id="upcomingSessionsGrid" class="sessions-calendar">
                     <div class="loading-placeholder"><div class="spinner"></div><p>Laddar...</p></div>
                 </div>
             </section>
