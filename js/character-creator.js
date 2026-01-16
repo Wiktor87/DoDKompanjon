@@ -320,6 +320,18 @@ function prevStep() {
     }
 }
 
+function getDefaultIconForKin(kin) {
+    var defaultIcons = {
+        'Människa': 'icons/Manniska.gif',
+        'Alv': 'icons/Alv.gif',
+        'Dvärg': 'icons/Dvarg.gif',
+        'Halvling': 'icons/NewCharacter.gif',
+        'Anka': 'icons/Anka.gif',
+        'Vargfolk': 'icons/Varg.gif'
+    };
+    return defaultIcons[kin] || 'icons/NewCharacter.gif';
+}
+
 function createCharacter() {
     // Initialize skills with isCore property
     var skills = {};
@@ -386,11 +398,9 @@ function createCharacter() {
         playerName: '',
         weakness: '',
         memento: '',
-        portraitType: creatorData.portraitType,
-        portraitUrl: creatorData.portraitUrl,
-        backgroundImage: null,
-        portraitUrl:  creatorData.portraitUrl || getDefaultIconForKin(creatorData.kin),
-        portraitType: creatorData. portraitType || 'icon',
+        portraitUrl: creatorData.portraitUrl || getDefaultIconForKin(creatorData.kin),
+        portraitType: creatorData.portraitType || 'icon',
+        backgroundImage: null
     };
     
     CharacterService.createCharacter(charData).then(function() {
