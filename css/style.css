@@ -6258,3 +6258,100 @@ body.app-active::before {
     font-size: 12px;
     font-weight: 600;
 }
+
+/* Character Background Images */
+.character-page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.character-page-background::before,
+.character-page-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    pointer-events: none;
+}
+
+.character-page-background::before {
+    left: 0;
+    background: linear-gradient(90deg, 
+        rgba(13, 13, 13, 1) 0%,
+        rgba(13, 13, 13, 0.8) 30%,
+        rgba(13, 13, 13, 0) 100%
+    );
+}
+
+.character-page-background::after {
+    right: 0;
+    background: linear-gradient(270deg, 
+        rgba(13, 13, 13, 1) 0%,
+        rgba(13, 13, 13, 0.8) 30%,
+        rgba(13, 13, 13, 0) 100%
+    );
+}
+
+/* Background selector */
+.background-selector {
+    margin: 1.5rem 0;
+}
+
+.background-selector label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.background-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.bg-option {
+    padding: 0.75rem;
+    background: var(--bg-card);
+    border: 2px solid var(--border-default);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.bg-option:hover {
+    border-color: var(--accent-gold);
+    transform: scale(1.05);
+}
+
+.bg-option.selected {
+    border-color: var(--accent-gold);
+    background: var(--bg-elevated);
+    box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+.bg-option img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+}
+
+.bg-option[data-bg="none"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 130px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}

@@ -471,6 +471,8 @@ function viewCharacter(id) {
         container.innerHTML = renderFullCharacterSheet(char);
         // Setup listeners for kin/profession/age changes
         setupKinChangeListener();
+        // Apply background image if set
+        applyCharacterBackground(char.backgroundImage);
     }).catch(function(err) {
         console.error('Failed to load character:', err);
         container.innerHTML = '<div class="empty-state"><h3>Fel</h3><p>Kunde inte ladda karaktären. Försök igen.</p><button class="btn btn-outline" onclick="closeCharacterSheet()">Stäng</button></div>';
@@ -480,6 +482,47 @@ function viewCharacter(id) {
 function closeCharacterSheet() {
     showSection('characters');
     currentCharacter = null;
+    removeCharacterBackground();
+}
+
+function applyCharacterBackground(backgroundImage) {
+    // Remove any existing background
+    removeCharacterBackground();
+    
+    if (backgroundImage && backgroundImage !== 'none') {
+        var bgDiv = document.createElement('div');
+        bgDiv.className = 'character-page-background';
+        bgDiv.id = 'charBackground';
+        bgDiv.style.backgroundImage = 'url(charbgs/' + backgroundImage + ')';
+        document.body.appendChild(bgDiv);
+    }
+}
+
+function removeCharacterBackground() {
+    var existingBg = document.getElementById('charBackground');
+    if (existingBg) {
+        existingBg.remove();
+    }
+}
+
+function selectCharacterBackground(backgroundImage) {
+    if (!currentCharacter) return;
+    
+    // Update character in database
+    CharacterService.updateCharacter(currentCharacter.id, {
+        backgroundImage: backgroundImage
+    }).then(function() {
+        currentCharacter.backgroundImage = backgroundImage;
+        applyCharacterBackground(backgroundImage);
+        if (typeof showToast !== 'undefined') {
+            showToast('Bakgrund uppdaterad!', 'success');
+        }
+    }).catch(function(err) {
+        console.error('Error updating background:', err);
+        if (typeof showToast !== 'undefined') {
+            showToast('Kunde inte uppdatera bakgrund', 'error');
+        }
+    });
 }
 
 function renderFullCharacterSheet(char) {
@@ -573,6 +616,7 @@ function renderFullCharacterSheet(char) {
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'combat\')">Strid</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'equipment\')">Utrustning</button>';
     html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'notes\')">Anteckningar</button>';
+    html += '<button class="sheet-tab-v2" onclick="switchSheetTabV2(this, \'settings\')">Inställningar</button>';
     html += '</div>';
     
     // Main layout - Content + Sidebar
@@ -609,6 +653,29 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Anteckningar</h3></div>';
     html += '<div class="sheet-panel-v2-content">';
     html += '<textarea class="bio-textarea" data-field="notes" placeholder="Dina anteckningar..." style="width:100%;min-height:300px;">' + (char.notes || '') + '</textarea>';
+    html += '</div></div>';
+    html += '</div>';
+    
+    // Tab content: Settings
+    html += '<div class="sheet-tab-content-v2" id="tab-settings-v2" style="display: none;">';
+    html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Inställningar</h3></div>';
+    html += '<div class="sheet-panel-v2-content">';
+    html += '<div class="background-selector">';
+    html += '<label>Bakgrundsbild</label>';
+    html += '<div class="background-options">';
+    
+    // None option
+    var noneSelected = (!char.backgroundImage || char.backgroundImage === 'none') ? ' selected' : '';
+    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')">Ingen</div>';
+    
+    // Note: In a real implementation, you would dynamically scan the charbgs folder
+    // For now, we'll add a note that backgrounds can be added to the charbgs folder
+    html += '<div style="grid-column: 1/-1; text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem;">';
+    html += 'Lägg till bilder i mappen /charbgs för att använda dem som bakgrund';
+    html += '</div>';
+    
+    html += '</div>'; // Close background-options
+    html += '</div>'; // Close background-selector
     html += '</div></div>';
     html += '</div>';
     
