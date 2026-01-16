@@ -673,21 +673,45 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-tab-content-v2" id="tab-settings-v2" style="display: none;">';
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Inställningar</h3></div>';
     html += '<div class="sheet-panel-v2-content">';
+    
+    // Portrait Section
+    html += '<div class="portrait-section" style="margin-bottom: 2rem;">';
+    html += '<h4 style="margin-bottom: 1rem; color: var(--gold-primary);">🖼️ Porträtt</h4>';
+    html += '<div class="current-portrait" style="margin-bottom: 1rem; text-align: center;">';
+    html += '<div style="display: inline-block; padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 2px solid var(--border-panel);">';
+    html += icon;
+    html += '</div></div>';
+    html += '<div class="portrait-buttons" style="display: flex; gap: 0.5rem; justify-content: center;">';
+    html += '<button class="btn btn-outline" onclick="openIconBrowser()">🎨 Välj ikon</button>';
+    html += '<button class="btn btn-outline" onclick="triggerPortraitUpload()">📤 Ladda upp</button>';
+    html += '</div>';
+    html += '<input type="file" id="portraitUpload" hidden accept="image/*" onchange="handlePortraitUpload(event)" />';
+    html += '</div>';
+    
+    // Background Section
     html += '<div class="background-selector">';
-    html += '<label>Bakgrundsbild</label>';
-    html += '<div class="background-options">';
+    html += '<h4 style="margin-bottom: 1rem; color: var(--gold-primary);">🎭 Bakgrundsbild</h4>';
+    
+    // Background preview
+    if (char.backgroundImage && char.backgroundImage !== 'none') {
+        html += '<div class="bg-preview-box" style="width: 100%; height: 150px; margin-bottom: 1rem; background-image: url(charbgs/' + char.backgroundImage + '); background-size: cover; background-position: center; border-radius: var(--radius-md); border: 2px solid var(--border-panel); position: relative; overflow: hidden;">';
+        html += '<div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13, 13, 13, 0.9) 0%, rgba(13, 13, 13, 0) 35%, rgba(13, 13, 13, 0) 65%, rgba(13, 13, 13, 0.9) 100%);"></div>';
+        html += '</div>';
+    }
+    
+    html += '<div class="background-options" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; margin-bottom: 1rem;">';
     
     // None option
     var noneSelected = (!char.backgroundImage || char.backgroundImage === 'none') ? ' selected' : '';
-    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')">Ingen</div>';
+    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')" style="aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 2px solid ' + (noneSelected ? 'var(--accent-gold)' : 'var(--border-panel)') + '; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; color: var(--text-secondary);">Ingen</div>';
     
-    // Note: In a real implementation, you would dynamically scan the charbgs folder
-    // For now, we'll add a note that backgrounds can be added to the charbgs folder
-    html += '<div style="grid-column: 1/-1; text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem;">';
-    html += 'Lägg till bilder i mappen /charbgs för att använda dem som bakgrund';
+    // List potential backgrounds (will be populated dynamically in real use)
+    // For now, show instruction message
+    html += '</div>';
+    html += '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-panel);">';
+    html += '📁 Lägg till bilder i mappen <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">/charbgs</code> för att använda dem som bakgrund';
     html += '</div>';
     
-    html += '</div>'; // Close background-options
     html += '</div>'; // Close background-selector
     html += '</div></div>';
     html += '</div>';
@@ -2439,5 +2463,180 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ Init complete');
 });
+
+// === Character Portrait Functions ===
+
+function openIconBrowser() {
+    var modal = document.createElement('div');
+    modal.id = 'iconBrowserModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    
+    // List of available icons
+    var icons = ['Alv.gif', 'Anka.gif', 'Book.gif', 'Brew.gif', 'Campfire.gif', 'CombatAction.gif', 
+                 'Dice.gif', 'Dvarg.gif', 'Enemy.gif', 'Key.gif', 'Magic.gif', 'Manniska.gif', 
+                 'Map.gif', 'NewCharacter.gif', 'Quill.gif', 'Scroll.gif', 'Treasure.gif', 'Varg.gif'];
+    
+    var html = '<div class="modal-content" style="max-width: 600px;">' +
+        '<div class="modal-header">' +
+        '<h2>🖼️ Välj Ikon</h2>' +
+        '<button class="modal-close" onclick="closeIconBrowser()">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<div class="icon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; max-height: 400px; overflow-y: auto; padding: 0.5rem;">';
+    
+    icons.forEach(function(iconFile) {
+        html += '<div class="icon-option" onclick="selectIcon(\'' + iconFile + '\')" style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 2px solid var(--border-panel); border-radius: var(--radius-md); cursor: pointer; padding: 0.5rem; transition: all 0.2s;">' +
+            '<img src="icons/' + iconFile + '" style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="' + iconFile + '" />' +
+            '</div>';
+    });
+    
+    html += '</div></div>' +
+        '<div class="modal-footer">' +
+        '<button class="btn btn-outline" onclick="closeIconBrowser()">Stäng</button>' +
+        '</div>' +
+        '</div>';
+    
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+}
+
+function closeIconBrowser() {
+    var modal = document.getElementById('iconBrowserModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function selectIcon(iconFile) {
+    if (!currentCharacter) return;
+    
+    // Store icon filename in character
+    CharacterService.updateCharacter(currentCharacter.id, {
+        portraitIcon: iconFile,
+        portraitType: 'icon'
+    }).then(function() {
+        currentCharacter.portraitIcon = iconFile;
+        showToast('Porträtt uppdaterat!', 'success');
+        closeIconBrowser();
+        // Refresh character sheet to show new icon
+        viewCharacter(currentCharacter.id);
+    }).catch(function(err) {
+        console.error('Error updating portrait:', err);
+        showToast('Kunde inte uppdatera porträtt', 'error');
+    });
+}
+
+function triggerPortraitUpload() {
+    var input = document.getElementById('portraitUpload');
+    if (input) {
+        input.click();
+    }
+}
+
+function handlePortraitUpload(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showToast('Vänligen välj en bildfil', 'error');
+        return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Bilden är för stor (max 5MB)', 'error');
+        return;
+    }
+    
+    if (!currentCharacter) {
+        showToast('Ingen karaktär vald', 'error');
+        return;
+    }
+    
+    var user = getCurrentUser();
+    if (!user) {
+        showToast('Du måste vara inloggad', 'error');
+        return;
+    }
+    
+    showToast('Laddar upp...', 'info');
+    
+    // Compress and upload
+    compressImage(file, {
+        maxWidth: 200,
+        maxHeight: 200,
+        quality: 0.8
+    }).then(function(blob) {
+        // Upload to Firebase Storage
+        var storageRef = firebase.storage().ref();
+        var portraitRef = storageRef.child('portraits/' + user.uid + '/' + currentCharacter.id + '.jpg');
+        
+        return portraitRef.put(blob).then(function(snapshot) {
+            return snapshot.ref.getDownloadURL();
+        });
+    }).then(function(url) {
+        // Update character document
+        return CharacterService.updateCharacter(currentCharacter.id, {
+            portraitUrl: url,
+            portraitType: 'custom'
+        }).then(function() {
+            currentCharacter.portraitUrl = url;
+            showToast('Porträtt uppdaterat!', 'success');
+            // Refresh character sheet
+            viewCharacter(currentCharacter.id);
+        });
+    }).catch(function(err) {
+        console.error('Error uploading portrait:', err);
+        showToast('Kunde inte ladda upp: ' + err.message, 'error');
+    });
+}
+
+function compressImage(file, options) {
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var width = img.width;
+                var height = img.height;
+                
+                // Scale down if needed
+                if (width > options.maxWidth) {
+                    height = (height * options.maxWidth) / width;
+                    width = options.maxWidth;
+                }
+                if (height > options.maxHeight) {
+                    width = (width * options.maxHeight) / height;
+                    height = options.maxHeight;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(function(blob) {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Failed to compress image'));
+                    }
+                }, 'image/jpeg', options.quality);
+            };
+            img.onerror = function() {
+                reject(new Error('Failed to load image'));
+            };
+            img.src = e.target.result;
+        };
+        reader.onerror = function() {
+            reject(new Error('Failed to read file'));
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 console.log('✅ app.js finished');
