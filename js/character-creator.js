@@ -205,7 +205,7 @@ function renderStep6Portrait() {
     
     availableIcons.forEach(function(icon) {
         var selected = creatorData.portraitUrl === icon ? ' selected' : '';
-        html += '<div class="icon-option' + selected + '" onclick="selectIcon(\'' + icon + '\')">';
+        html += '<div class="creation-icon-option icon-option' + selected + '" onclick="selectCreationIcon(\'' + icon + '\')">';
         html += '<img src="' + icon + '" alt="Icon" style="width: 64px; height: 64px;">';
         html += '</div>';
     });
@@ -214,8 +214,11 @@ function renderStep6Portrait() {
     html += '<p class="form-help-text" style="margin-top: 1rem;">Custom upload kommer snart!</p>';
     html += '</div>';
     html += '</div>';
-    html += '<div class="creator-nav"><button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>';
-    html += '<button class="btn btn-gold" onclick="nextStep()">Nästa →</button></div></div>';
+    html += '<div class="creator-nav">';
+    html += '<button class="btn btn-outline" onclick="prevStep()">← Tillbaka</button>';
+    html += '<button class="btn btn-outline" onclick="skipIconSelection()">Hoppa över</button>';
+    html += '<button class="btn btn-gold" onclick="nextStep()">Nästa →</button>';
+    html += '</div></div>';
     return html;
 }
 
@@ -237,10 +240,31 @@ function renderStep7Summary() {
     return html;
 }
 
-function selectIcon(iconPath) {
+function selectCreationIcon(iconPath) {
     creatorData.portraitType = 'icon';
     creatorData.portraitUrl = iconPath;
     renderCreatorStep();
+}
+
+function skipIconSelection() {
+    // Use default icon based on kin if available, otherwise use generic
+    var defaultIcons = {
+        'Människa': 'icons/Manniska.gif',
+        'Alv': 'icons/Alv.gif',
+        'Dvärg': 'icons/Dvarg.gif',
+        'Halvling': 'icons/NewCharacter.gif',
+        'Anka': 'icons/Anka.gif',
+        'Vargfolk': 'icons/Varg.gif'
+    };
+    
+    if (creatorData.kin && defaultIcons[creatorData.kin]) {
+        creatorData.portraitUrl = defaultIcons[creatorData.kin];
+    } else {
+        creatorData.portraitUrl = 'icons/NewCharacter.gif';
+    }
+    
+    creatorData.portraitType = 'icon';
+    nextStep();
 }
 
 function selectKin(kin) {

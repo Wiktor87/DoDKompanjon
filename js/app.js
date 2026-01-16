@@ -713,6 +713,14 @@ function renderFullCharacterSheet(char) {
     html += '</div>';
     
     html += '</div>'; // Close background-selector
+    
+    // Delete Character Section
+    html += '<div class="danger-zone" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-panel);">';
+    html += '<h4 style="margin-bottom: 1rem; color: var(--brand-red);">⚠️ Farlig Zon</h4>';
+    html += '<p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">När du raderar en karaktär kan åtgärden inte ångras. All data kommer att tas bort permanent.</p>';
+    html += '<button class="btn btn-outline" style="border-color: var(--brand-red); color: var(--brand-red);" onclick="confirmDeleteCharacter(\'' + char.id + '\', \'' + escapeHtml(char.name) + '\')">🗑️ Radera Karaktär</button>';
+    html += '</div>';
+    
     html += '</div></div>';
     html += '</div>';
     
@@ -2584,12 +2592,16 @@ function closeIconBrowser() {
 function selectIcon(iconFile) {
     if (!currentCharacter) return;
     
-    // Store icon filename in character
+    // Build full icon path
+    var iconPath = iconFile.startsWith('icons/') ? iconFile : 'icons/' + iconFile;
+    
+    // Update character in Firestore
     CharacterService.updateCharacter(currentCharacter.id, {
-        portraitIcon: iconFile,
+        portraitUrl: iconPath,
         portraitType: 'icon'
     }).then(function() {
-        currentCharacter.portraitIcon = iconFile;
+        currentCharacter.portraitUrl = iconPath;
+        currentCharacter.portraitType = 'icon';
         showToast('Porträtt uppdaterat!', 'success');
         closeIconBrowser();
         // Refresh character sheet to show new icon
@@ -2617,9 +2629,9 @@ function handlePortraitUpload(event) {
         return;
     }
     
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('Bilden är för stor (max 5MB)', 'error');
+    // Validate file size (max 2MB before compression)
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('Bilden är för stor. Max 2MB.', 'error');
         return;
     }
     
@@ -2628,44 +2640,90 @@ function handlePortraitUpload(event) {
         return;
     }
     
-    var user = getCurrentUser();
-    if (!user) {
-        showToast('Du måste vara inloggad', 'error');
-        return;
-    }
-    
-    showToast('Laddar upp...', 'info');
-    
-    // Compress and upload
-    compressImage(file, {
-        maxWidth: 200,
-        maxHeight: 200,
-        quality: 0.8
-    }).then(function(blob) {
-        // Upload to Firebase Storage
-        var storageRef = firebase.storage().ref();
-        var portraitRef = storageRef.child('portraits/' + user.uid + '/' + currentCharacter.id + '.jpg');
+    try {
+        showToast('Bearbetar bild...', 'info');
         
-        return portraitRef.put(blob).then(function(snapshot) {
-            return snapshot.ref.getDownloadURL();
-        });
-    }).then(function(url) {
-        // Update character document
-        return CharacterService.updateCharacter(currentCharacter.id, {
-            portraitUrl: url,
-            portraitType: 'custom'
+        // Compress and convert to Base64
+        compressAndConvertToBase64(file, {
+            maxWidth: 150,
+            maxHeight: 150,
+            quality: 0.7
+        }).then(function(base64Image) {
+            // Save Base64 directly to Firestore (bypasses CORS)
+            return CharacterService.updateCharacter(currentCharacter.id, {
+                portraitUrl: base64Image,
+                portraitType: 'custom'
+            });
         }).then(function() {
-            currentCharacter.portraitUrl = url;
-            showToast('Porträtt uppdaterat!', 'success');
-            // Refresh character sheet
+            currentCharacter.portraitUrl = base64Image;
+            showToast('Porträtt uppladdat!', 'success');
+            // Refresh character sheet to show new portrait
             viewCharacter(currentCharacter.id);
+        }).catch(function(err) {
+            console.error('Error uploading portrait:', err);
+            showToast('Kunde inte ladda upp bilden. Försök igen.', 'error');
         });
-    }).catch(function(err) {
-        console.error('Error uploading portrait:', err);
-        showToast('Kunde inte ladda upp: ' + err.message, 'error');
+    } catch (error) {
+        console.error('Error uploading portrait:', error);
+        showToast('Kunde inte ladda upp bilden. Försök igen.', 'error');
+    }
+}
+
+function compressAndConvertToBase64(file, options) {
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        
+        reader.onload = function(e) {
+            var img = new Image();
+            
+            img.onload = function() {
+                try {
+                    var canvas = document.createElement('canvas');
+                    var width = img.width;
+                    var height = img.height;
+                    
+                    // Calculate new dimensions (maintain aspect ratio)
+                    if (width > height) {
+                        if (width > options.maxWidth) {
+                            height = Math.round((height * options.maxWidth) / width);
+                            width = options.maxWidth;
+                        }
+                    } else {
+                        if (height > options.maxHeight) {
+                            width = Math.round((width * options.maxHeight) / height);
+                            height = options.maxHeight;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to Base64 JPEG
+                    var base64 = canvas.toDataURL('image/jpeg', options.quality);
+                    resolve(base64);
+                    
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            
+            img.onerror = function() { 
+                reject(new Error('Failed to load image')); 
+            };
+            img.src = e.target.result;
+        };
+        
+        reader.onerror = function() { 
+            reject(new Error('Failed to read file')); 
+        };
+        reader.readAsDataURL(file);
     });
 }
 
+// Legacy compressImage function - keeping for backward compatibility if needed elsewhere
 function compressImage(file, options) {
     return new Promise(function(resolve, reject) {
         var reader = new FileReader();
@@ -2710,6 +2768,30 @@ function compressImage(file, options) {
         };
         reader.readAsDataURL(file);
     });
+}
+
+// Delete Character Function
+function confirmDeleteCharacter(characterId, characterName) {
+    var confirmed = confirm('Är du säker på att du vill radera "' + characterName + '"? Detta kan inte ångras.');
+    
+    if (confirmed) {
+        // Additional safety confirmation
+        var doubleConfirm = confirm('Sista varningen! Radera "' + characterName + '" permanent?');
+        
+        if (doubleConfirm) {
+            showToast('Raderar karaktär...', 'info');
+            
+            CharacterService.deleteCharacter(characterId).then(function() {
+                showToast('Karaktär raderad', 'success');
+                // Navigate back to characters list
+                closeCharacterSheet();
+                loadCharactersList();
+            }).catch(function(error) {
+                console.error('Error deleting character:', error);
+                showToast('Kunde inte radera karaktären. Försök igen.', 'error');
+            });
+        }
+    }
 }
 
 console.log('✅ app.js finished');
