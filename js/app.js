@@ -2592,8 +2592,8 @@ function closeIconBrowser() {
 function selectIcon(iconFile) {
     if (!currentCharacter) return;
     
-    // Build full icon path
-    var iconPath = iconFile.startsWith('icons/') ? iconFile : 'icons/' + iconFile;
+    // Build full icon path using shared utility
+    var iconPath = normalizeIconPath(iconFile);
     
     // Update character in Firestore
     CharacterService.updateCharacter(currentCharacter.id, {
@@ -2612,6 +2612,11 @@ function selectIcon(iconFile) {
     });
 }
 
+// Utility function for normalizing icon paths
+function normalizeIconPath(iconPath) {
+    return iconPath.startsWith('icons/') ? iconPath : 'icons/' + iconPath;
+}
+
 function triggerPortraitUpload() {
     var input = document.getElementById('portraitUpload');
     if (input) {
@@ -2621,6 +2626,7 @@ function triggerPortraitUpload() {
 
 // Portrait upload constants
 var PORTRAIT_MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+var PORTRAIT_MAX_FILE_SIZE_MB = 2; // For error messages
 var PORTRAIT_MAX_WIDTH = 150;
 var PORTRAIT_MAX_HEIGHT = 150;
 var PORTRAIT_QUALITY = 0.7;
@@ -2635,9 +2641,9 @@ function handlePortraitUpload(event) {
         return;
     }
     
-    // Validate file size (max 2MB before compression)
+    // Validate file size
     if (file.size > PORTRAIT_MAX_FILE_SIZE) {
-        showToast('Bilden är för stor. Max 2MB.', 'error');
+        showToast('Bilden är för stor. Max ' + PORTRAIT_MAX_FILE_SIZE_MB + 'MB.', 'error');
         return;
     }
     
@@ -2776,8 +2782,8 @@ function compressImage(file, options) {
 
 // Delete Character Function
 function confirmDeleteCharacter(characterId, characterName) {
-    // Sanitize character name for display in confirm dialogs
-    var safeName = String(characterName).replace(/[<>"']/g, '');
+    // Use existing escapeHtml function for proper sanitization
+    var safeName = escapeHtml(characterName);
     
     var confirmed = confirm('Är du säker på att du vill radera "' + safeName + '"? Detta kan inte ångras.');
     
