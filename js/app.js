@@ -1555,11 +1555,11 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
                 '</div>';
             
             // Location (if provided)
-            if (party.sessionLocation) {
+            if (party.nextSessionLocation) {
                 html += '<div class="session-row" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">' +
                     '<span class="icon" style="font-size: 1.25rem;">📍</span>' +
                     '<span class="label" style="font-weight: 600; color: var(--text-secondary);">Plats:</span>' +
-                    '<span class="value" style="color: var(--text-primary);">' + party.sessionLocation + '</span>' +
+                    '<span class="value" style="color: var(--text-primary);">' + party.nextSessionLocation + '</span>' +
                     '</div>';
             }
             
@@ -2236,15 +2236,8 @@ function saveSession(partyId) {
     
     var formattedDate = dayName + ' ' + day + ' ' + month + ', ' + hours + ':' + minutes;
     
-    // Save to party with location
-    var sessionData = {
-        nextSession: formattedDate,
-        nextSessionTimestamp: firebase.firestore.Timestamp.fromDate(dateTime),
-        sessionLocation: locationValue || '',
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    db.collection('parties').doc(partyId).update(sessionData)
+    // Use PartyService for consistency
+    PartyService.setNextSession(partyId, formattedDate, firebase.firestore.Timestamp.fromDate(dateTime), locationValue)
         .then(function() {
             showToast('Session schemalagd!', 'success');
             closeSessionScheduler();
