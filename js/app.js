@@ -583,7 +583,7 @@ function renderFullCharacterSheet(char) {
     
     // Character header: Portrait, Name/Info, Save button
     html += '<div class="char-header-v2">';
-    html += '<div class="char-portrait-v2">' + icon + '</div>';
+    html += '<div class="char-portrait-v2"><div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">' + icon + '</div></div>';
     html += '<div class="char-info-v2">';
     html += '<input type="text" class="char-name-input-v2" value="' + (char.name || '') + '" data-field="name" placeholder="Karaktärens namn">';
     html += '<div class="char-meta-v2">' + (char.kin || '—') + ' • ' + (char.profession || '—') + ' • ' + (char.age || '—') + '</div>';
@@ -703,23 +703,23 @@ function renderFullCharacterSheet(char) {
     
     // Background preview
     if (char.backgroundImage && char.backgroundImage !== 'none') {
-        html += '<div class="bg-preview-box" style="width: 100%; height: 150px; margin-bottom: 1rem; background-image: url(charbgs/' + char.backgroundImage + '); background-size: cover; background-position: center; border-radius: var(--radius-md); border: 2px solid var(--border-panel); position: relative; overflow: hidden;">';
+        html += '<div class="bg-preview-box" style="width: 100%; height: 150px; margin-bottom: 1rem; background-color: var(--bg-secondary); background-image: url(charbgs/' + char.backgroundImage + '); background-size: contain; background-position: center; background-repeat: no-repeat; border-radius: var(--radius-md); border: 2px solid var(--border-panel); position: relative; overflow: hidden;">';
         html += '<div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13, 13, 13, 0.9) 0%, rgba(13, 13, 13, 0) 35%, rgba(13, 13, 13, 0) 65%, rgba(13, 13, 13, 0.9) 100%);"></div>';
         html += '</div>';
     }
     
-    html += '<div class="background-options" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; margin-bottom: 1rem;">';
+    html += '<div class="background-options" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">';
     
     // None option
     var noneSelected = (!char.backgroundImage || char.backgroundImage === 'none') ? ' selected' : '';
-    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')" style="aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 2px solid ' + (noneSelected ? 'var(--accent-gold)' : 'var(--border-panel)') + '; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; color: var(--text-secondary);">Ingen</div>';
+    html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')" style="min-height: 80px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 2px solid ' + (noneSelected ? 'var(--accent-gold)' : 'var(--border-panel)') + '; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; color: var(--text-secondary); padding: 1rem;">Ingen</div>';
     
     // Render all available backgrounds
     AVAILABLE_BACKGROUNDS.forEach(function(bgFile) {
         var isSelected = char.backgroundImage === bgFile ? ' selected' : '';
         var borderColor = isSelected ? 'var(--accent-gold)' : 'var(--border-panel)';
-        html += '<div class="bg-option' + isSelected + '" data-bg="' + escapeHtml(bgFile) + '" onclick="selectCharacterBackground(\'' + escapeHtml(bgFile) + '\')" style="aspect-ratio: 16/9; background-color: var(--bg-secondary); background-image: url(charbgs/' + escapeHtml(bgFile) + '); background-size: contain; background-position: center; background-repeat: no-repeat; border: 2px solid ' + borderColor + '; border-radius: var(--radius-sm); cursor: pointer; position: relative; overflow: hidden;">';
-        html += '<div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 0.25rem; font-size: 0.625rem; color: white; text-align: center;">' + escapeHtml(bgFile.split('.')[0]) + '</div>';
+        html += '<div class="bg-option' + isSelected + '" data-bg="' + escapeHtml(bgFile) + '" onclick="selectCharacterBackground(\'' + escapeHtml(bgFile) + '\')" style="min-height: 80px; background-color: var(--bg-secondary); background-image: url(charbgs/' + escapeHtml(bgFile) + '); background-size: contain; background-position: center; background-repeat: no-repeat; border: 2px solid ' + borderColor + '; border-radius: var(--radius-sm); cursor: pointer; position: relative; overflow: hidden; padding: 0.5rem; display: flex; align-items: flex-end;">';
+        html += '<div style="width: 100%; background: rgba(0,0,0,0.8); padding: 0.25rem; font-size: 0.625rem; color: white; text-align: center; border-radius: 4px;">' + escapeHtml(bgFile.split('.')[0]) + '</div>';
         html += '</div>';
     });
     
