@@ -583,7 +583,10 @@ function renderFullCharacterSheet(char) {
     
     // Character header: Portrait, Name/Info, Save button
     html += '<div class="char-header-v2">';
-    html += '<div class="char-portrait-v2"><div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">' + icon + '</div></div>';
+    html += '<div class="char-portrait-v2">';
+    html += icon;
+    html += '<button class="portrait-edit-btn" onclick="openIconBrowser()" title="Ändra porträtt">✏️</button>';
+    html += '</div>';
     html += '<div class="char-info-v2">';
     html += '<input type="text" class="char-name-input-v2" value="' + (char.name || '') + '" data-field="name" placeholder="Karaktärens namn">';
     html += '<div class="char-meta-v2">' + (char.kin || '—') + ' • ' + (char.profession || '—') + ' • ' + (char.age || '—') + '</div>';
