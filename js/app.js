@@ -718,7 +718,7 @@ function renderFullCharacterSheet(char) {
     AVAILABLE_BACKGROUNDS.forEach(function(bgFile) {
         var isSelected = char.backgroundImage === bgFile ? ' selected' : '';
         var borderColor = isSelected ? 'var(--accent-gold)' : 'var(--border-panel)';
-        html += '<div class="bg-option' + isSelected + '" data-bg="' + escapeHtml(bgFile) + '" onclick="selectCharacterBackground(\'' + escapeHtml(bgFile) + '\')" style="aspect-ratio: 16/9; background-image: url(charbgs/' + escapeHtml(bgFile) + '); background-size: cover; background-position: center; border: 2px solid ' + borderColor + '; border-radius: var(--radius-sm); cursor: pointer; position: relative; overflow: hidden;">';
+        html += '<div class="bg-option' + isSelected + '" data-bg="' + escapeHtml(bgFile) + '" onclick="selectCharacterBackground(\'' + escapeHtml(bgFile) + '\')" style="aspect-ratio: 16/9; background-color: var(--bg-secondary); background-image: url(charbgs/' + escapeHtml(bgFile) + '); background-size: contain; background-position: center; background-repeat: no-repeat; border: 2px solid ' + borderColor + '; border-radius: var(--radius-sm); cursor: pointer; position: relative; overflow: hidden;">';
         html += '<div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 0.25rem; font-size: 0.625rem; color: white; text-align: center;">' + escapeHtml(bgFile.split('.')[0]) + '</div>';
         html += '</div>';
     });
