@@ -47,6 +47,13 @@ var ALL_SKILLS = {
 
 var WEAPON_SKILLS = ['Armborst', 'Båge', 'Kastspjut', 'Sköld', 'Slagsmål', 'Svärd/Kniv', 'Yxa/Hammare', 'Stångvapen'];
 
+// Available character backgrounds (add filenames from /charbgs folder here)
+var AVAILABLE_BACKGROUNDS = [
+    'Chargb_Library_01.gif'
+    // Add more backgrounds here as you add files to the charbgs folder
+    // Example: 'tavern.png', 'forest.jpg', etc.
+];
+
 // Character Sheet V2 - Skills and Weapon Skills from JSX specifications
 var SKILLS = {
     'Bestiologi': { attr: 'INT' },
@@ -707,12 +714,23 @@ function renderFullCharacterSheet(char) {
     var noneSelected = (!char.backgroundImage || char.backgroundImage === 'none') ? ' selected' : '';
     html += '<div class="bg-option' + noneSelected + '" data-bg="none" onclick="selectCharacterBackground(\'none\')" style="aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 2px solid ' + (noneSelected ? 'var(--accent-gold)' : 'var(--border-panel)') + '; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; color: var(--text-secondary);">Ingen</div>';
     
-    // List potential backgrounds (will be populated dynamically in real use)
-    // For now, show instruction message
+    // Render all available backgrounds
+    AVAILABLE_BACKGROUNDS.forEach(function(bgFile) {
+        var isSelected = char.backgroundImage === bgFile ? ' selected' : '';
+        var borderColor = isSelected ? 'var(--accent-gold)' : 'var(--border-panel)';
+        html += '<div class="bg-option' + isSelected + '" data-bg="' + escapeHtml(bgFile) + '" onclick="selectCharacterBackground(\'' + escapeHtml(bgFile) + '\')" style="aspect-ratio: 16/9; background-image: url(charbgs/' + escapeHtml(bgFile) + '); background-size: cover; background-position: center; border: 2px solid ' + borderColor + '; border-radius: var(--radius-sm); cursor: pointer; position: relative; overflow: hidden;">';
+        html += '<div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 0.25rem; font-size: 0.625rem; color: white; text-align: center;">' + escapeHtml(bgFile.split('.')[0]) + '</div>';
+        html += '</div>';
+    });
+    
     html += '</div>';
-    html += '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-panel);">';
-    html += '📁 Lägg till bilder i mappen <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">/charbgs</code> för att använda dem som bakgrund';
-    html += '</div>';
+    
+    // Info message
+    if (AVAILABLE_BACKGROUNDS.length === 0) {
+        html += '<div style="text-align: center; padding: 1rem; color: var(--text-secondary); font-size: 0.875rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-panel);">';
+        html += '📁 Lägg till bilder i mappen <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">/charbgs</code> för att använda dem som bakgrund';
+        html += '</div>';
+    }
     
     html += '</div>'; // Close background-selector
     
