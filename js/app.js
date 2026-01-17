@@ -32,6 +32,24 @@ function getKinIcon(kin) {
     return fallback[kin] || fallback.default;
 }
 
+// Get character portrait - uses custom portrait if set, otherwise falls back to kin icon
+function getCharacterPortrait(char) {
+    if (!char) return getKinIcon('default');
+    
+    // Check for custom portrait (uploaded image or selected icon)
+    if (char.portraitUrl) {
+        // Base64 data URL (uploaded image)
+        if (char.portraitUrl.startsWith('data:')) {
+            return '<img src="' + char.portraitUrl + '" class="race-icon">';
+        }
+        // Icon path
+        return '<img src="' + char.portraitUrl + '" class="race-icon">';
+    }
+    
+    // Fall back to kin-based icon
+    return getKinIcon(char.kin);
+}
+
 var PROFESSION_ICONS = {
     'Bard': '🎵', 'Hantverkare': '🔨', 'Jägare': '🏹', 'Krigare': '⚔️',
     'Lärd': '📚', 'Magiker': '✨', 'Nasare': '🗡️', 'Riddare': '🛡️',
@@ -257,7 +275,7 @@ function loadDashboardParties() {
 }
 
 function renderCharacterCardCompact(char) {
-    var icon = getKinIcon(char.kin);
+    var icon = getCharacterPortrait(char);
     var attrs = char.attributes || {};
     var maxKp = attrs.FYS || 0;
     var maxVp = attrs.PSY || 0;
@@ -398,7 +416,7 @@ function renderNewCharacterCard() {
 }
 
 function renderCharacterCardFull(char) {
-    var icon = getKinIcon(char.kin);
+    var icon = getCharacterPortrait(char);
     var profIcon = PROFESSION_ICONS[char.profession] || PROFESSION_ICONS.default;
     var attrs = char.attributes || {};
     var maxKp = attrs.FYS || 0;
@@ -548,8 +566,8 @@ function selectCharacterBackground(backgroundImage) {
 }
 
 function renderFullCharacterSheet(char) {
-    var icon = getKinIcon(char.kin);
-    var attrs = char.attributes || {};
+    var icon = getCharacterPortrait(char);
+    var attrs = char.attributes || {};;
     var skills = char.skills || {};
     var weaponSkills = char.weaponSkills || {};
     var conditions = char.conditions || {};
@@ -1854,7 +1872,7 @@ function renderMessage(msg) {
 }
 
 function renderPartyCharacterCard(char, partyId) {
-    var icon = getKinIcon(char.kin);
+    var icon = getCharacterPortrait(char);
     var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
     var attrs = char.attributes || {};
     
@@ -1872,7 +1890,7 @@ function renderPartyCharacterCard(char, partyId) {
 }
 
 function renderAddCharacterCard(char, partyId) {
-    var icon = getKinIcon(char.kin);
+    var icon = getCharacterPortrait(char);
     var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
     
     return '<div class="character-card">' +
@@ -2166,7 +2184,7 @@ function displayFoundGroup(party, container) {
                 charList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">Välj en karaktär att skicka förfrågan med:</p>' +
                     '<div class="character-cards" style="grid-template-columns: 1fr;">' +
                     characters.map(function(char) {
-                        var icon = getKinIcon(char.kin);
+                        var icon = getCharacterPortrait(char);
                         var subtitle = [char.kin, char.profession].filter(Boolean).join(' ');
                         return '<div class="character-card" onclick="requestJoinWithCharacter(\'' + party.id + '\', \'' + char.id + '\')" style="cursor: pointer;">' +
                             '<div class="char-portrait">' + icon + '</div>' +
@@ -2646,11 +2664,22 @@ function selectIcon(iconFile) {
         currentCharacter.portraitUrl = iconPath;
         currentCharacter.portraitType = 'icon';
         
+        // Update the portrait in the DOM directly without reloading
+        var newIcon = '<img src="' + iconPath + '" class="race-icon">';
+        var portraitContainer = document.querySelector('.char-portrait-v2');
+        if (portraitContainer) {
+            // Preserve the edit button
+            portraitContainer.innerHTML = newIcon + '<button class="portrait-edit-btn" onclick="openIconBrowser()" title="Ändra porträtt">✏️</button>';
+        }
+        
+        // Also update the settings preview
+        var settingsPortrait = document.querySelector('.portrait-section .current-portrait div');
+        if (settingsPortrait) {
+            settingsPortrait.innerHTML = newIcon;
+        }
+        
         showToast('Porträtt uppdaterat!', 'success');
         closeIconBrowser();
-        
-        // Force refresh the character sheet to show new icon
-        viewCharacter(currentCharacter.id);
     }).catch(function(err) {
         console.error('Error updating portrait:', err);
         showToast('Kunde inte spara porträtt: ' + err.message, 'error');
@@ -2714,10 +2743,25 @@ function handlePortraitUpload(event) {
             portraitType: 'custom'
         });
     }).then(function() {
+        // Update local state
         currentCharacter.portraitUrl = base64Image;
+        currentCharacter.portraitType = 'custom';
+        
+        // Update the portrait in the DOM directly without reloading
+        var newIcon = '<img src="' + base64Image + '" class="race-icon">';
+        var portraitContainer = document.querySelector('.char-portrait-v2');
+        if (portraitContainer) {
+            // Preserve the edit button
+            portraitContainer.innerHTML = newIcon + '<button class="portrait-edit-btn" onclick="openIconBrowser()" title="Ändra porträtt">✏️</button>';
+        }
+        
+        // Also update the settings preview
+        var settingsPortrait = document.querySelector('.portrait-section .current-portrait div');
+        if (settingsPortrait) {
+            settingsPortrait.innerHTML = newIcon;
+        }
+        
         showToast('Porträtt uppladdat!', 'success');
-        // Refresh character sheet to show new portrait
-        viewCharacter(currentCharacter.id);
     }).catch(function(err) {
         console.error('Error uploading portrait:', err);
         showToast('Kunde inte ladda upp bilden. Försök igen.', 'error');
