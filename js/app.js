@@ -3,18 +3,7 @@ console.log('🚀 app.js loaded');
 
 var currentCharacter = null;
 
-// Helper: Escape HTML to prevent XSS
-function escapeHtml(text) {
-    if (!text) return '';
-    var map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+// Note: escapeHtml is now defined globally in firebase-config.js
 
 // Game constants
 var DAMAGE_BONUS_DIVISOR = 5;

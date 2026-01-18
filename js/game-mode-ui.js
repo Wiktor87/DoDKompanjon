@@ -1558,16 +1558,9 @@ var GameModeUI = {
             });
     },
     
-    // Escape HTML to prevent XSS
+    // Escape HTML to prevent XSS - use global escapeHtml function
     escapeHtml: function(text) {
-        var map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+        return escapeHtml(text);
     },
     
     // Exit game mode
