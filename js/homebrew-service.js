@@ -51,10 +51,27 @@ var HomebrewService = {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
+        // Validate input lengths for common fields
+        var validatedData = validateFields(data, {
+            name: INPUT_LIMITS.name,
+            description: INPUT_LIMITS.description,
+            requirement: INPUT_LIMITS.shortText,
+            abilityType: INPUT_LIMITS.shortText,
+            school: INPUT_LIMITS.shortText,
+            itemType: INPUT_LIMITS.shortText,
+            equipmentType: INPUT_LIMITS.shortText,
+            rarity: INPUT_LIMITS.shortText,
+            range: INPUT_LIMITS.shortText,
+            duration: INPUT_LIMITS.shortText,
+            effect: INPUT_LIMITS.description,
+            size: INPUT_LIMITS.shortText,
+            movement: INPUT_LIMITS.shortText
+        });
+        
         var homebrew = {
             type: type,
-            name: data.name || '',
-            description: data.description || '',
+            name: validatedData.name || '',
+            description: validatedData.description || '',
             authorId: user.uid,
             authorName: user.displayName || user.email,
             rating: 0,
@@ -65,7 +82,7 @@ var HomebrewService = {
             availableForCharacters: availableForCharacters || false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            data: data
+            data: validatedData
         };
         
         return db.collection('homebrew').add(homebrew).then(function(ref) {
@@ -241,8 +258,33 @@ var HomebrewService = {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
-        updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-        return db.collection('homebrew').doc(id).update(updates);
+        // Validate input lengths if data field is being updated
+        if (updates.data) {
+            updates.data = validateFields(updates.data, {
+                name: INPUT_LIMITS.name,
+                description: INPUT_LIMITS.description,
+                requirement: INPUT_LIMITS.shortText,
+                abilityType: INPUT_LIMITS.shortText,
+                school: INPUT_LIMITS.shortText,
+                itemType: INPUT_LIMITS.shortText,
+                equipmentType: INPUT_LIMITS.shortText,
+                rarity: INPUT_LIMITS.shortText,
+                range: INPUT_LIMITS.shortText,
+                duration: INPUT_LIMITS.shortText,
+                effect: INPUT_LIMITS.description,
+                size: INPUT_LIMITS.shortText,
+                movement: INPUT_LIMITS.shortText
+            });
+        }
+        
+        // Validate top-level fields
+        var validatedUpdates = validateFields(updates, {
+            name: INPUT_LIMITS.name,
+            description: INPUT_LIMITS.description
+        });
+        
+        validatedUpdates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        return db.collection('homebrew').doc(id).update(validatedUpdates);
     },
 
     // Delete homebrew
@@ -260,6 +302,14 @@ var HomebrewService = {
         if (rating < 1 || rating > 5) {
             return Promise.reject(new Error('Betyg måste vara mellan 1 och 5'));
         }
+        
+        // TODO: There's a typo here - 'oderId' should be 'userId'
+        // This requires a data migration to fix properly:
+        // 1. Query all homebrewRatings documents
+        // 2. Copy 'oderId' value to new 'userId' field
+        // 3. Update code to use 'userId'
+        // 4. Remove old 'oderId' field
+        // For now, keeping 'oderId' to maintain compatibility with existing data
         
         // Check if user already rated this
         return db.collection('homebrewRatings')
@@ -294,6 +344,9 @@ var HomebrewService = {
     addComment: function(homebrewId, comment) {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
+        
+        // TODO: There's a typo here - 'oderId' should be 'userId'
+        // See rateHomebrew function for migration details
         
         // Check if user already has a rating
         return db.collection('homebrewRatings')

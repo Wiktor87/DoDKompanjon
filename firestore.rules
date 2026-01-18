@@ -120,5 +120,11 @@ service cloud.firestore {
       allow delete: if request.auth != null &&
         resource.data.ownerId == request.auth.uid;
     }
+    
+    // Mail collection - only accessible by Cloud Functions (admin SDK)
+    // Client apps should never read or write to this collection
+    match /mail/{mailId} {
+      allow read, write: if false;
+    }
   }
 }

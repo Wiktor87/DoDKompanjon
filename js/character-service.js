@@ -4,7 +4,18 @@ var CharacterService = {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
-        var character = Object.assign({}, data, {
+        // Validate input lengths
+        var validatedData = validateFields(data, {
+            name: INPUT_LIMITS.name,
+            kin: INPUT_LIMITS.shortText,
+            profession: INPUT_LIMITS.shortText,
+            age: INPUT_LIMITS.shortText,
+            weakness: INPUT_LIMITS.shortText,
+            memento: INPUT_LIMITS.shortText,
+            notes: INPUT_LIMITS.notes
+        });
+        
+        var character = Object.assign({}, validatedData, {
             ownerId: user. uid,
             ownerName: user. displayName || user.email,
             createdAt: firebase.firestore.FieldValue. serverTimestamp(),
@@ -96,8 +107,19 @@ var CharacterService = {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
-        updates. updatedAt = firebase.firestore. FieldValue.serverTimestamp();
-        return db.collection('characters').doc(id).update(updates);
+        // Validate input lengths
+        var validatedUpdates = validateFields(updates, {
+            name: INPUT_LIMITS.name,
+            kin: INPUT_LIMITS.shortText,
+            profession: INPUT_LIMITS.shortText,
+            age: INPUT_LIMITS.shortText,
+            weakness: INPUT_LIMITS.shortText,
+            memento: INPUT_LIMITS.shortText,
+            notes: INPUT_LIMITS.notes
+        });
+        
+        validatedUpdates. updatedAt = firebase.firestore. FieldValue.serverTimestamp();
+        return db.collection('characters').doc(id).update(validatedUpdates);
     },
     
     deleteCharacter:  function(id) {

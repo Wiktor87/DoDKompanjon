@@ -43,13 +43,22 @@ var PartyService = {
         var self = this;
         
         return this.ensureUniqueInviteCode().then(function(inviteCode) {
-            var party = Object.assign({}, data, {
+            // Validate input lengths
+            var validatedData = validateFields(data, {
+                name: INPUT_LIMITS.name,
+                description: INPUT_LIMITS.description,
+                notes: INPUT_LIMITS.notes,
+                nextSession: INPUT_LIMITS.shortText,
+                nextSessionLocation: INPUT_LIMITS.shortText
+            });
+            
+            var party = Object.assign({}, validatedData, {
                 ownerId: user.uid,
                 ownerName: user.displayName || user.email,
                 memberIds: [user.uid],
                 characterIds: [],
                 inviteCode: inviteCode,
-                notes: '',
+                notes: validatedData.notes || '',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -163,8 +172,17 @@ var PartyService = {
         var user = getCurrentUser();
         if (!user) return Promise.reject(new Error('Inte inloggad'));
         
-        updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-        return db.collection('parties').doc(id).update(updates);
+        // Validate input lengths
+        var validatedUpdates = validateFields(updates, {
+            name: INPUT_LIMITS.name,
+            description: INPUT_LIMITS.description,
+            notes: INPUT_LIMITS.notes,
+            nextSession: INPUT_LIMITS.shortText,
+            nextSessionLocation: INPUT_LIMITS.shortText
+        });
+        
+        validatedUpdates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        return db.collection('parties').doc(id).update(validatedUpdates);
     },
     
     deleteParty: function(id) {

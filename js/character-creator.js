@@ -301,10 +301,17 @@ function rollAllAttributes() {
 function nextStep() {
     if (creatorData.step === 1) {
         var input = document.getElementById('charName');
-        if (input) creatorData.name = input.value;
+        if (input) {
+            // Validate and truncate name to 100 characters
+            creatorData.name = validateInput(input.value, INPUT_LIMITS.name);
+        }
         if (!creatorData.name.trim()) {
             alert('Ange ett namn');
             return;
+        }
+        // Show feedback if name was truncated
+        if (input && input.value.length > INPUT_LIMITS.name) {
+            alert('Namnet har förkortats till ' + INPUT_LIMITS.name + ' tecken');
         }
     }
     if (creatorData.step < 7) {
