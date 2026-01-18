@@ -596,7 +596,37 @@ function renderFullCharacterSheet(char) {
     html += '</div>';
     html += '<div class="char-info-v2">';
     html += '<input type="text" class="char-name-input-v2" value="' + escapeHtml(char.name || '') + '" data-field="name" placeholder="Karaktärens namn">';
-    html += '<div class="char-meta-v2">' + escapeHtml(char.kin || '—') + ' • ' + escapeHtml(char.profession || '—') + ' • ' + escapeHtml(char.age || '—') + '</div>';
+    // Build kin dropdown
+    html += '<div class="char-meta-v2">';
+    html += '<select data-field="kin" class="char-select-v2">';
+    html += '<option value=""' + (!char.kin ? ' selected' : '') + '>—</option>';
+    var kinOptions = ['Människa', 'Alv', 'Dvärg', 'Halvling', 'Anka', 'Vargfolk'];
+    kinOptions.forEach(function(kinOpt) {
+        var selected = (char.kin === kinOpt) ? ' selected' : '';
+        html += '<option value="' + escapeHtml(kinOpt) + '"' + selected + '>' + escapeHtml(kinOpt) + '</option>';
+    });
+    html += '</select>';
+    html += ' • ';
+    // Build profession dropdown
+    html += '<select data-field="profession" class="char-select-v2">';
+    html += '<option value=""' + (!char.profession ? ' selected' : '') + '>—</option>';
+    var professionOptions = ['Bard', 'Hantverkare', 'Jägare', 'Krigare', 'Lärd', 'Magiker', 'Nasare', 'Riddare', 'Sjöfarare', 'Tjuv'];
+    professionOptions.forEach(function(profOpt) {
+        var selected = (char.profession === profOpt) ? ' selected' : '';
+        html += '<option value="' + escapeHtml(profOpt) + '"' + selected + '>' + escapeHtml(profOpt) + '</option>';
+    });
+    html += '</select>';
+    html += ' • ';
+    // Build age dropdown
+    html += '<select data-field="age" class="char-select-v2">';
+    html += '<option value=""' + (!char.age ? ' selected' : '') + '>—</option>';
+    var ageOptions = ['Ung', 'Medelålders', 'Gammal'];
+    ageOptions.forEach(function(ageOpt) {
+        var selected = (char.age === ageOpt) ? ' selected' : '';
+        html += '<option value="' + escapeHtml(ageOpt) + '"' + selected + '>' + escapeHtml(ageOpt) + '</option>';
+    });
+    html += '</select>';
+    html += '</div>';
     html += '<div class="char-details-row-v2">';
     html += '<span>Spelare: <input type="text" value="' + escapeHtml(char.playerName || '') + '" data-field="playerName" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
     html += '<span>Svaghet: <input type="text" value="' + escapeHtml(char.weakness || '') + '" data-field="weakness" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
@@ -1152,9 +1182,9 @@ function saveCharacter() {
     
     var updates = {
         name: '',
-        kin: '',
-        profession: '',
-        age: '',
+        kin: currentCharacter.kin || '',
+        profession: currentCharacter.profession || '',
+        age: currentCharacter.age || '',
         currentKP: 0,
         currentVP: 0,
         movement: 10,
@@ -1177,6 +1207,16 @@ function saveCharacter() {
     // Get basic fields
     var nameEl = document.querySelector('[data-field="name"]');
     if (nameEl) updates.name = nameEl.value || '';
+    
+    // Get kin, profession, age from dropdowns
+    var kinEl = document.querySelector('[data-field="kin"]');
+    if (kinEl) updates.kin = kinEl.value;
+    
+    var professionEl = document.querySelector('[data-field="profession"]');
+    if (professionEl) updates.profession = professionEl.value;
+    
+    var ageEl = document.querySelector('[data-field="age"]');
+    if (ageEl) updates.age = ageEl.value;
     
     var playerNameEl = document.querySelector('[data-field="playerName"]');
     if (playerNameEl) updates.playerName = playerNameEl.value || '';

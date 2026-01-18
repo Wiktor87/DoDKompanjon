@@ -1703,6 +1703,25 @@ body.app-active::before {
     color: var(--text-secondary);
 }
 
+.char-select-v2 {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-panel);
+    color: var(--text-primary);
+    padding: 2px 4px;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.char-select-v2:hover {
+    border-color: var(--accent-gold);
+}
+
+.char-select-v2:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+}
+
 .char-details-row-v2 {
     display: flex;
     gap: 1rem;
