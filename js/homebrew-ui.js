@@ -1142,11 +1142,9 @@ var HomebrewUI = {
         });
     },
     
-    // Utility: Escape HTML
+    // Utility: Escape HTML - use global escapeHtml function
     escapeHtml: function(text) {
-        var div = document.createElement('div');
-        div.textContent = text || '';
-        return div.innerHTML;
+        return escapeHtml(text);
     },
     
     // Utility: Get initials

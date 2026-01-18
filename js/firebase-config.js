@@ -15,4 +15,25 @@ var db = firebase.firestore();
 var storage = firebase.storage();
 var googleProvider = new firebase.auth.GoogleAuthProvider();
 
+// Global helper: Escape HTML to prevent XSS
+function escapeHtml(text) {
+    // Handle null, undefined, and falsy values
+    if (text === null || text === undefined) return '';
+    
+    // Convert to string if not already
+    var str = String(text);
+    
+    // If empty string, return early
+    if (!str) return '';
+    
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return str.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 console.log('✅ Firebase initialiserad');

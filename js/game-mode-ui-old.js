@@ -158,7 +158,7 @@ var GameModeUI = {
         var html = '<div class="game-mode-header">' +
             '<div class="game-mode-header-left">' +
             '<button class="btn btn-ghost" onclick="GameModeUI.switchView(\'overview\')">← Tillbaka</button>' +
-            '<h1 class="game-mode-title">' + focusedChar.name + '</h1>' +
+            '<h1 class="game-mode-title">' + this.escapeHtml(focusedChar.name) + '</h1>' +
             '</div>' +
             '<div class="game-mode-header-right">' +
             '<button class="btn btn-ghost" onclick="GameModeUI.exit()">✕ Avsluta</button>' +
@@ -204,8 +204,8 @@ var GameModeUI = {
             '<div class="compact-card-header">' +
             '<div class="character-avatar">' + getKinIcon(character.kin || 'default') + '</div>' +
             '<div class="character-info">' +
-            '<div class="character-name">' + character.name + '</div>' +
-            '<div class="character-meta">' + (character.kin || '') + ' • ' + (character.profession || '') + '</div>' +
+            '<div class="character-name">' + this.escapeHtml(character.name) + '</div>' +
+            '<div class="character-meta">' + this.escapeHtml(character.kin || '') + ' • ' + this.escapeHtml(character.profession || '') + '</div>' +
             '</div>' +
             '</div>';
         
@@ -286,11 +286,11 @@ var GameModeUI = {
         
         // HEADER: Basic Info
         html += '<div class="expanded-header">' +
-            '<h2>' + character.name + '</h2>' +
+            '<h2>' + this.escapeHtml(character.name) + '</h2>' +
             '<p class="char-identity">' + 
-            (character.kin || '') + ' • ' + 
-            (character.profession || '') + 
-            (character.age ? ' • ' + character.age : '') +
+            this.escapeHtml(character.kin || '') + ' • ' + 
+            this.escapeHtml(character.profession || '') + 
+            (character.age ? ' • ' + this.escapeHtml(character.age) : '') +
             '</p>';
         
         if (character.weakness || character.memento) {
@@ -439,10 +439,10 @@ var GameModeUI = {
             character.weapons.forEach(function(weapon) {
                 if (weapon.name) {
                     html += '<tr>' +
-                        '<td>' + weapon.name + '</td>' +
-                        '<td>' + (weapon.grip || '-') + '</td>' +
-                        '<td>' + (weapon.damage || '-') + '</td>' +
-                        '<td>' + (weapon.range || '-') + '</td>' +
+                        '<td>' + self.escapeHtml(weapon.name) + '</td>' +
+                        '<td>' + self.escapeHtml(weapon.grip || '-') + '</td>' +
+                        '<td>' + self.escapeHtml(weapon.damage || '-') + '</td>' +
+                        '<td>' + self.escapeHtml(weapon.range || '-') + '</td>' +
                         '</tr>';
                 }
             });
@@ -544,7 +544,7 @@ var GameModeUI = {
         if (character.notes) {
             html += '<div class="expanded-section">' +
                 '<h3>📝 Anteckningar</h3>' +
-                '<div class="notes-display">' + character.notes + '</div>' +
+                '<div class="notes-display">' + this.escapeHtml(character.notes) + '</div>' +
                 '</div>';
         }
         
@@ -593,7 +593,7 @@ var GameModeUI = {
         var topWeapons = this.getTop3WeaponSkills(character);
         
         var html = '<div class="sidebar-card" onclick="GameModeUI.focusCharacter(\'' + character.id + '\')">' +
-            '<div class="sidebar-card-name">' + character.name + '</div>' +
+            '<div class="sidebar-card-name">' + this.escapeHtml(character.name) + '</div>' +
             '<div class="sidebar-card-stats">' +
             '<div>KP: ' + kp + '/' + maxKp + '</div>' +
             '<div>VP: ' + vp + '/' + maxVp + '</div>';
@@ -642,7 +642,7 @@ var GameModeUI = {
                 html += '<div class="' + itemClass + '">' +
                     '<span class="initiative-number">' + (index + 1) + '.</span>' +
                     '<span class="initiative-icon">' + icon + '</span>' +
-                    '<span class="initiative-name">' + item.name + '</span>' +
+                    '<span class="initiative-name">' + self.escapeHtml(item.name) + '</span>' +
                     '<span class="initiative-total">' + rollDisplay + ' (' + item.total + ')</span>' +
                     '</div>';
             });
@@ -744,16 +744,9 @@ var GameModeUI = {
             '</div>';
     },
     
-    // Escape HTML to prevent XSS
+    // Escape HTML to prevent XSS - use global escapeHtml function
     escapeHtml: function(text) {
-        var map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+        return escapeHtml(text);
     },
     
     // Remove monster

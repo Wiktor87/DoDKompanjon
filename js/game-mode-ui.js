@@ -216,7 +216,7 @@ var GameModeUI = {
                 }
                 
                 html += '<div class="gm-init-token-icon">' + icon + '</div>' +
-                    '<div class="gm-init-token-name">' + item.name + '</div>' +
+                    '<div class="gm-init-token-name">' + this.escapeHtml(item.name) + '</div>' +
                     '</div>';
             });
             
@@ -293,8 +293,8 @@ var GameModeUI = {
         html += '<div class="gm-card-header">' +
             '<div>' + getKinIcon(character.kin || 'default') + '</div>' +
             '<div style="flex: 1;">' +
-            '<div class="gm-card-name">' + character.name.toUpperCase() + '</div>' +
-            '<div class="gm-card-meta">' + (character.kin || '') + ' • ' + (character.profession || '') + '</div>';
+            '<div class="gm-card-name">' + this.escapeHtml(character.name).toUpperCase() + '</div>' +
+            '<div class="gm-card-meta">' + this.escapeHtml(character.kin || '') + ' • ' + this.escapeHtml(character.profession || '') + '</div>';
         
         if (isDead) {
             html += '<div class="gm-death-badge">💀 DÖD</div>';
@@ -382,15 +382,15 @@ var GameModeUI = {
                 character.weapons.slice(0, 3).forEach(function(weapon) {
                     if (weapon.name) {
                         html += '<div class="gm-weapon-item">' +
-                            '<span class="gm-weapon-name">' + weapon.name + '</span>' +
-                            '<span class="gm-weapon-dmg">' + (weapon.damage || '-') + '</span>' +
+                            '<span class="gm-weapon-name">' + self.escapeHtml(weapon.name) + '</span>' +
+                            '<span class="gm-weapon-dmg">' + self.escapeHtml(weapon.damage || '-') + '</span>' +
                             '</div>';
                     }
                 });
             } else if (topWeapons.length > 0) {
                 topWeapons.forEach(function(weapon) {
                     html += '<div class="gm-weapon-item">' +
-                        '<span class="gm-weapon-name">' + weapon.name + '</span>' +
+                        '<span class="gm-weapon-name">' + self.escapeHtml(weapon.name) + '</span>' +
                         '<span class="gm-weapon-dmg">' + weapon.value + '</span>' +
                         '</div>';
                 });
@@ -511,8 +511,8 @@ var GameModeUI = {
             
             monster.attacks.forEach(function(attack) {
                 html += '<div class="gm-monster-attack">' +
-                    '<span class="gm-monster-attack-name">' + attack.name + '</span>' +
-                    '<span class="gm-monster-attack-dmg">' + attack.damage + '</span>' +
+                    '<span class="gm-monster-attack-name">' + self.escapeHtml(attack.name) + '</span>' +
+                    '<span class="gm-monster-attack-dmg">' + self.escapeHtml(attack.damage) + '</span>' +
                     '</div>';
             });
             
@@ -556,7 +556,7 @@ var GameModeUI = {
         var notes = (this.currentSession && this.currentSession.notes) || '';
         html += '<div class="gm-sidebar-panel gm-notes">' +
             '<div class="gm-sidebar-title">📝 ANTECKNINGAR</div>' +
-            '<textarea id="gmNotesTextarea" class="gm-notes-textarea" placeholder="Anteckningar för denna session...">' + notes + '</textarea>' +
+            '<textarea id="gmNotesTextarea" class="gm-notes-textarea" placeholder="Anteckningar för denna session...">' + this.escapeHtml(notes) + '</textarea>' +
             '<button class="btn btn-gold btn-sm" style="margin-top: 0.5rem; width: 100%;" onclick="GameModeUI.saveNotes(event)">💾 Spara</button>' +
             '</div>';
         
@@ -1244,8 +1244,8 @@ var GameModeUI = {
             // Header
             '<div style="text-align: center; margin-bottom: 2rem;">' +
             '<div style="font-size: 3rem; margin-bottom: 0.5rem;">' + getKinIcon(char.kin || 'default') + '</div>' +
-            '<h1 style="margin-bottom: 0.5rem;">' + char.name + '</h1>' +
-            '<div style="color: var(--text-muted);">' + (char.kin || '') + ' • ' + (char.profession || '') + (char.age ? ' • ' + char.age + ' år' : '') + '</div>' +
+            '<h1 style="margin-bottom: 0.5rem;">' + this.escapeHtml(char.name) + '</h1>' +
+            '<div style="color: var(--text-muted);">' + this.escapeHtml(char.kin || '') + ' • ' + this.escapeHtml(char.profession || '') + (char.age ? ' • ' + this.escapeHtml(char.age) + ' år' : '') + '</div>' +
             '</div>' +
             
             // Attributes Grid with Conditions
@@ -1274,11 +1274,11 @@ var GameModeUI = {
             '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SKADEBONUS (STY)</div>' +
-            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + (char.damageBonusSTY || 'T4') + '</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + this.escapeHtml(char.damageBonusSTY || 'T4') + '</div>' +
             '</div>' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SKADEBONUS (SMI)</div>' +
-            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + (char.damageBonusSMI || 'T6') + '</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + this.escapeHtml(char.damageBonusSMI || 'T6') + '</div>' +
             '</div>' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">FÖRFLYTTNING</div>' +
@@ -1333,11 +1333,11 @@ var GameModeUI = {
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Rustning</div>' +
-            '<div><span style="font-weight: bold;">' + (char.armor || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.armorProtection || 0) + ')</span></div>' +
+            '<div><span style="font-weight: bold;">' + this.escapeHtml(char.armor || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.armorProtection || 0) + ')</span></div>' +
             '</div>' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Hjälm</div>' +
-            '<div><span style="font-weight: bold;">' + (char.helmet || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.helmetProtection || 0) + ')</span></div>' +
+            '<div><span style="font-weight: bold;">' + this.escapeHtml(char.helmet || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.helmetProtection || 0) + ')</span></div>' +
             '</div>' +
             '</div></div>';
         
@@ -1360,11 +1360,11 @@ var GameModeUI = {
             char.weapons.forEach(function(weapon, idx) {
                 if (weapon.name) {
                     modalHTML += '<tr' + (idx % 2 === 0 ? '' : ' style="background: rgba(0,0,0,0.2);"') + '>' +
-                        '<td style="padding: 0.75rem;">' + weapon.name + '</td>' +
-                        '<td style="padding: 0.75rem;">' + (weapon.grip || '-') + '</td>' +
-                        '<td style="padding: 0.75rem;">' + (weapon.skill || '-') + '</td>' +
-                        '<td style="padding: 0.75rem; color: var(--red-hp); font-weight: bold;">' + (weapon.damage || '-') + '</td>' +
-                        '<td style="padding: 0.75rem;">' + (weapon.range || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.name) + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.grip || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.skill || '-') + '</td>' +
+                        '<td style="padding: 0.75rem; color: var(--red-hp); font-weight: bold;">' + self.escapeHtml(weapon.damage || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.range || '-') + '</td>' +
                         '</tr>';
                 }
             });
@@ -1558,16 +1558,9 @@ var GameModeUI = {
             });
     },
     
-    // Escape HTML to prevent XSS
+    // Escape HTML to prevent XSS - use global escapeHtml function
     escapeHtml: function(text) {
-        var map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+        return escapeHtml(text);
     },
     
     // Exit game mode

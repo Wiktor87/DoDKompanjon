@@ -44,7 +44,7 @@ function updateLandingHeader() {
     if (currentUser) {
         // User is logged in - show user menu
         var userName = currentUser.displayName || currentUser.email.split('@')[0];
-        navActions.innerHTML = '<span class="user-name">' + userName + '</span>' +
+        navActions.innerHTML = '<span class="user-name">' + escapeHtml(userName) + '</span>' +
             '<button id="landingLogoutBtn" class="btn btn-ghost btn-sm">Logga ut</button>';
         
         // Add logout handler
