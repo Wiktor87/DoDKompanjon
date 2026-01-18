@@ -17,6 +17,22 @@ const db = admin.firestore();
 const REMINDER_WINDOW_HOURS = 23; // Don't send duplicate reminders within this window
 
 /**
+ * Helper function to escape HTML special characters
+ * Prevents HTML/script injection in emails
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
  * Trigger when a party's nextSessionTimestamp is updated
  * Sends email notification to all party members
  */
@@ -71,18 +87,18 @@ exports.onSessionScheduled = functions.firestore
         
         console.log('Sending session notification to:', memberEmails);
         
-        // Prepare email data
+        // Prepare email data (with sanitized user content)
         const emailData = {
             to: memberEmails,
             message: {
-                subject: `Ny session schemalagd: ${after.name}`,
+                subject: `Ny session schemalagd: ${escapeHtml(after.name)}`,
                 text: `En ny spelession har schemalagts för gruppen "${after.name}"!\n\n` +
                       `📅 Tid: ${after.nextSession}\n\n` +
                       `Logga in på DoD Kompanjon för mer information.\n\n` +
                       `Se dig där!`,
                 html: `<h2>Ny session schemalagd!</h2>` +
-                      `<p>En ny spelession har schemalagts för gruppen <strong>"${after.name}"</strong>!</p>` +
-                      `<p>📅 <strong>Tid:</strong> ${after.nextSession}</p>` +
+                      `<p>En ny spelession har schemalagts för gruppen <strong>"${escapeHtml(after.name)}"</strong>!</p>` +
+                      `<p>📅 <strong>Tid:</strong> ${escapeHtml(after.nextSession)}</p>` +
                       `<p>Logga in på DoD Kompanjon för mer information.</p>` +
                       `<p>Se dig där!</p>`
             }
@@ -181,19 +197,19 @@ exports.sendSessionReminders = functions.pubsub
             
             console.log(`Sending reminder for party ${partyId} to:`, memberEmails);
             
-            // Prepare email data
+            // Prepare email data (with sanitized user content)
             const emailData = {
                 to: memberEmails,
                 message: {
-                    subject: `Påminnelse: Session imorgon - ${party.name}`,
+                    subject: `Påminnelse: Session imorgon - ${escapeHtml(party.name)}`,
                     text: `Glöm inte er spelession imorgon!\n\n` +
                           `Grupp: ${party.name}\n` +
                           `📅 Tid: ${party.nextSession}\n\n` +
                           `Vi ses imorgon!`,
                     html: `<h2>Påminnelse: Session imorgon!</h2>` +
                           `<p>Glöm inte er spelession imorgon!</p>` +
-                          `<p><strong>Grupp:</strong> ${party.name}</p>` +
-                          `<p>📅 <strong>Tid:</strong> ${party.nextSession}</p>` +
+                          `<p><strong>Grupp:</strong> ${escapeHtml(party.name)}</p>` +
+                          `<p>📅 <strong>Tid:</strong> ${escapeHtml(party.nextSession)}</p>` +
                           `<p>Vi ses imorgon!</p>`
                 }
             };
