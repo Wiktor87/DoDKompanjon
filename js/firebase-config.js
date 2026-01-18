@@ -15,4 +15,17 @@ var db = firebase.firestore();
 var storage = firebase.storage();
 var googleProvider = new firebase.auth.GoogleAuthProvider();
 
+// Global helper: Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 console.log('✅ Firebase initialiserad');

@@ -290,8 +290,8 @@ function renderCharacterCardCompact(char) {
         '<div class="character-card-new">' +
             '<div class="char-portrait-new">' + icon + '</div>' +
             '<div class="char-details">' +
-                '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
-                '<div class="char-meta">' + (char.kin || 'Okänd') + ' · ' + (char.profession || 'Okänt yrke') + '</div>' +
+                '<div class="char-name">' + escapeHtml(char.name || 'Namnlös') + '</div>' +
+                '<div class="char-meta">' + escapeHtml(char.kin || 'Okänd') + ' · ' + escapeHtml(char.profession || 'Okänt yrke') + '</div>' +
                 '<div class="char-stats-bars">' +
                     '<div class="stat-bar">' +
                         '<div class="stat-bar-header">' +
@@ -352,7 +352,7 @@ function renderPartyCardHome(party) {
         nextSessionHtml = 
             '<div class="next-session-badge">' +
                 '<div class="badge-label">Nästa session</div>' +
-                '<div class="badge-value">' + party.nextSession + '</div>' +
+                '<div class="badge-value">' + escapeHtml(party.nextSession) + '</div>' +
             '</div>';
     }
     
@@ -362,7 +362,7 @@ function renderPartyCardHome(party) {
         '<div class="corner-accent"></div>' +
         '<div class="party-card-header">' +
             '<div>' +
-                '<h3>' + (party.name || 'Namnlös grupp') + '</h3>' +
+                '<h3>' + escapeHtml(party.name || 'Namnlös grupp') + '</h3>' +
                 '<p class="party-meta">' + memberCount + ' äventyrare</p>' +
             '</div>' +
             nextSessionHtml +
@@ -370,7 +370,7 @@ function renderPartyCardHome(party) {
         '<div class="party-members">' + membersHtml + '</div>' +
         '<div class="party-actions">' +
             '<button class="btn btn-primary" onclick="viewParty(\'' + party.id + '\')">Öppna gruppsida</button>' +
-            '<button class="btn btn-outline" onclick="copyInviteCode(\'' + (party.inviteCode || '') + '\')">Bjud in spelare</button>' +
+            '<button class="btn btn-outline" onclick="copyInviteCode(\'' + escapeHtml(party.inviteCode || '') + '\')">Bjud in spelare</button>' +
         '</div>' +
     '</div>';
 }
@@ -446,8 +446,8 @@ function renderCharacterCardFull(char) {
     html += '<div class="portrait-corner-deco bottom-right"></div>';
     html += '</div>';
     html += '<div class="fantasy-card-identity">';
-    html += '<h3 class="fantasy-card-name">' + (char.name || 'Namnlös') + '</h3>';
-    html += '<div class="fantasy-card-subtitle"><span class="icon">⚔</span>' + (char.kin || 'Okänd') + ' • ' + (char.profession || 'Okänt yrke') + '</div>';
+    html += '<h3 class="fantasy-card-name">' + escapeHtml(char.name || 'Namnlös') + '</h3>';
+    html += '<div class="fantasy-card-subtitle"><span class="icon">⚔</span>' + escapeHtml(char.kin || 'Okänd') + ' • ' + escapeHtml(char.profession || 'Okänt yrke') + '</div>';
     html += '</div></div>';
     
     // Divider
@@ -606,12 +606,12 @@ function renderFullCharacterSheet(char) {
     html += '<button class="portrait-edit-btn" onclick="openIconBrowser()" title="Ändra porträtt">✏️</button>';
     html += '</div>';
     html += '<div class="char-info-v2">';
-    html += '<input type="text" class="char-name-input-v2" value="' + (char.name || '') + '" data-field="name" placeholder="Karaktärens namn">';
-    html += '<div class="char-meta-v2">' + (char.kin || '—') + ' • ' + (char.profession || '—') + ' • ' + (char.age || '—') + '</div>';
+    html += '<input type="text" class="char-name-input-v2" value="' + escapeHtml(char.name || '') + '" data-field="name" placeholder="Karaktärens namn">';
+    html += '<div class="char-meta-v2">' + escapeHtml(char.kin || '—') + ' • ' + escapeHtml(char.profession || '—') + ' • ' + escapeHtml(char.age || '—') + '</div>';
     html += '<div class="char-details-row-v2">';
-    html += '<span>Spelare: <input type="text" value="' + (char.playerName || '') + '" data-field="playerName" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
-    html += '<span>Svaghet: <input type="text" value="' + (char.weakness || '') + '" data-field="weakness" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
-    html += '<span>Minnesak: <input type="text" value="' + (char.memento || '') + '" data-field="memento" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
+    html += '<span>Spelare: <input type="text" value="' + escapeHtml(char.playerName || '') + '" data-field="playerName" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
+    html += '<span>Svaghet: <input type="text" value="' + escapeHtml(char.weakness || '') + '" data-field="weakness" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
+    html += '<span>Minnesak: <input type="text" value="' + escapeHtml(char.memento || '') + '" data-field="memento" style="background:transparent;border:none;border-bottom:1px solid var(--border-panel);padding:2px 4px;color:var(--text-primary);width:120px;"></span>';
     html += '</div></div>';
     html += '<div class="char-actions-v2"><button class="btn btn-gold" onclick="saveCharacter()">💾 Spara</button></div>';
     html += '</div>';
@@ -634,11 +634,11 @@ function renderFullCharacterSheet(char) {
     html += '<div class="secondary-attrs-v2">';
     html += '<div class="secondary-attr-v2">';
     html += '<label>Skadebonus (STY)</label>';
-    html += '<input type="text" value="' + (char.damageBonusSTY || 'T4') + '" data-field="damageBonusSTY" placeholder="T4, T6, +1, etc.">';
+    html += '<input type="text" value="' + escapeHtml(char.damageBonusSTY || 'T4') + '" data-field="damageBonusSTY" placeholder="T4, T6, +1, etc.">';
     html += '</div>';
     html += '<div class="secondary-attr-v2">';
     html += '<label>Skadebonus (SMI)</label>';
-    html += '<input type="text" value="' + (char.damageBonusSMI || 'T6') + '" data-field="damageBonusSMI" placeholder="T4, T6, +1, etc.">';
+    html += '<input type="text" value="' + escapeHtml(char.damageBonusSMI || 'T6') + '" data-field="damageBonusSMI" placeholder="T4, T6, +1, etc.">';
     html += '</div>';
     html += '<div class="secondary-attr-v2">';
     html += '<label>FÖR</label>';
@@ -695,7 +695,7 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-tab-content-v2" id="tab-notes-v2" style="display: none;">';
     html += '<div class="sheet-panel-v2"><div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Anteckningar</h3></div>';
     html += '<div class="sheet-panel-v2-content">';
-    html += '<textarea class="bio-textarea" data-field="notes" placeholder="Dina anteckningar..." style="width:100%;min-height:300px;">' + (char.notes || '') + '</textarea>';
+    html += '<textarea class="bio-textarea" data-field="notes" placeholder="Dina anteckningar..." style="width:100%;min-height:300px;">' + escapeHtml(char.notes || '') + '</textarea>';
     html += '</div></div>';
     html += '</div>';
     
@@ -816,9 +816,9 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-panel-v2">';
     html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Rustning & Hjälm</h3></div>';
     html += '<div class="armor-grid-v2">';
-    html += '<div class="armor-item-v2"><label>Rustning</label><input type="text" value="' + (char.armor || '') + '" data-field="armor" placeholder="Plåt"></div>';
+    html += '<div class="armor-item-v2"><label>Rustning</label><input type="text" value="' + escapeHtml(char.armor || '') + '" data-field="armor" placeholder="Plåt"></div>';
     html += '<div class="armor-item-v2"><label>Skydd</label><input type="number" value="' + (char.armorProtection || 0) + '" data-field="armorProtection" placeholder="4"></div>';
-    html += '<div class="armor-item-v2"><label>Hjälm</label><input type="text" value="' + (char.helmet || '') + '" data-field="helmet" placeholder="Full"></div>';
+    html += '<div class="armor-item-v2"><label>Hjälm</label><input type="text" value="' + escapeHtml(char.helmet || '') + '" data-field="helmet" placeholder="Full"></div>';
     html += '<div class="armor-item-v2"><label>Skydd</label><input type="number" value="' + (char.helmetProtection || 0) + '" data-field="helmetProtection" placeholder="2"></div>';
     html += '</div></div>';
     
@@ -836,8 +836,8 @@ function renderFullCharacterSheet(char) {
     html += '<div class="sheet-panel-v2-header"><h3 class="sheet-panel-v2-title">Hjälteförmåga</h3></div>';
     html += '<div class="hero-ability-v2">';
     html += '<div class="icon">⚡</div>';
-    html += '<div class="name">' + (char.heroicAbility || 'Ingen vald') + '</div>';
-    html += '<div class="description">' + (char.kinAbility || '') + '</div>';
+    html += '<div class="name">' + escapeHtml(char.heroicAbility || 'Ingen vald') + '</div>';
+    html += '<div class="description">' + escapeHtml(char.kinAbility || '') + '</div>';
     html += '</div></div>';
     
     html += '</div>'; // Close sheet-sidebar-v2
@@ -1320,7 +1320,7 @@ function showToast(msg, type) {
     if (old) old.remove();
     var t = document.createElement('div');
     t.className = 'toast toast-' + (type || 'info');
-    t.innerHTML = '<span>' + msg + '</span>';
+    t.innerHTML = '<span>' + escapeHtml(msg) + '</span>';
     document.body.appendChild(t);
     setTimeout(function() { t.classList.add('show'); }, 10);
     setTimeout(function() { t.remove(); }, 3000);
@@ -1427,7 +1427,7 @@ function renderPartyCard(party) {
     // Header
     html += '<div class="fantasy-group-header">';
     html += '<div>';
-    html += '<h3 class="fantasy-group-title">' + (party.name || 'Namnlös grupp') + '</h3>';
+    html += '<h3 class="fantasy-group-title">' + escapeHtml(party.name || 'Namnlös grupp') + '</h3>';
     html += '<div class="fantasy-group-meta">' + memberCount + ' medlemmar' + (isOwner ? ' • Skapad av dig' : '') + '</div>';
     html += '</div>';
     if (isActive) {
@@ -1619,8 +1619,8 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
     var html = '<div style="padding: 1rem;">' +
         '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">' +
         '<div style="flex: 1;">' +
-        '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + party.name + '</h1>' +
-        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>';
+        '<h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;">' + escapeHtml(party.name) + '</h1>' +
+        '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + escapeHtml(party.description || 'Ingen beskrivning') + '</p>';
     
     // Admin actions for owner
     if (isOwner) {
@@ -1638,8 +1638,8 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
         '<div style="background: var(--bg-elevated); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 2px solid var(--accent-gold); margin-bottom: 0.5rem;">' +
         '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase;">Inbjudningskod</div>' +
         '<div style="display: flex; align-items: center; gap: 0.5rem;">' +
-        '<code style="font-size: 1.25rem; font-weight: 700; color: var(--accent-gold); letter-spacing: 0.1em;">' + (party.inviteCode || '------') + '</code>' +
-        '<button class="btn btn-ghost btn-xs" onclick="copyInviteCode(\'' + (party.inviteCode || '') + '\')">📋 Kopiera</button>' +
+        '<code style="font-size: 1.25rem; font-weight: 700; color: var(--accent-gold); letter-spacing: 0.1em;">' + escapeHtml(party.inviteCode || '------') + '</code>' +
+        '<button class="btn btn-ghost btn-xs" onclick="copyInviteCode(\'' + escapeHtml(party.inviteCode || '') + '\')">📋 Kopiera</button>' +
         '</div></div>' +
         '</div></div>';
     
@@ -1660,7 +1660,7 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
                 '<div class="session-row" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">' +
                 '<span class="icon" style="font-size: 1.25rem;">🗓️</span>' +
                 '<span class="label" style="font-weight: 600; color: var(--text-secondary);">Datum:</span>' +
-                '<span class="value" style="color: var(--text-primary);">' + party.nextSession + '</span>' +
+                '<span class="value" style="color: var(--text-primary);">' + escapeHtml(party.nextSession) + '</span>' +
                 '</div>';
             
             // Location (if provided)
@@ -1668,7 +1668,7 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
                 html += '<div class="session-row" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">' +
                     '<span class="icon" style="font-size: 1.25rem;">📍</span>' +
                     '<span class="label" style="font-weight: 600; color: var(--text-secondary);">Plats:</span>' +
-                    '<span class="value" style="color: var(--text-primary);">' + party.nextSessionLocation + '</span>' +
+                    '<span class="value" style="color: var(--text-primary);">' + escapeHtml(party.nextSessionLocation) + '</span>' +
                     '</div>';
             }
             
@@ -1708,7 +1708,7 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
                 
                 html += '<div class="participant ' + statusClass + '" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-sm);">' +
                     '<div class="participant-avatar" style="width: 32px; height: 32px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">👤</div>' +
-                    '<span class="participant-name" style="flex: 1; font-weight: 500;">' + (attendee.name || 'Okänd') + '</span>' +
+                    '<span class="participant-name" style="flex: 1; font-weight: 500;">' + escapeHtml(attendee.name || 'Okänd') + '</span>' +
                     '<span class="status ' + statusClass + '" style="font-size: 0.875rem; padding: 0.25rem 0.5rem; border-radius: 4px;">' + statusIcon + ' ' + statusText + '</span>' +
                     '</div>';
             });
@@ -1786,13 +1786,13 @@ function renderPartyView(party, partyChars, availableChars, joinRequests, messag
     if (isOwner) {
         html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
             '<h3 style="margin-bottom: 0.5rem; font-size: 1rem;">📝 Anteckningar (synliga för alla medlemmar)</h3>' +
-            '<textarea id="partyNotes" class="bio-textarea" placeholder="Lägg till anteckningar för gruppen..." style="margin-bottom: 0.5rem;">' + (party.notes || '') + '</textarea>' +
+            '<textarea id="partyNotes" class="bio-textarea" placeholder="Lägg till anteckningar för gruppen..." style="margin-bottom: 0.5rem;">' + escapeHtml(party.notes || '') + '</textarea>' +
             '<button class="btn btn-gold btn-xs" onclick="savePartyNotes(\'' + party.id + '\')">💾 Spara anteckningar</button>' +
             '</div>';
     } else if (party.notes) {
         html += '<div style="margin-bottom: 2rem; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
             '<h3 style="margin-bottom: 0.5rem; font-size: 1rem;">📝 Anteckningar från ägaren</h3>' +
-            '<p style="color: var(--text-secondary); white-space: pre-wrap;">' + party.notes + '</p>' +
+            '<p style="color: var(--text-secondary); white-space: pre-wrap;">' + escapeHtml(party.notes) + '</p>' +
             '</div>';
     }
     
@@ -1879,8 +1879,8 @@ function renderPartyCharacterCard(char, partyId) {
     return '<div class="character-card">' +
         '<div class="char-portrait">' + icon + '</div>' +
         '<div class="char-info">' +
-        '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
-        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+        '<div class="char-name">' + escapeHtml(char.name || 'Namnlös') + '</div>' +
+        '<div class="char-subtitle">' + escapeHtml(subtitle || 'Okänd') + '</div>' +
         '<div class="char-stats">' +
         '<div class="char-stat">❤️ ' + (attrs.FYS || '?') + ' KP</div>' +
         '<div class="char-stat">💜 ' + (attrs.PSY || '?') + ' VP</div>' +
@@ -1896,8 +1896,8 @@ function renderAddCharacterCard(char, partyId) {
     return '<div class="character-card">' +
         '<div class="char-portrait">' + icon + '</div>' +
         '<div class="char-info">' +
-        '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
-        '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+        '<div class="char-name">' + escapeHtml(char.name || 'Namnlös') + '</div>' +
+        '<div class="char-subtitle">' + escapeHtml(subtitle || 'Okänd') + '</div>' +
         '</div>' +
         '<button class="btn btn-gold btn-xs" onclick="addCharToParty(\'' + partyId + '\', \'' + char.id + '\')">+ Lägg till</button>' +
         '</div>';
@@ -1969,8 +1969,8 @@ function openAddToGroupModal(charId) {
             }
             
             return '<div class="group-select-item" onclick="addCharToGroup(\'' + party.id + '\', \'' + charId + '\', ' + isOwner + ')">' +
-                '<div><div class="group-name">👥 ' + party.name + '</div>' +
-                '<div class="group-owner">' + (isOwner ? 'Din grupp' : 'Ägare: ' + party.ownerName) + '</div></div>' +
+                '<div><div class="group-name">👥 ' + escapeHtml(party.name) + '</div>' +
+                '<div class="group-owner">' + (isOwner ? 'Din grupp' : 'Ägare: ' + escapeHtml(party.ownerName)) + '</div></div>' +
                 '<button class="btn btn-ghost btn-xs">' + (isOwner ? 'Lägg till' : 'Skicka förfrågan') + ' →</button>' +
                 '</div>';
         }).join('');
@@ -2167,9 +2167,9 @@ function displayFoundGroup(party, container) {
             '</div>';
     } else {
         container.innerHTML = '<div style="background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem;">' +
-            '<h3 style="margin-bottom: 0.5rem;">👥 ' + party.name + '</h3>' +
-            '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + (party.description || 'Ingen beskrivning') + '</p>' +
-            '<p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Ägare: ' + party.ownerName + '</p>' +
+            '<h3 style="margin-bottom: 0.5rem;">👥 ' + escapeHtml(party.name) + '</h3>' +
+            '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">' + escapeHtml(party.description || 'Ingen beskrivning') + '</p>' +
+            '<p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Ägare: ' + escapeHtml(party.ownerName) + '</p>' +
             '<div id="joinCharactersList"></div>' +
             '</div>';
         
@@ -2189,8 +2189,8 @@ function displayFoundGroup(party, container) {
                         return '<div class="character-card" onclick="requestJoinWithCharacter(\'' + party.id + '\', \'' + char.id + '\')" style="cursor: pointer;">' +
                             '<div class="char-portrait">' + icon + '</div>' +
                             '<div class="char-info">' +
-                            '<div class="char-name">' + (char.name || 'Namnlös') + '</div>' +
-                            '<div class="char-subtitle">' + (subtitle || 'Okänd') + '</div>' +
+                            '<div class="char-name">' + escapeHtml(char.name || 'Namnlös') + '</div>' +
+                            '<div class="char-subtitle">' + escapeHtml(subtitle || 'Okänd') + '</div>' +
                             '</div>' +
                             '<button class="btn btn-gold btn-xs">Skicka förfrågan →</button>' +
                             '</div>';
@@ -2213,9 +2213,9 @@ function displayMultipleGroups(groups, container, user) {
             return '<div class="group-select-item' + (isMember ? ' disabled' : '') + '" ' +
                 (isMember ? '' : 'onclick="selectGroupFromSearch(\'' + party.id + '\')"') + '>' +
                 '<div>' +
-                '<div class="group-name">👥 ' + party.name + '</div>' +
-                '<div class="group-owner">Ägare: ' + party.ownerName + ' • ' + memberCount + ' medlem' + (memberCount !== 1 ? 'mar' : '') + '</div>' +
-                (party.description ? '<div style="font-size: 0.813rem; color: var(--text-muted); margin-top: 0.25rem;">' + party.description + '</div>' : '') +
+                '<div class="group-name">👥 ' + escapeHtml(party.name) + '</div>' +
+                '<div class="group-owner">Ägare: ' + escapeHtml(party.ownerName) + ' • ' + memberCount + ' medlem' + (memberCount !== 1 ? 'mar' : '') + '</div>' +
+                (party.description ? '<div style="font-size: 0.813rem; color: var(--text-muted); margin-top: 0.25rem;">' + escapeHtml(party.description) + '</div>' : '') +
                 '</div>' +
                 '<button class="btn btn-ghost btn-xs">' + (isMember ? '✓ Medlem' : 'Välj →') + '</button>' +
                 '</div>';

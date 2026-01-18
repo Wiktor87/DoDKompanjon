@@ -120,7 +120,7 @@ function updateCreatorProgress() {
 
 function renderStep1Name() {
     return '<div class="creator-step"><h2>Vad heter din karaktär?</h2>' +
-        '<input type="text" id="charName" class="creator-input" placeholder="Ange namn" value="' + (creatorData.name || '') + '">' +
+        '<input type="text" id="charName" class="creator-input" placeholder="Ange namn" value="' + escapeHtml(creatorData.name || '') + '">' +
         '<div class="creator-nav"><button class="btn btn-gold" onclick="nextStep()">Nästa →</button></div></div>';
 }
 
