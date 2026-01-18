@@ -599,6 +599,7 @@ function renderFullCharacterSheet(char) {
     // Build kin dropdown
     html += '<div class="char-meta-v2">';
     html += '<select data-field="kin" class="char-select-v2">';
+    html += '<option value=""' + (!char.kin ? ' selected' : '') + '>—</option>';
     var kinOptions = ['Människa', 'Alv', 'Dvärg', 'Halvling', 'Anka', 'Vargfolk'];
     kinOptions.forEach(function(kinOpt) {
         var selected = (char.kin === kinOpt) ? ' selected' : '';
@@ -608,6 +609,7 @@ function renderFullCharacterSheet(char) {
     html += ' • ';
     // Build profession dropdown
     html += '<select data-field="profession" class="char-select-v2">';
+    html += '<option value=""' + (!char.profession ? ' selected' : '') + '>—</option>';
     var professionOptions = ['Bard', 'Hantverkare', 'Jägare', 'Krigare', 'Lärd', 'Magiker', 'Nasare', 'Riddare', 'Sjöfarare', 'Tjuv'];
     professionOptions.forEach(function(profOpt) {
         var selected = (char.profession === profOpt) ? ' selected' : '';
@@ -617,6 +619,7 @@ function renderFullCharacterSheet(char) {
     html += ' • ';
     // Build age dropdown
     html += '<select data-field="age" class="char-select-v2">';
+    html += '<option value=""' + (!char.age ? ' selected' : '') + '>—</option>';
     var ageOptions = ['Ung', 'Medelålders', 'Gammal'];
     ageOptions.forEach(function(ageOpt) {
         var selected = (char.age === ageOpt) ? ' selected' : '';
