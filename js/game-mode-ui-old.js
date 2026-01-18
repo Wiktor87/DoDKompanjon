@@ -544,7 +544,7 @@ var GameModeUI = {
         if (character.notes) {
             html += '<div class="expanded-section">' +
                 '<h3>📝 Anteckningar</h3>' +
-                '<div class="notes-display">' + character.notes + '</div>' +
+                '<div class="notes-display">' + this.escapeHtml(character.notes) + '</div>' +
                 '</div>';
         }
         

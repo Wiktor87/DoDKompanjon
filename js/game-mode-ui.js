@@ -1274,11 +1274,11 @@ var GameModeUI = {
             '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SKADEBONUS (STY)</div>' +
-            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + (char.damageBonusSTY || 'T4') + '</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + this.escapeHtml(char.damageBonusSTY || 'T4') + '</div>' +
             '</div>' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">SKADEBONUS (SMI)</div>' +
-            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + (char.damageBonusSMI || 'T6') + '</div>' +
+            '<div style="font-size: 1.25rem; font-weight: bold; color: var(--red-hp);">' + this.escapeHtml(char.damageBonusSMI || 'T6') + '</div>' +
             '</div>' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px; text-align: center;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">FÖRFLYTTNING</div>' +
@@ -1333,11 +1333,11 @@ var GameModeUI = {
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Rustning</div>' +
-            '<div><span style="font-weight: bold;">' + (char.armor || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.armorProtection || 0) + ')</span></div>' +
+            '<div><span style="font-weight: bold;">' + this.escapeHtml(char.armor || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.armorProtection || 0) + ')</span></div>' +
             '</div>' +
             '<div style="padding: 0.75rem; background: var(--card-bg); border-radius: 8px;">' +
             '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Hjälm</div>' +
-            '<div><span style="font-weight: bold;">' + (char.helmet || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.helmetProtection || 0) + ')</span></div>' +
+            '<div><span style="font-weight: bold;">' + this.escapeHtml(char.helmet || 'Ingen') + '</span> <span style="color: var(--text-muted);">(Skydd: ' + (char.helmetProtection || 0) + ')</span></div>' +
             '</div>' +
             '</div></div>';
         
@@ -1360,11 +1360,11 @@ var GameModeUI = {
             char.weapons.forEach(function(weapon, idx) {
                 if (weapon.name) {
                     modalHTML += '<tr' + (idx % 2 === 0 ? '' : ' style="background: rgba(0,0,0,0.2);"') + '>' +
-                        '<td style="padding: 0.75rem;">' + weapon.name + '</td>' +
-                        '<td style="padding: 0.75rem;">' + (weapon.grip || '-') + '</td>' +
-                        '<td style="padding: 0.75rem;">' + (weapon.skill || '-') + '</td>' +
-                        '<td style="padding: 0.75rem; color: var(--red-hp); font-weight: bold;">' + (weapon.damage || '-') + '</td>' +
-                        '<td style="padding: 0.75rem;">' + (weapon.range || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.name) + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.grip || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.skill || '-') + '</td>' +
+                        '<td style="padding: 0.75rem; color: var(--red-hp); font-weight: bold;">' + self.escapeHtml(weapon.damage || '-') + '</td>' +
+                        '<td style="padding: 0.75rem;">' + self.escapeHtml(weapon.range || '-') + '</td>' +
                         '</tr>';
                 }
             });

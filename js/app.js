@@ -910,10 +910,10 @@ function renderWeaponsTable(weapons) {
     } else {
         weapons.forEach(function(weapon, index) {
             html += '<tr>';
-            html += '<td><input type="text" value="' + (weapon.name || '') + '" data-weapon-field="name" data-weapon-index="' + index + '"></td>';
-            html += '<td><input type="text" value="' + (weapon.damage || '') + '" data-weapon-field="damage" data-weapon-index="' + index + '"></td>';
-            html += '<td><input type="text" value="' + (weapon.range || '') + '" data-weapon-field="range" data-weapon-index="' + index + '"></td>';
-            html += '<td><input type="text" value="' + (weapon.weight || '') + '" data-weapon-field="weight" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + escapeHtml(weapon.name || '') + '" data-weapon-field="name" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + escapeHtml(weapon.damage || '') + '" data-weapon-field="damage" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + escapeHtml(weapon.range || '') + '" data-weapon-field="range" data-weapon-index="' + index + '"></td>';
+            html += '<td><input type="text" value="' + escapeHtml(weapon.weight || '') + '" data-weapon-field="weight" data-weapon-index="' + index + '"></td>';
             html += '<td><button class="btn btn-ghost btn-xs" onclick="removeWeapon(' + index + ')">🗑️</button></td>';
             html += '</tr>';
         });
@@ -1864,10 +1864,10 @@ function renderMessage(msg) {
     var time = formatMessageTimestamp(msg.timestamp);
     return '<div style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--bg-elevated); border-radius: var(--radius-sm);">' +
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">' +
-        '<span style="font-weight: 600; font-size: 0.875rem; color: var(--accent-gold);">' + (msg.userName || 'Okänd') + '</span>' +
+        '<span style="font-weight: 600; font-size: 0.875rem; color: var(--accent-gold);">' + escapeHtml(msg.userName || 'Okänd') + '</span>' +
         '<span style="font-size: 0.75rem; color: var(--text-muted);">' + time + '</span>' +
         '</div>' +
-        '<p style="color: var(--text-secondary); font-size: 0.875rem; word-wrap: break-word;">' + (msg.message || '') + '</p>' +
+        '<p style="color: var(--text-secondary); font-size: 0.875rem; word-wrap: break-word;">' + escapeHtml(msg.message || '') + '</p>' +
         '</div>';
 }
 
