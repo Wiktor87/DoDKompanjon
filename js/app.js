@@ -1210,13 +1210,13 @@ function saveCharacter() {
     
     // Get kin, profession, age from dropdowns
     var kinEl = document.querySelector('[data-field="kin"]');
-    if (kinEl) updates.kin = kinEl.value || currentCharacter.kin || '';
+    if (kinEl) updates.kin = kinEl.value;
     
     var professionEl = document.querySelector('[data-field="profession"]');
-    if (professionEl) updates.profession = professionEl.value || currentCharacter.profession || '';
+    if (professionEl) updates.profession = professionEl.value;
     
     var ageEl = document.querySelector('[data-field="age"]');
-    if (ageEl) updates.age = ageEl.value || currentCharacter.age || '';
+    if (ageEl) updates.age = ageEl.value;
     
     var playerNameEl = document.querySelector('[data-field="playerName"]');
     if (playerNameEl) updates.playerName = playerNameEl.value || '';
